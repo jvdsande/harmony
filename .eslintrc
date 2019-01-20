@@ -1,0 +1,16 @@
+{
+  "parser": "babel-eslint",
+  "parserOptions": {
+    "sourceType": "module",
+    "allowImportExportEverywhere": true
+  },
+  "extends": [
+    "@dazzled/dazzled"
+  ],
+  "plugins": [
+    "import"
+  ],
+  "rules": {
+    "react/no-unescaped-entities": "off"
+  }
+}

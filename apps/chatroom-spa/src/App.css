@@ -1,0 +1,163 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  animation: App-logo-spin infinite 20s linear;
+  height: 40vmin;
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+
+#login, #chatbox, html, body, #root, .App, .App > div {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+#header, #header-container {
+  height: 32px;
+  flex: 0;
+  background-color: #5C6BC0;
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+
+  padding: 0 4px;
+}
+
+#login {
+  justify-content: center;
+  align-items: center;
+}
+
+#login form {
+  display: flex;
+  flex-direction: column;
+  padding: 32px 32px;
+
+  background-color: #5C6BC0;
+  border-radius: 4px;
+  box-shadow: 1px 1px 5px 0 rgba(0, 0, 0, 0.5);
+
+  color: white;
+}
+
+#login form input, #login form button {
+  margin: 16px 0;
+  padding: 8px 16px;
+  border: 1px solid #EEEEEE;
+  background: white;
+  border-radius: 3px;
+}
+
+#login form button {
+  cursor: pointer;
+}
+
+#chatbox #messages {
+  height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+
+  overflow: auto;
+}
+
+#chatbox h1 {
+  background-color: #5C6BC0;
+  color: white;
+
+  margin: 0;
+  padding: 16px;
+}
+
+#chatbox .message {
+  background-color: #EEEEEE;
+  border-radius: 10px;
+  margin: 10px;
+  margin-bottom: 0;
+  width: auto;
+  display: inline-block;
+  padding: 8px;
+  text-align: justify;
+}
+
+#chatbox .message .author,
+#chatbox .message p {
+  margin: 0;
+  width: auto;
+}
+
+#chatbox .message .author {
+  font-size: 16px;
+}
+
+#chatbox .message .date {
+  color: #757575;
+  font-size: 12px;
+}
+
+#chatbox .message .content {
+  padding: 10px 0;
+  font-size: 15px;
+}
+
+#chatbox #form {
+  background-color: #5C6BC0;
+
+  margin: 0;
+  padding: 16px;
+
+  display: flex;
+  align-items: center;
+}
+
+#chatbox #form input {
+  height: 100%;
+  width: 100%;
+  flex: 1;
+}
+
+#chatbox #form button {
+  height: 100%;
+  width: 128px;
+  margin: 8px 16px;
+}
+
+#chatbox #typing {
+  background-color: #CCCCCC;
+  color: #424242;
+  font-size: 14px;
+  line-height: 32px;
+}

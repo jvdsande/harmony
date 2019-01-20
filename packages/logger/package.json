@@ -1,0 +1,44 @@
+{
+  "name": "@foundationjs/logger",
+  "version": "0.0.1",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "Configurable logger library for the Foundation Framework",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "major": "git commit -a && npm version major && npm publish",
+    "minor": "git commit -a && npm version minor && npm publish",
+    "patch": "git commit -a && npm version patch && npm publish",
+    "dev": "npm run build && git commit -a && git push",
+    "build": "babel source -d dist && flow-copy-source -v source dist",
+    "watch": "babel source -d dist --watch & flow-copy-source -v source dist --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jvdsande/foundationjs.git"
+  },
+  "author": "Jérémie VAN DER SANDE <jeremie.vandersande@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "@foundationjs/flowtypes": "^0.1.0",
+    "colors": "^1.3.2",
+    "moment": "^2.22.2",
+    "winston": "^3.1.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.1.2",
+    "@babel/core": "^7.1.2",
+    "@babel/plugin-proposal-class-properties": "^7.1.0",
+    "@babel/preset-env": "^7.1.0",
+    "@dazzled/eslint-config-dazzled": "^1.0.0",
+    "babel-eslint": "^10.0.1",
+    "babel-plugin-add-module-exports": "^1.0.0",
+    "babel-plugin-transform-flow-strip-types": "^6.22.0",
+    "eslint": "^5.6.1",
+    "flow-copy-source": "^2.0.2"
+  },
+  "gitHead": "a896e4656e71ab6dc197b1b0f88ac1635582a459"
+}

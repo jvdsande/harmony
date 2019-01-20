@@ -1,0 +1,38 @@
+{
+  "name": "@foundationjs/controller-gatsby",
+  "version": "0.1.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "Gatsby controller for the Dazzled framework",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "babel source -d dist && flow-copy-source -v source dist",
+    "watch": "babel source -d dist --watch & flow-copy-source -v source dist --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/cli": "^7.1.2",
+    "@babel/core": "^7.1.2",
+    "@babel/plugin-proposal-class-properties": "^7.1.0",
+    "@babel/plugin-transform-runtime": "^7.1.0",
+    "@babel/preset-env": "^7.1.0",
+    "@dazzled/eslint-config-dazzled": "^1.0.0",
+    "babel-eslint": "^10.0.1",
+    "babel-plugin-add-module-exports": "^1.0.0",
+    "babel-plugin-transform-flow-strip-types": "^6.22.0",
+    "eslint": "^5.6.1",
+    "flow-copy-source": "^2.0.2"
+  },
+  "dependencies": {
+    "@foundationjs/flowtypes": "^0.1.0",
+    "@foundationjs/logger": "^0.1.0",
+    "h2o2": "^8.1.2",
+    "http-proxy": "^1.17.0",
+    "inert": "^5.1.2"
+  },
+  "gitHead": "a896e4656e71ab6dc197b1b0f88ac1635582a459"
+}
