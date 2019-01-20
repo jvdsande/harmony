@@ -34,6 +34,7 @@
     "hapi-react-views": "^10.0.0",
     "inert": "^5.1.0",
     "jsonwebtoken": "^8.4.0",
+    "react": "^16.7.0",
     "socket.io": "^2.1.1",
     "socket.io-redis": "^5.2.0",
     "socketio-sticky-session": "^0.4.3",
