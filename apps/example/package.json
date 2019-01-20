@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@foundationjs/example",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Example app using the Foundation Framework",
   "main": "index.js",
   "scripts": {
@@ -42,7 +42,7 @@
     "@foundationjs/controller-gatsby": "^0.1.1",
     "@foundationjs/persistence": "^0.1.1",
     "@foundationjs/query": "^0.1.1",
-    "@foundationjs/server": "^0.1.1",
+    "@foundationjs/server": "^0.1.2",
     "lodash": "^4.17.11",
     "mobx": "^5.5.2",
     "mobx-react": "^5.3.6",
