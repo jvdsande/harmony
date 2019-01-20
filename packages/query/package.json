@@ -34,7 +34,7 @@
     "@babel/core": "^7.1.2",
     "@babel/plugin-proposal-class-properties": "^7.1.0",
     "@babel/preset-env": "^7.1.0",
-    "@babel/runtime-corejs2": "^7.1.5",
+    "@babel/runtime-corejs2": "^7.2.0",
     "@dazzled/eslint-config-dazzled": "^1.0.0",
     "babel-eslint": "^10.0.1",
     "babel-plugin-add-module-exports": "^1.0.0",

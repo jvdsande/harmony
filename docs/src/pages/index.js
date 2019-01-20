@@ -126,8 +126,6 @@ class Index extends React.Component {
                   $ npm init
                   <br />
                   $ npm install --save @foundationjs/server
-                  <br />
-                  <i># (soon: npm install --save @foundationjs/server)</i>
                 </code>
               </pre>
 
@@ -159,7 +157,6 @@ class Index extends React.Component {
               <Highlight className="javascript">
                 {
                   `import Server from '@foundationjs/server'
-// soon: import Server from '@foundationjs/server'
 
 const server = new Server()
 
@@ -230,8 +227,6 @@ server.init({
               <pre>
                 <code>
                   $ npm install --save @foundationjs/persistence
-                  <br />
-                  <i># (soon: npm install --save @foundationjs/persistence)</i>
                 </code>
               </pre>
               <p>
