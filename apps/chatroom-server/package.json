@@ -1,6 +1,6 @@
 {
   "name": "chatroom-server",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "",
   "main": "index.js",
@@ -10,8 +10,8 @@
   "author": "Jérémie VAN DER SANDE <jeremie.vandersande@gmail.com>",
   "license": "ISC",
   "dependencies": {
-    "@foundationjs/persistence": "^0.1.0",
-    "@foundationjs/server": "^0.1.0",
+    "@foundationjs/persistence": "^0.1.1",
+    "@foundationjs/server": "^0.1.1",
     "esm": "^3.1.0",
     "mongoose": "^5.4.4"
   }

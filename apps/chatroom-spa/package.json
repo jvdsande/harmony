@@ -1,10 +1,10 @@
 {
   "name": "chatroom-spa",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "homepage": "/spa",
   "dependencies": {
-    "@foundationjs/query": "^0.1.0",
+    "@foundationjs/query": "^0.1.1",
     "@reach/router": "^1.2.1",
     "react": "^16.7.0",
     "react-dom": "^16.7.0",

@@ -1,6 +1,6 @@
 {
   "name": "@foundationjs/controller-gatsby",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publishConfig": {
     "access": "public"
   },
@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@foundationjs/flowtypes": "^0.1.0",
-    "@foundationjs/logger": "^0.1.0",
+    "@foundationjs/logger": "^0.1.1",
     "h2o2": "^8.1.2",
     "http-proxy": "^1.17.0",
     "inert": "^5.1.2"
