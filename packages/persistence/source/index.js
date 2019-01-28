@@ -3,7 +3,7 @@
 import Cluster from 'cluster'
 
 import Mongoose from 'mongoose'
-import mongoosastic from 'mongoosastic'
+import Mexp from 'mongoose-elasticsearch-xp'
 import { schemaComposer } from 'graphql-compose'
 import Logger from '@foundationjs/logger'
 import type { Model, PersistenceConfiguration } from '@foundationjs/flowtypes/persistence'
@@ -197,7 +197,15 @@ export default class Persistence {
       scopes[composerName(model)] = model.scope
       refMap[model.name] = model
 
-      const schema = new Mongoose.Schema(model.schema)
+      let params
+
+      if (model.elasticsearch && model.elasticsearch.fields) {
+        params = {
+          es_extend: model.elasticsearch.fields,
+        }
+      }
+
+      const schema = new Mongoose.Schema(model.schema, params)
       const name = modelName(model.name)
 
       schema.post('save', (doc) => {
@@ -225,8 +233,8 @@ export default class Persistence {
         }
       })
 
-      if (model.enableElasticsearch) {
-        schema.plugin(mongoosastic, { hydrate: true })
+      if (model.elasticsearch) {
+        schema.plugin(Mexp, { hydrate: true })
       }
 
       models[name] = Mongoose.model(model.name, schema, model.collection) // Force the collection name if provided
