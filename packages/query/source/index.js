@@ -211,6 +211,10 @@ class QueryBuilderInternal extends Promise<any> {
         args: { filter, skip, sort },
         select,
       },
+      SEARCH: {
+        args: { query: filter },
+        select,
+      },
     }[this.type]
 
     // Get the request name
@@ -218,6 +222,7 @@ class QueryBuilderInternal extends Promise<any> {
       COUNT: 'Count',
       LIST: 'List',
       GET: '',
+      SEARCH: 'Search',
     }[this.type]
 
     const queryName = this.model + suffix
@@ -335,6 +340,10 @@ export class QueryBuilder {
 
   count(model?: string): QueryBuilderInternal {
     return new QueryBuilderInternal('COUNT', model || this.model)
+  }
+
+  search(model?: string): QueryBuilderInternal {
+    return new QueryBuilderInternal('SEARCH', model || this.model)
   }
 }
 

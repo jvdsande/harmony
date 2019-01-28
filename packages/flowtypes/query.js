@@ -9,7 +9,7 @@ export type QuerySelect = {
 
 export type QueryArgs = {
   [string]: any
-}
+} | string
 
 export type PureQuerySelect = {
   [string]: QuerySelect
@@ -34,6 +34,6 @@ export type QueryConfiguration = {
 
 
 // Builders
-export type QueryType = 'COUNT' | 'LIST' | 'GET'
+export type QueryType = 'COUNT' | 'LIST' | 'GET' | 'SEARCH'
 
 export type MutationType = 'UPDATE' | 'CREATE' | 'DELETE'
