@@ -29,6 +29,7 @@
     "graphql": "^14.0.2",
     "graphql-compose": "^5.2.0",
     "graphql-compose-mongoose": "^5.1.0",
+    "mongoosastic": "^4.4.1",
     "mongoose": "^5.4.4"
   },
   "devDependencies": {

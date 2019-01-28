@@ -3,6 +3,7 @@
 import Cluster from 'cluster'
 
 import Mongoose from 'mongoose'
+import mongoosastic from 'mongoosastic'
 import { schemaComposer } from 'graphql-compose'
 import Logger from '@foundationjs/logger'
 import type { Model, PersistenceConfiguration } from '@foundationjs/flowtypes/persistence'
@@ -223,6 +224,10 @@ export default class Persistence {
           this.io.to('updates').emit(`${name.toLowerCase()}-removed`, doc._id)
         }
       })
+
+      if (model.enableElasticsearch) {
+        schema.plugin(mongoosastic, { hydrate: true })
+      }
 
       models[name] = Mongoose.model(model.name, schema, model.collection) // Force the collection name if provided
       models[name].composer = model.composer
