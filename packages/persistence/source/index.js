@@ -234,6 +234,27 @@ export default class Persistence {
       })
 
       if (model.elasticsearch) {
+        // Get the list of path to populate
+        const paths = []
+        if (model.elasticsearch.fields) {
+          Object.values(model.elasticsearch.fields).forEach((field) => {
+            if (field.es_populate) {
+              paths.push(...Object.entries(field.es_populate).filter(p => p[1]).map(([path]) => path))
+            }
+          })
+        }
+
+        schema.post('save', async (doc, next) => {
+          if (paths.length) {
+            let exec = doc
+            paths.forEach((path) => {
+              exec = exec.populate(path)
+            })
+
+            await doc.execPopulate()
+          }
+          next()
+        })
         schema.plugin(Mexp, { hydrate: true })
       }
 
