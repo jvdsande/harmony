@@ -1,6 +1,6 @@
 {
   "name": "@foundationjs/query",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publishConfig": {
     "access": "public"
   },
@@ -22,7 +22,7 @@
   "author": "Jérémie VAN DER SANDE <jeremie.vandersande@gmail.com>",
   "license": "ISC",
   "dependencies": {
-    "@foundationjs/flowtypes": "^0.1.0",
+    "@foundationjs/flowtypes": "^0.1.1",
     "apollo-boost": "^0.1.16",
     "graphql": "^14.0.2",
     "graphql-tag": "^2.9.2",
