@@ -28,6 +28,7 @@ export type PersistenceConfiguration = {
   mutation?: FieldFunction,
   log?: LogConfig,
   endpoint?: string,
+  elasticsearch?: Object,
 }
 
 
