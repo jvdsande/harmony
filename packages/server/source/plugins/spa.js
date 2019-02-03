@@ -80,10 +80,10 @@ const ControllerSPA = function (options : ControllerSPAConfiguration) : ServerCo
       /* Route for serving static files */
       server.route({
         method: 'GET',
-        path: `${path}${statics.path}/{param*}`,
+        path: `${staticPath}/{param*}`,
         handler: {
           directory: {
-            path: staticPath,
+            path: statics.dir,
           },
         },
       })
