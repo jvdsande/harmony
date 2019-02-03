@@ -285,10 +285,13 @@ export default class Persistence {
           if (elasticsearch.port) {
             mexpParams.port = elasticsearch.port
           }
+          if (elasticsearch.protocol) {
+            mexpParams.protocol = elasticsearch.protocol
+          }
 
           if (elasticsearch.prefix) {
-            mexpParams.index = `${elasticsearch.prefix}_${name}`
-            mexpParams.type = `${elasticsearch.prefix}_${name}`
+            mexpParams.index = `${elasticsearch.prefix}_${name}`.toLowerCase()
+            mexpParams.type = `${elasticsearch.prefix}_${name}`.toLowerCase()
           }
         }
 
