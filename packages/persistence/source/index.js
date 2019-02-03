@@ -116,6 +116,21 @@ function addField(field, kind, to, composers) {
   })
 }
 
+function makeEsExtend(fields) {
+  const esFields = {}
+
+  Object.keys(fields).forEach((f) => {
+    const field = fields[f]
+
+    esFields[f] = {
+      es_value: field.value || field.es_value,
+      es_type: field.type || field.es_type,
+    }
+  })
+
+  return esFields
+}
+
 export const Types = {
   ...Mongoose.Schema.Types,
   Map: Mongoose.Schema.Types.Mixed,
@@ -154,6 +169,7 @@ export default class Persistence {
    * @param {mutation} mutation - Optional object to configure additional mutations
    * @param {log} log - Optional object to configure the logger
    * @param {endpoint} endpoint - Optional object to configure the endpoint for Mongo
+   * @param {object} elasticsearch - Optional object to configure ElasticSearch bridge
    * @returns {boolean} - Successful initialization
    */
   async init({
@@ -162,6 +178,7 @@ export default class Persistence {
     mutation,
     log,
     endpoint,
+    elasticsearch,
   } : PersistenceConfiguration) {
     // Prepare the logger
     const logConfig = log || {}
@@ -201,7 +218,7 @@ export default class Persistence {
 
       if (model.elasticsearch && model.elasticsearch.fields) {
         params = {
-          es_extend: model.elasticsearch.fields,
+          es_extend: makeEsExtend(model.elasticsearch.fields),
         }
       }
 
@@ -255,7 +272,27 @@ export default class Persistence {
           }
           next()
         })
-        schema.plugin(Mexp, { hydrate: true })
+
+        const mexpParams = { hydrate: true }
+
+        if (elasticsearch) {
+          if (elasticsearch.host) {
+            mexpParams.host = elasticsearch.host
+          }
+          if (elasticsearch.auth) {
+            mexpParams.auth = elasticsearch.auth
+          }
+          if (elasticsearch.port) {
+            mexpParams.port = elasticsearch.port
+          }
+
+          if (elasticsearch.prefix) {
+            mexpParams.index = `${elasticsearch.prefix}_${name}`
+            mexpParams.type = `${elasticsearch.prefix}_${name}`
+          }
+        }
+
+        schema.plugin(Mexp, mexpParams)
       }
 
       models[name] = Mongoose.model(model.name, schema, model.collection) // Force the collection name if provided
