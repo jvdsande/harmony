@@ -1,6 +1,6 @@
 {
   "name": "chatroom-server",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "private": true,
   "description": "",
   "main": "index.js",
@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "@foundationjs/persistence": "^0.1.5",
-    "@foundationjs/server": "^0.1.4",
+    "@foundationjs/server": "^0.1.5",
     "esm": "^3.1.0",
     "mongoose": "^5.4.4"
   }
