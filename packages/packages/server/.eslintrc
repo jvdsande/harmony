@@ -1,0 +1,13 @@
+{
+  "parser": "babel-eslint",
+  "parserOptions": {
+    "sourceType": "module",
+    "allowImportExportEverywhere": true
+  },
+  "extends": [
+    "@foundationjs/eslint"
+  ],
+  "plugins": [
+    "import"
+  ]
+}

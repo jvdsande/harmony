@@ -4,34 +4,7 @@ import Winston from 'winston'
 import moment from 'moment'
 import colors from 'colors/safe'
 
-interface LoggerClass {
-  fileLogger: any,
-  logger: any,
-
-  error: (any) => void,
-  warn: (any) => void,
-  info: (any) => void,
-  verbose: (any) => void,
-  debug: (any) => void,
-  silly: (any) => void,
-  log: (any) => void,
-}
-
-type LogConfig = {
-  disabled: boolean,
-  level: string,
-  filename?: string,
-  console: boolean,
-}
-
-enum LogLevel {
-  error = 'error',
-  warn = 'warn',
-  info = 'info',
-  debug = 'debug',
-  verbose = 'verbose',
-  silly = 'silly',
-}
+import { LoggerClass, LogConfig, LogLevel } from '@foundationjs/typedefs/logger'
 
 export default class Logger implements LoggerClass {
   logger: any

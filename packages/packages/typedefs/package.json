@@ -1,0 +1,15 @@
+{
+  "name": "@foundationjs/typedefs",
+  "version": "0.1.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "Typescript definitions for Foundation Framework",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",
+  "license": "ISC",
+  "gitHead": "a896e4656e71ab6dc197b1b0f88ac1635582a459"
+}
