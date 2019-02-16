@@ -4,11 +4,23 @@
   "publishConfig": {
     "access": "public"
   },
+  "@pika/pack": {
+    "pipeline": [
+      [
+        "@pika/plugin-standard-pkg"
+      ],
+      [
+        "@pika/plugin-build-node"
+      ],
+      [
+        "@pika/plugin-build-web"
+      ]
+    ]
+  },
   "description": "Gatsby controller for the Dazzled framework",
   "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "babel source -d dist && flow-copy-source -v source dist",
     "watch": "babel source -d dist --watch & flow-copy-source -v source dist --watch",
     "prepublishOnly": "npm run build"
   },
@@ -17,7 +29,6 @@
   "devDependencies": {
     "@babel/cli": "^7.1.2",
     "@babel/core": "^7.1.2",
-    "@babel/plugin-proposal-class-properties": "^7.1.0",
     "@babel/plugin-transform-runtime": "^7.1.0",
     "@babel/preset-env": "^7.1.0",
     "@dazzled/eslint-config-dazzled": "^1.0.0",

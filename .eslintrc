@@ -1,5 +1,5 @@
 {
-  "parser": "babel-eslint",
+  "parser": "typescript-eslint-parser",
   "parserOptions": {
     "sourceType": "module",
     "allowImportExportEverywhere": true
@@ -8,6 +8,8 @@
     "@foundationjs/eslint"
   ],
   "rules": {
-    "react/no-unescaped-entities": "off"
-  }
+    "react/no-unescaped-entities": "off",
+    "no-unused-vars": "off"
+  },
+  "plugins": [ "typescript" ]
 }

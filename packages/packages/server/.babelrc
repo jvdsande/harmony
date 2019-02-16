@@ -8,15 +8,7 @@
     ]
   ],
   "plugins": [
-    "@babel/proposal-class-properties",
-    [
-      "@babel/plugin-transform-runtime",
-      {
-        "regenerator": true,
-        "corejs": 2
-      }
-    ],
-    "add-module-exports",
-    "transform-flow-strip-types"
+    "transform-flow-strip-types",
+    "@babel/plugin-proposal-class-properties"
   ]
 }

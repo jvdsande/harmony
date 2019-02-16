@@ -4,6 +4,16 @@
   "publishConfig": {
     "access": "public"
   },
+  "@pika/pack": {
+    "pipeline": [
+      [
+        "@pika/plugin-standard-pkg"
+      ],
+      [
+        "@pika/plugin-build-node"
+      ]
+    ]
+  },
   "description": "Default Server for the Foundation Framework",
   "main": "dist/index.js",
   "scripts": {
@@ -12,7 +22,6 @@
     "minor": "git commit -a && npm version minor && npm publish",
     "patch": "git commit -a && npm version patch && npm publish",
     "dev": "npm run build && git commit -a && git push",
-    "build": "babel source -d dist && flow-copy-source -v source dist",
     "watch": "babel source -d dist --watch & flow-copy-source -v source dist --watch",
     "prepublishOnly": "npm run build"
   },

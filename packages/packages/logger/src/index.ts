@@ -1,20 +1,54 @@
-// @flow
 import Cluster from 'cluster'
 
 import Winston from 'winston'
 import moment from 'moment'
 import colors from 'colors/safe'
-import type { LogConfig, LoggerClass, LogLevel } from '@foundationjs/flowtypes/logger'
+
+interface LoggerClass {
+  fileLogger: any,
+  logger: any,
+
+  error: (any) => void,
+  warn: (any) => void,
+  info: (any) => void,
+  verbose: (any) => void,
+  debug: (any) => void,
+  silly: (any) => void,
+  log: (any) => void,
+}
+
+type LogConfig = {
+  disabled: boolean,
+  level: string,
+  filename?: string,
+  console: boolean,
+}
+
+enum LogLevel {
+  error = 'error',
+  warn = 'warn',
+  info = 'info',
+  debug = 'debug',
+  verbose = 'verbose',
+  silly = 'silly',
+}
 
 export default class Logger implements LoggerClass {
-  logger: Object
+  logger: any
 
-  fileLogger: Object
+  fileLogger: any
 
-  constructor(name: string, config: ?LogConfig) {
+  constructor(name: string, config?: LogConfig) {
     const {
       disabled, level, filename, console,
-    } = config || {}
+    } = config || {
+      disabled: false,
+      level: 'info',
+      filename: null,
+      console: false,
+    }
+
+    const test = 'test'
 
     const type = {
       error: colors.red('ERROR  '),
@@ -38,7 +72,8 @@ export default class Logger implements LoggerClass {
 
     const cut = name.slice(0, NAME_LENGTH)
     const frontSpaces = NAME_LENGTH - cut.length
-    const padded = Array(frontSpaces + 1).join(' ')
+    const padded = Array(frontSpaces + 1)
+      .join(' ')
 
     const timeFormat = 'YY/MM/DD HH:mm:ss.SSS'
 
@@ -48,16 +83,17 @@ export default class Logger implements LoggerClass {
       i => (
         `${suffix}${
           colors.grey(`${moment(i.timestamp).format(timeFormat)}`)
-        + colors.bold.grey(` ${cut} ${padded} [`)
-        + colors.bold(type[i.level])
-        + colors.bold.grey(']')
+          + colors.bold(colors.grey(` ${cut} ${padded} [`))
+          + colors.bold(type[i.level])
+          + colors.bold(colors.grey(']'))
         } ${i.message}`
       ),
     )
 
     const fileFormat = Winston.format.printf(
       i => (
-        `${moment(i.timestamp).format(timeFormat)} ${cut} ${padded} [${fileType[i.level]}] ${i.message}`
+        `${moment(i.timestamp)
+          .format(timeFormat)} ${cut} ${padded} [${fileType[i.level]}] ${i.message}`
       ),
     )
 

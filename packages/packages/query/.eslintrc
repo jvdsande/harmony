@@ -5,10 +5,9 @@
     "allowImportExportEverywhere": true
   },
   "extends": [
-    "@dazzled/dazzled"
+    "@foundationjs/eslint"
   ],
   "plugins": [
-    "import",
-    "flowtype"
+    "import"
   ]
 }

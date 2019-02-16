@@ -4,6 +4,19 @@
   "publishConfig": {
     "access": "public"
   },
+  "@pika/pack": {
+    "pipeline": [
+      [
+        "@pika/plugin-standard-pkg"
+      ],
+      [
+        "@pika/plugin-build-node"
+      ],
+      [
+        "@pika/plugin-build-web"
+      ]
+    ]
+  },
   "description": "Client-side request handler for the Foundation Framework",
   "main": "dist/index.js",
   "scripts": {
@@ -11,7 +24,6 @@
     "major": "git commit -a && npm version major && npm publish",
     "minor": "git commit -a && npm version minor && npm publish",
     "patch": "git commit -a && npm version patch && npm publish",
-    "build": "babel source -d dist && flow-copy-source -v source dist",
     "watch": "babel source -d dist --watch & flow-copy-source -v source dist --watch",
     "prepublishOnly": "npm run build"
   },

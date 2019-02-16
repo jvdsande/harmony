@@ -4,6 +4,19 @@
   "publishConfig": {
     "access": "public"
   },
+  "@pika/pack": {
+    "pipeline": [
+      [
+        "@pika/plugin-ts-standard-pkg"
+      ],
+      [
+        "@pika/plugin-build-node"
+      ],
+      [
+        "@pika/plugin-build-web"
+      ]
+    ]
+  },
   "description": "Configurable logger library for the Foundation Framework",
   "main": "dist/index.js",
   "scripts": {
@@ -12,7 +25,6 @@
     "minor": "git commit -a && npm version minor && npm publish",
     "patch": "git commit -a && npm version patch && npm publish",
     "dev": "npm run build && git commit -a && git push",
-    "build": "babel source -d dist && flow-copy-source -v source dist",
     "watch": "babel source -d dist --watch & flow-copy-source -v source dist --watch",
     "prepublishOnly": "npm run build"
   },
@@ -39,7 +51,8 @@
     "babel-plugin-add-module-exports": "^1.0.0",
     "babel-plugin-transform-flow-strip-types": "^6.22.0",
     "eslint": "^5.6.1",
-    "flow-copy-source": "^2.0.2"
+    "flow-copy-source": "^2.0.2",
+    "typescript": "^3.3.3"
   },
   "gitHead": "a896e4656e71ab6dc197b1b0f88ac1635582a459"
 }
