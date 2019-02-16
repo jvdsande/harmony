@@ -1,17 +1,31 @@
 {
-	"name": "root",
-	"private": true,
-	"scripts": {
-		"watch": "npm run watch:server & npm run watch:persistence & npm run watch:logger & npm run watch:query & npm run watch:example",
-		"watch:logger": "cd packages/logger && npm run watch",
-		"watch:persistence": "cd packages/persistence && npm run watch",
-		"watch:server": "cd packages/server && npm run watch",
-		"watch:query": "cd packages/query && npm run watch",
-		"watch:example": "cd apps/example && npm run dll && npm run dev-webpack",
-		"dev": "cd apps/example && npm run dev-server"
-	},
-	"devDependencies": {
-		"@dazzled/eslint-config-dazzled": "^1.0.1",
-		"lerna": "^3.4.3"
-	}
+  "name": "foundation-framework",
+  "version": "1.0.0",
+  "description": "Full-features NodeJS Framework",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jvdsande/foundationjs.git"
+  },
+  "keywords": [
+    "NodeJS",
+    "Framework",
+    "GraphQL",
+    "Backend",
+    "Frontend"
+  ],
+  "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jvdsande/foundationjs/issues"
+  },
+  "homepage": "https://github.com/jvdsande/foundationjs#readme",
+  "devDependencies": {
+    "@foundationjs/eslint-config-eslint": "^1.0.1",
+    "babel-eslint": "^10.0.1",
+    "eslint": "^5.14.0"
+  }
 }

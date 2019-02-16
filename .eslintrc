@@ -5,10 +5,7 @@
     "allowImportExportEverywhere": true
   },
   "extends": [
-    "@dazzled/dazzled"
-  ],
-  "plugins": [
-    "import"
+    "@foundationjs/eslint"
   ],
   "rules": {
     "react/no-unescaped-entities": "off"
