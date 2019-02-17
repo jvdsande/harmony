@@ -1,6 +1,6 @@
 {
   "name": "@foundationjs/controller-gatsby",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "publishConfig": {
     "access": "public"
   },
@@ -19,8 +19,7 @@
   },
   "description": "Gatsby controller for the Dazzled framework",
   "main": "dist/index.js",
-  "scripts": {
-  },
+  "scripts": {},
   "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",
   "license": "ISC",
   "gitHead": "a896e4656e71ab6dc197b1b0f88ac1635582a459",

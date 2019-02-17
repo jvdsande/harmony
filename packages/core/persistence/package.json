@@ -1,6 +1,6 @@
 {
   "name": "@foundationjs/persistence",
-  "version": "0.1.7",
+  "version": "0.2.0",
   "publishConfig": {
     "access": "public"
   },
@@ -16,8 +16,7 @@
   },
   "description": "Persistence handling for the Foundation Framework",
   "main": "dist/index.js",
-  "scripts": {
-  },
+  "scripts": {},
   "repository": {
     "type": "git",
     "url": "https://github.com/jvdsande/foundationjs.git"

@@ -1,6 +1,6 @@
 {
   "name": "@foundationjs/server",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "publishConfig": {
     "access": "public"
   },
@@ -16,8 +16,7 @@
   },
   "description": "Default Server for the Foundation Framework",
   "main": "dist/index.js",
-  "scripts": {
-  },
+  "scripts": {},
   "repository": {
     "type": "git",
     "url": "https://github.com/jvdsande/foundationjs.git"
