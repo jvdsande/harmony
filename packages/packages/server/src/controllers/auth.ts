@@ -1,9 +1,7 @@
-// @flow
-
 import JWT from 'hapi-auth-jwt2'
-import type { AuthenticationConfig } from '@foundationjs/flowtypes/server'
+import { AuthenticationConfig } from '@foundationjs/typedefs/server'
 
-export default async function (server: Object, { secret, validate }: AuthenticationConfig) {
+export default async function (server: any, { secret, validate }: AuthenticationConfig) {
   await server.register(JWT)
 
   // Set the Authentication strategy to JWT

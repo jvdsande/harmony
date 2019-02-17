@@ -1,32 +1,33 @@
-// @flow
-
 /* global localStorage */
 
-import ApolloClient from 'apollo-boost'
+import ApolloClient, { FetchPolicy } from 'apollo-boost'
 import Graphql from 'graphql-tag'
 import { jsonToGraphQLQuery as JSQ, EnumType } from 'json-to-graphql-query'
 import IO from 'socket.io-client'
-import type {
+import {
   MutationType,
-  QueryArgs, QueryConfiguration, QueryDefinition, QuerySelect, QueryType,
-} from '@foundationjs/flowtypes/query'
+  QueryArgs, QueryConfiguration, QueryDefinition, QueryType,
+  PureQuerySelect, QueryArgsMap, QueryCallback, QueryField,
+} from '@foundationjs/typedefs/query'
 
-const transformJSQ = (q : QueryDefinition) => {
+const transformJSQ = (q: QueryDefinition) => {
   const query = {}
 
-  Object.keys(q).map(key => ([key, q[key]])).forEach(([name, content]) => {
-    if (typeof content === 'boolean') {
-      query[name] = true
-    } else {
-      query[name] = {
-        ...((content.select) || (content.get) || {}),
-      }
-    }
+  Object.keys(q)
+    .map(key => ([key, q[key]]))
+    .forEach(([name, content]: [string, QueryField | boolean]) => {
+      if (typeof content === 'boolean') {
+        query[name] = true
+      } else {
+        query[name] = {
+          ...((content.select) || (content.get) || {}),
+        }
 
-    if (content.args) {
-      query[name].__args = content.args
-    }
-  })
+        if (content.args) {
+          query[name].__args = content.args
+        }
+      }
+    })
 
   return JSQ(query)
 }
@@ -37,16 +38,22 @@ class Query {
     path: '/foundationjs-socket',
   })
 
-  client : ApolloClient
+  client: ApolloClient<any>
 
   fetchPolicy = 'network-only'
 
-  configure = (params : QueryConfiguration = {}) => {
+  configure = (params: QueryConfiguration = {}) => {
     const { token, fetchPolicy = 'network-only', uri } = params
 
     this.fetchPolicy = fetchPolicy
 
-    const config = {}
+    const config: {
+      headers?: {
+        [key: string]: string
+      },
+      uri?: string
+    } = {}
+
     if (token) {
       config.headers = {
         authorization: `Bearer ${token}`,
@@ -60,14 +67,16 @@ class Query {
     this.client = new ApolloClient(config)
   }
 
-  query = (q : QueryDefinition) => this.client.query({
+  query = (q: QueryDefinition) => this.client.query({
     query: Graphql(`{ ${transformJSQ(q)} }`),
-    fetchPolicy: this.fetchPolicy,
-  }).then(({ data }) => data)
+    fetchPolicy: <FetchPolicy> this.fetchPolicy,
+  })
+    .then(({ data }) => data)
 
-  mutation = (q : QueryDefinition) => this.client.mutate({
+  mutation = (q: QueryDefinition) => this.client.mutate({
     mutation: Graphql(`mutation { ${transformJSQ(q)} }`),
-  }).then(({ data }) => data)
+  })
+    .then(({ data }) => data)
 
   subscribe = (event, callback) => Query.io.on(event, callback)
 
@@ -75,7 +84,7 @@ class Query {
 }
 
 const client = new Query()
-const { query } = client
+const { query }: any = client
 
 query.query = client.query
 query.mutate = client.mutation
@@ -90,25 +99,25 @@ export default query
  * @param {string} name - Name of the collection
  * @returns {string} - Formatted name
  */
-function eventName(name : string) {
+function eventName(name: string) {
   return `${name.replace(/[A-Z]/g, m => m.toLowerCase())}s`
 }
 
 
-/** *
+/**
  * Builders
  */
 
-/**
-* Class QueryBuilderInternal: Create isolated instances of QueryBuilder
-*/
+/*
+ * Class QueryBuilderInternal: Create isolated instances of QueryBuilder
+ */
 class QueryBuilderInternal extends Promise<any> {
-  config : {
-    filter: ?QueryArgs,
-    select: ?QuerySelect,
-    skip: ?number,
-    limit: ?number,
-    sort: ?string,
+  config: {
+    filter?: QueryArgs,
+    select?: PureQuerySelect,
+    skip?: number,
+    limit?: number,
+    sort?: EnumType,
   } = {
     filter: null,
     skip: null,
@@ -117,12 +126,13 @@ class QueryBuilderInternal extends Promise<any> {
     select: null,
   }
 
-  type : QueryType
+  type: QueryType
 
-  model : string
+  model: string
 
-  constructor(type: QueryType, model?: ?string) {
-    super(() => {})
+  constructor(type: QueryType, model?: string | null) {
+    super(() => {
+    })
 
     this.type = type
     if (model) {
@@ -149,7 +159,9 @@ class QueryBuilderInternal extends Promise<any> {
   where = (filter: QueryArgs) => {
     this.config.filter = filter
 
-    if (this.subscribed) this.subscription()
+    if (this.subscribed) {
+      this.subscription()
+    }
 
     return this
   }
@@ -157,15 +169,19 @@ class QueryBuilderInternal extends Promise<any> {
   skip = (skip: number) => {
     this.config.skip = skip
 
-    if (this.subscribed) this.subscription()
+    if (this.subscribed) {
+      this.subscription()
+    }
 
     return this
   }
 
-  limit = (limit: ?number = null) => {
+  limit = (limit: number = null) => {
     this.config.limit = limit
 
-    if (this.subscribed) this.subscription()
+    if (this.subscribed) {
+      this.subscription()
+    }
 
     return this
   }
@@ -178,7 +194,7 @@ class QueryBuilderInternal extends Promise<any> {
     return this
   }
 
-  select = (body: QuerySelect) => {
+  select = (body: PureQuerySelect) => {
     this.config.select = body
 
     if (this.subscribed) this.subscription()
@@ -188,7 +204,7 @@ class QueryBuilderInternal extends Promise<any> {
 
 
   /* Build query */
-  build = () : QueryDefinition => {
+  build = (): QueryDefinition => {
     // Check if the query is complete
     this.validate()
 
@@ -197,18 +213,25 @@ class QueryBuilderInternal extends Promise<any> {
     } = this.config
 
     // Create the request
-    const request = {
+    const request: QueryField = {
       COUNT: {
         args: { filter },
       },
       LIST: {
         args: {
-          filter, skip, sort, limit,
+          filter,
+          skip,
+          sort,
+          limit,
         },
         select,
       },
       GET: {
-        args: { filter, skip, sort },
+        args: {
+          filter,
+          skip,
+          sort,
+        },
         select,
       },
       SEARCH: {
@@ -234,7 +257,7 @@ class QueryBuilderInternal extends Promise<any> {
   }
 
   /* Chain query */
-  then = (callback: ?(QueryArgs => any) | (Array<QueryArgs> => any)) => {
+  then = (callback?: QueryCallback) => {
     const request = this.build()
     return query(request)
       .then(response => response[Object.keys(request)[0]])
@@ -248,11 +271,12 @@ class QueryBuilderInternal extends Promise<any> {
 
   subscriptionCallback = null
 
-  subscriptionModels : ?Array<string> = null
+  subscriptionModels?: Array<string> = null
 
-  subscription = async (force) => {
+  subscription = async (force?: boolean) => {
     const request = this.build()
-    const response = await query(request).then(res => res[Object.keys(request)[0]])
+    const response = await query(request)
+      .then(res => res[Object.keys(request)[0]])
 
     const stringifiedResponse = JSON.stringify(response)
     if ((force || stringifiedResponse !== this.lastResponse) && !!this.subscriptionCallback) {
@@ -262,7 +286,7 @@ class QueryBuilderInternal extends Promise<any> {
     this.lastResponse = stringifiedResponse
   }
 
-  subscribe = (callback: ?((QueryArgs => any) | (Array<QueryArgs> => any)), models: ?Array<string>) => {
+  subscribe = (callback?: QueryCallback, models?: Array<string>) => {
     if (callback) {
       this.subscriptionCallback = callback
     }
@@ -273,13 +297,16 @@ class QueryBuilderInternal extends Promise<any> {
 
     // Subscribe to updated list of additional models
     if (this.subscriptionModels) {
-      this.subscriptionModels.forEach((model) => {
-        query.subscribe(`${eventName(model)}-updated`, this.subscription)
-      })
+      this
+        .subscriptionModels
+        .forEach((model) => {
+          query.subscribe(`${eventName(model)}-updated`, this.subscription)
+        })
     }
 
     query.unsubscribe(`${eventName(this.model)}-updated`, this.subscription)
     query.subscribe(`${eventName(this.model)}-updated`, this.subscription)
+
     this.subscription(true)
 
     this.subscribed = true
@@ -287,7 +314,7 @@ class QueryBuilderInternal extends Promise<any> {
     return this
   }
 
-  listen = (...models : Array<string>) => {
+  listen = (...models: Array<string>) => {
     // Unsubscribe from all additional models
     if (this.subscriptionModels) {
       this.subscriptionModels.forEach((model) => {
@@ -323,9 +350,9 @@ export class QueryBuilder {
 
   static SORT_DESC = '_ID_DESC'
 
-  model : ?string
+  model?: string
 
-  constructor(model: ?string = null) {
+  constructor(model: string = null) {
     this.model = model
   }
 
@@ -342,16 +369,16 @@ export class QueryBuilder {
     return new QueryBuilderInternal('COUNT', model || this.model)
   }
 
-  search(model?: string): QueryBuilderInternal {
+  search(model ?: string): QueryBuilderInternal {
     return new QueryBuilderInternal('SEARCH', model || this.model)
   }
 }
 
 export class MutationBuilderInternal extends Promise<any> {
   config: {
-    record: ?QueryArgs,
-    select: ?QuerySelect,
-    _id: ?string,
+    record?: QueryArgs,
+    select?: PureQuerySelect,
+    _id?: string,
   } = {
     record: null,
     _id: null,
@@ -362,8 +389,9 @@ export class MutationBuilderInternal extends Promise<any> {
 
   model: string
 
-  constructor(type: MutationType, model?: ?string) {
-    super(() => {})
+  constructor(type: MutationType, model?: string) {
+    super(() => {
+    })
 
     this.type = type
     if (model) {
@@ -379,7 +407,11 @@ export class MutationBuilderInternal extends Promise<any> {
       throw new Error('Cannot create a mutation without a type of query. Use create(), update() or delete()')
     }
 
-    if (this.type === 'UPDATE' && !this.config._id && (!this.config.record || !this.config.record._id)) {
+    if (
+      this.type === 'UPDATE'
+      && !this.config._id
+      && (!this.config.record || (!(<QueryArgsMap> this.config.record)._id))
+    ) {
       throw new Error('Cannot update a document without an ID. Use withId()')
     }
 
@@ -407,14 +439,14 @@ export class MutationBuilderInternal extends Promise<any> {
   }
 
 
-  select = (body: QuerySelect) => {
+  select = (body: PureQuerySelect) => {
     this.config.select = body
 
     return this
   }
 
   /* Build mutation */
-  build = () : QueryDefinition => {
+  build = (): QueryDefinition => {
     this.validate()
 
     const { record, _id, select } = this.config
@@ -422,13 +454,18 @@ export class MutationBuilderInternal extends Promise<any> {
     const createName = Array.isArray(record) ? 'records' : 'record'
 
     // Create the request
-    const request = {
+    const request: QueryArgs = {
       CREATE: {
         args: { [createName]: record },
         select: select || { recordId: true },
       },
       UPDATE: {
-        args: { record: { ...record, _id: _id || (record ? record._id : '') } },
+        args: {
+          record: {
+            ...(record as QueryArgsMap),
+            _id: _id || (record ? (<QueryArgsMap>record)._id : ''),
+          },
+        },
         select: select || { recordId: true },
       },
       DELETE: {
@@ -453,7 +490,7 @@ export class MutationBuilderInternal extends Promise<any> {
   }
 
   /* Chain mutation */
-  then = (callback: ?((QueryArgs => any) | (Array<QueryArgs> => any))) => {
+  then = (callback?: QueryCallback) => {
     const request = this.build()
     return query.mutate(request)
       .then(response => response[Object.keys(request)[0]])
@@ -462,27 +499,27 @@ export class MutationBuilderInternal extends Promise<any> {
 }
 
 export class MutationBuilder {
-  model: ?string
+  model?: string
 
-  constructor(model: ?string = null) {
+  constructor(model: string = null) {
     this.model = model
   }
 
   /* Type of requests */
-  create = (model?: string) : MutationBuilderInternal => new MutationBuilderInternal('CREATE', model || this.model)
+  create = (model?: string): MutationBuilderInternal => new MutationBuilderInternal('CREATE', model || this.model)
 
-  update = (model?: string) : MutationBuilderInternal => new MutationBuilderInternal('UPDATE', model || this.model)
+  update = (model?: string): MutationBuilderInternal => new MutationBuilderInternal('UPDATE', model || this.model)
 
-  delete = (model?: string) : MutationBuilderInternal => new MutationBuilderInternal('DELETE', model || this.model)
+  delete = (model?: string): MutationBuilderInternal => new MutationBuilderInternal('DELETE', model || this.model)
 }
 
 
 export class Controller {
-  query : QueryBuilder
+  query: QueryBuilder
 
   mutate: MutationBuilder
 
-  constructor(model : string) {
+  constructor(model: string) {
     this.query = new QueryBuilder(model)
     this.mutate = new MutationBuilder(model)
   }

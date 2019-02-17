@@ -1,5 +1,3 @@
-// @flow
-
 import Inert from 'inert'
 import H2O2 from 'h2o2'
 import httpProxy from 'http-proxy'
@@ -9,8 +7,8 @@ import path from 'path'
 
 import Logger from '@foundationjs/logger'
 
-import type { ServerController } from '@foundationjs/flowtypes/server'
-import type { ControllerGatsbyConfiguration } from './types'
+import { ServerController } from '@foundationjs/typedefs/server'
+import { ControllerGatsbyConfiguration } from './types'
 
 const logger : Logger = new Logger('GatsbyController')
 
@@ -30,7 +28,7 @@ const GatsbyController = function (options : ControllerGatsbyConfiguration) : Se
       production ? 'static' : 'webpack'
     })`)
 
-    const handler = {}
+    const handler: any = {}
 
     if (!production) {
       // In development, we establish the proxy

@@ -33,28 +33,8 @@
   },
   "author": "Jérémie VAN DER SANDE <jeremie.vandersande@gmail.com>",
   "license": "ISC",
-  "dependencies": {
-    "@foundationjs/flowtypes": "^0.1.2",
-    "apollo-boost": "^0.1.16",
-    "graphql": "^14.0.2",
-    "graphql-tag": "^2.9.2",
-    "json-to-graphql-query": "^1.8.0",
-    "socket.io-client": "^2.1.1"
-  },
+  "gitHead": "a896e4656e71ab6dc197b1b0f88ac1635582a459",
   "devDependencies": {
-    "@babel/cli": "^7.1.2",
-    "@babel/core": "^7.1.2",
-    "@babel/plugin-proposal-class-properties": "^7.1.0",
-    "@babel/preset-env": "^7.1.0",
-    "@babel/runtime-corejs2": "^7.2.0",
-    "@dazzled/eslint-config-dazzled": "^1.0.0",
-    "babel-eslint": "^10.0.1",
-    "babel-plugin-add-module-exports": "^1.0.0",
-    "babel-plugin-transform-flow-strip-types": "^6.22.0",
-    "eslint": "^5.7.0",
-    "eslint-plugin-flowtype": "^3.0.0",
-    "eslint-plugin-import": "^2.14.0",
-    "flow-copy-source": "^2.0.2"
-  },
-  "gitHead": "a896e4656e71ab6dc197b1b0f88ac1635582a459"
+    "typescript": "^3.3.3"
+  }
 }

@@ -1,12 +1,11 @@
-// @flow
-
 import Cluster from 'cluster'
 
 import Mongoose from 'mongoose'
 import Mexp from 'mongoose-elasticsearch-xp'
 import { schemaComposer } from 'graphql-compose'
 import Logger from '@foundationjs/logger'
-import type { Model, PersistenceConfiguration } from '@foundationjs/flowtypes/persistence'
+// @ts-ignore
+import { Model, ModelElasticsearchField, PersistenceConfiguration } from '@foundationjs/typedefs/persistence'
 
 import createComposer, { getComposerName } from './composer'
 
@@ -52,7 +51,11 @@ function scopeComposers(composers, context) {
     }
 
     queryResolvers.forEach((rs) => {
-      scopedComposers[key][rs] = (filter, { skip, sort, limit } = {}) => composer[rs].resolve({
+      scopedComposers[key][rs] = (filter, {
+        skip = undefined,
+        sort = undefined,
+        limit = undefined,
+      } = {}) => composer[rs].resolve({
         args: {
           filter,
           skip,
@@ -61,7 +64,11 @@ function scopeComposers(composers, context) {
         },
         context,
       })
-      scopedComposers[key][rs].unscoped = (filter, { skip, sort, limit } = {}) => composer[rs].unscoped.resolve({
+      scopedComposers[key][rs].unscoped = (filter, {
+        skip = undefined,
+        sort = undefined,
+        limit = undefined,
+      } = {}) => composer[rs].unscoped.resolve({
         args: {
           filter,
           skip,
@@ -144,7 +151,7 @@ export default class Persistence {
 
   schema : Object
 
-  io : Object
+  io : any
 
   typeComposers : Object
 
@@ -156,7 +163,7 @@ export default class Persistence {
    * Constructor
    * @param {PersistenceConfiguration} config - Optional config object
    */
-  constructor(config: ?PersistenceConfiguration) {
+  constructor(config?: PersistenceConfiguration) {
     if (config) {
       this.init(config)
     }
@@ -164,22 +171,19 @@ export default class Persistence {
 
   /**
    * Function configuring the Persistence instance
-   * @param {models} models - List of models to store
-   * @param {query} query - Optional object to configure additional queries
-   * @param {mutation} mutation - Optional object to configure additional mutations
-   * @param {log} log - Optional object to configure the logger
-   * @param {endpoint} endpoint - Optional object to configure the endpoint for Mongo
-   * @param {object} elasticsearch - Optional object to configure ElasticSearch bridge
+   * @param {PersistenceConfiguration} config - Configuration
    * @returns {boolean} - Successful initialization
    */
-  async init({
-    models: modelsConfig,
-    query,
-    mutation,
-    log,
-    endpoint,
-    elasticsearch,
-  } : PersistenceConfiguration) {
+  async init(config : PersistenceConfiguration) {
+    const {
+      models: modelsConfig,
+      query,
+      mutation,
+      log,
+      endpoint,
+      elasticsearch,
+    } = config
+
     // Prepare the logger
     const logConfig = log || {}
 
@@ -254,7 +258,7 @@ export default class Persistence {
         // Get the list of path to populate
         const paths = []
         if (model.elasticsearch.fields) {
-          Object.values(model.elasticsearch.fields).forEach((field) => {
+          Object.values(model.elasticsearch.fields).forEach((field: ModelElasticsearchField) => {
             if (field.es_populate) {
               paths.push(...Object.entries(field.es_populate).filter(p => p[1]).map(([path]) => path))
             }
@@ -273,7 +277,7 @@ export default class Persistence {
           next()
         })
 
-        const mexpParams = { hydrate: true }
+        const mexpParams: any = { hydrate: true }
 
         if (elasticsearch) {
           if (elasticsearch.host) {
@@ -435,7 +439,7 @@ export default class Persistence {
     })
   }
 
-  configureIO = ({ io } : { io: Object }) => {
+  configureIO = ({ io } : { io: any }) => {
     const { logger } = this
 
     logger.info('New Socket.IO service available. Connecting...')

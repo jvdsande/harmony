@@ -1,5 +1,3 @@
-// @flow
-
 import Inert from 'inert'
 import H2O2 from 'h2o2'
 import Vision from 'vision'
@@ -8,7 +6,7 @@ import HapiReactViews from 'hapi-react-views'
 
 import Logger from '@foundationjs/logger'
 
-import type { ServerController, ControllerSPAConfiguration } from '@foundationjs/flowtypes/server'
+import { ServerController, ControllerSPAConfiguration } from '@foundationjs/typedefs/server'
 
 const logger : Logger = new Logger('SPAController')
 

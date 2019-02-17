@@ -17,12 +17,12 @@ import JWT from 'jsonwebtoken'
 // Require Logger for logs
 import Logger from '@foundationjs/logger'
 
-import type {
-  ServerConfiguration, GraphqlConfig,
-} from '@foundationjs/flowtypes/server'
-import type {
+import {
+  ServerConfiguration, GraphqlConfig, Address,
+} from '@foundationjs/typedefs/server'
+import {
   LogConfig,
-} from '@foundationjs/flowtypes/logger'
+} from '@foundationjs/typedefs/logger'
 
 // Require controllers
 import ControllerAuth from './controllers/auth'
@@ -35,23 +35,23 @@ import PluginSPA from './plugins/spa'
 
 export const ControllerSPA = PluginSPA
 
-/**
+/*
  * Class Server : initialize a Server instance for a Foundation App
  */
 export default class Server {
-  logger : Logger
+  logger: Logger
 
-  server : Object
+  server: any
 
-  port : ?number
+  port?: number
 
-  usingGraphQL : boolean = false
+  usingGraphQL: boolean = false
 
   /**
    * Constructor function
    * @param {object} config - Configuration options (optional)
    */
-  constructor(config : ?ServerConfiguration) {
+  constructor(config?: ServerConfiguration) {
     if (config) {
       this.init(config)
     }
@@ -61,7 +61,7 @@ export default class Server {
    * Init function
    * @param {object} config - Configuration options
    */
-  init = async (config : ServerConfiguration) => {
+  init = async (config: ServerConfiguration) => {
     const {
       cluster,
       graphql,
@@ -140,11 +140,12 @@ export default class Server {
     graphql,
     persistence,
     endpoint,
-  } : ServerConfiguration) => {
+  }: ServerConfiguration) => {
     this.logBanner()
 
-    const address = endpoint || addresses.endpoint
-      || {}
+    const address: Address = endpoint || addresses.endpoint || {
+      host: 'localhost',
+    }
 
     if (!endpoint && addresses.endpoint) {
       this.logger.warn('\'addresses.endpoint\' has been deprecated. Please use \'endpoint\' directly.')
@@ -180,7 +181,7 @@ export default class Server {
     graphql,
     log,
     controllers,
-  } : ServerConfiguration) => {
+  }: ServerConfiguration) => {
     const logConfig = log || {}
     const { logger } = this
 
@@ -200,8 +201,9 @@ export default class Server {
       this.usingGraphQL = (!!graphql) && (!!graphql.schema || (!!persistence && !!persistence.schema))
     }
 
-    const address = endpoint || addresses.endpoint
-      || {}
+    const address: Address = endpoint || addresses.endpoint || {
+      host: 'localhost',
+    }
 
     if (!endpoint && addresses.endpoint) {
       this.logger.warn('\'addresses.endpoint\' has been deprecated. Please use \'endpoint\' directly.')
@@ -227,8 +229,7 @@ export default class Server {
 
     // Call all controllers
 
-    const registeredPlugins = [
-    ]
+    const registeredPlugins = []
 
     // Add Authentication
     logger.info('Initializing Authentications service...')

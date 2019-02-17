@@ -1,12 +1,10 @@
-// @flow
-
 import Inert from 'inert'
 import Vision from 'vision'
 import HapiReactViews from 'hapi-react-views'
-import type { WebConfig } from '@foundationjs/flowtypes/server'
+import { WebConfig } from '@foundationjs/typedefs/server'
 
 export default async function (
-  server: Object,
+  server: any,
   {
     views,
     static: staticConfig,

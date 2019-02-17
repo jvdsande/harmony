@@ -1,9 +1,7 @@
-// @flow
-
 import H2O2 from 'h2o2'
-import type { HMRAddress } from '@foundationjs/flowtypes/server'
+import { HMRAddress } from '@foundationjs/typedefs/server'
 
-export default async function (server: Object, { host, port, path }: HMRAddress) {
+export default async function (server: any, { host, port, path }: HMRAddress) {
   await server.register(H2O2)
 
   server.route({

@@ -9,7 +9,9 @@
   ],
   "rules": {
     "react/no-unescaped-entities": "off",
-    "no-unused-vars": "off"
+    "no-unused-vars": "off",
+    "compat/compat": "off",
+    "camelcase": "warn"
   },
   "plugins": [ "typescript", "import" ],
   "settings": {

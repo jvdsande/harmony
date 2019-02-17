@@ -1,7 +1,5 @@
-// @flow
-
 import { composeWithMongoose } from 'graphql-compose-mongoose/node8'
-import type { MakeComposerArguments, Model } from '@foundationjs/flowtypes/persistence'
+import { MakeComposerArguments, Model } from '@foundationjs/typedefs/persistence'
 
 export function capitalize(name : string) : string {
   if (!name) {
@@ -126,8 +124,11 @@ const makeComposers = ({
     })
 
   const resolvers : {
-    ['Query'|'Mutation']: {
-      [string]: Array<string>
+    Query?: {
+      [key: string]: Array<string>
+    },
+    Mutation?: {
+      [key: string]: Array<string>
     }
   } = {
     Query: {

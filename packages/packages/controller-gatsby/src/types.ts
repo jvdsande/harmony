@@ -1,5 +1,3 @@
-// @flow
-
 export type ControllerGatsbyConfiguration = {
   path: string,
   dir: string,
@@ -8,7 +6,9 @@ export type ControllerGatsbyConfiguration = {
     endpoint: string,
     port: string | number,
   },
-  dynamicRoutes: ?{
-    [string]: string
+  dynamicRoutes?: {
+    [key: string]: string
   }
 }
+
+export const other = null
