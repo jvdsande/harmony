@@ -1,0 +1,31 @@
+{
+  "name": "@foundationjs/persistence",
+  "version": "0.1.7",
+  "publishConfig": {
+    "access": "public"
+  },
+  "@pika/pack": {
+    "pipeline": [
+      [
+        "@pika/plugin-ts-standard-pkg"
+      ],
+      [
+        "@pika/plugin-build-node"
+      ]
+    ]
+  },
+  "description": "Persistence handling for the Foundation Framework",
+  "main": "dist/index.js",
+  "scripts": {
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jvdsande/foundationjs.git"
+  },
+  "author": "Jérémie VAN DER SANDE <jeremie.vandersande@gmail.com>",
+  "license": "ISC",
+  "gitHead": "a896e4656e71ab6dc197b1b0f88ac1635582a459",
+  "devDependencies": {
+    "typescript": "^3.3.3"
+  }
+}

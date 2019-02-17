@@ -2,11 +2,8 @@
 
 import path from 'path'
 
-import Server from '@foundationjs/server'
+import Server, { ControllerSPA } from '@foundationjs/server'
 import Persistence from '@foundationjs/persistence'
-
-import ControllerGatsby from '@foundationjs/controller-gatsby'
-import ControllerSPA from '@foundationjs/server/dist/plugins/spa'
 
 import models from './persistence/models'
 
@@ -20,30 +17,13 @@ persistence.connect({
 })
 
 server.init({
-  addresses: {
-    endpoint: {
-      host: '127.0.0.1',
-      port: 8082,
-    },
-
-    webpack: {
-      host: '127.0.0.1',
-      port: 8090,
-      path: '/webpack',
-    },
+  endpoint: {
+    host: '127.0.0.1',
+    port: 8082,
   },
 
   authentication: {
     secret: 'secret-key',
-  },
-
-  web: {
-    views: {
-      dir: path.resolve(__dirname, './views'),
-      paths: {
-        '/gatsby/todo/{path*}': 'index.jsx',
-      },
-    },
   },
 
   persistence,
@@ -63,21 +43,6 @@ server.init({
   },
 
   controllers: [
-    new ControllerGatsby({
-      path: '/gatsby',
-      forceStatic: true,
-
-      dir: path.resolve(__dirname, './gatsby/public'),
-      dynamicRoutes: {
-        '/dynamic/{path*}': 'dynamic',
-      },
-
-      hmr: {
-        endpoint: 'localhost',
-        port: 7777,
-      },
-    }),
-
     new ControllerSPA({
       path: '/',
       forceStatic: false,

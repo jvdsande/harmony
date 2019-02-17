@@ -2,7 +2,7 @@
 
 import React from 'react'
 import ReactDOM from 'react-dom'
-import { hot } from 'react-hot-loader'
+// import { hot } from 'react-hot-loader'
 
 import { store, collect } from 'react-recollect'
 
@@ -253,7 +253,7 @@ class _App extends React.Component<void> {
 const App = collect(_App)
 
 
-const HotReloadApp = hot(module)(App)
+const HotReloadApp = App // hot(module)(App)
 
 const MainApp = () => {
   const element = document.getElementById('root')

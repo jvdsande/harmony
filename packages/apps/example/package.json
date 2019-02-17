@@ -24,6 +24,7 @@
     "@babel/runtime": "^7.1.2",
     "@babel/runtime-corejs2": "^7.1.2",
     "babel-loader": "^8.0.4",
+    "babel-plugin-react-hot-loader": "^3.0.0-beta.6",
     "css-loader": "^1.0.1",
     "file-loader": "^2.0.0",
     "node-sass": "^4.10.0",
@@ -39,10 +40,6 @@
   "dependencies": {
     "@babel/polyfill": "^7.0.0",
     "@babel/register": "^7.0.0",
-    "@foundationjs/controller-gatsby": "^0.1.3",
-    "@foundationjs/persistence": "^0.1.7",
-    "@foundationjs/query": "^0.1.3",
-    "@foundationjs/server": "^0.1.6",
     "lodash": "^4.17.11",
     "mobx": "^5.5.2",
     "mobx-react": "^5.3.6",

@@ -144,13 +144,16 @@ module.exports = (e) => {
       use: [
         {
           loader: 'babel-loader',
+
           options: {
             plugins: [
               [
                 'react-hot-loader/babel',
               ],
             ],
+            exclude: /node_modules/,
           },
+
         }],
     })
   }

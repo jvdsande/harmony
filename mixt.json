@@ -1,6 +1,9 @@
 {
   "packages": "packages",
   "sources": [
-    "packages"
+    "types",
+    "utils",
+    "core",
+    "plugins"
   ]
 }
