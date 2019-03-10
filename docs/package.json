@@ -31,7 +31,7 @@
   "scripts": {
     "build": "gatsby build",
     "develop": "gatsby develop",
-    "surge": "surge public/ harmonyjs.surge.sh",
+    "surge": "surge public/ harmony.surge.sh",
     "deploy": "npm run build && npm run surge",
     "format": "prettier --write '**/*.js'",
     "test": "echo \"Error: no test specified\" && exit 1"
