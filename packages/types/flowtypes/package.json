@@ -1,10 +1,10 @@
 {
-  "name": "@foundationjs/flowtypes",
-  "version": "0.2.0",
+  "name": "@harmonyjs/flowtypes",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
   },
-  "description": "Flow definitions for the Dazzled Framework",
+  "description": "Flow definitions for Harmony",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

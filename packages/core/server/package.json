@@ -1,25 +1,28 @@
 {
-  "name": "@foundationjs/server",
-  "version": "0.2.1",
+  "name": "@harmonyjs/server",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
   },
   "@pika/pack": {
     "pipeline": [
       [
-        "@pika/plugin-ts-standard-pkg"
+        "@pika/plugin-standard-pkg"
       ],
       [
         "@pika/plugin-build-node"
+      ],
+      [
+        "@pika/plugin-build-types"
       ]
     ]
   },
-  "description": "Default Server for the Foundation Framework",
+  "description": "Default Server for Harmony",
   "main": "dist/index.js",
   "scripts": {},
   "repository": {
     "type": "git",
-    "url": "https://github.com/jvdsande/foundationjs.git"
+    "url": "https://github.com/jvdsande/harmonyjs.git"
   },
   "author": "Jérémie VAN DER SANDE <jeremie.vandersande@gmail.com>",
   "license": "ISC",

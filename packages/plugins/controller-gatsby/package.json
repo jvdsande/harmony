@@ -1,6 +1,6 @@
 {
-  "name": "@foundationjs/controller-gatsby",
-  "version": "0.2.1",
+  "name": "@harmonyjs/controller-gatsby",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
   },
@@ -17,7 +17,7 @@
       ]
     ]
   },
-  "description": "Gatsby controller for the Dazzled framework",
+  "description": "Gatsby controller for Harmony",
   "main": "dist/index.js",
   "scripts": {},
   "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",

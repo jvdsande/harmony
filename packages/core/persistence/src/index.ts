@@ -3,8 +3,8 @@ import Cluster from 'cluster'
 import Mongoose from 'mongoose'
 import Mexp from 'mongoose-elasticsearch-xp'
 import { schemaComposer } from 'graphql-compose'
-import Logger from '@foundationjs/logger'
-import { Model, ModelElasticsearchField, PersistenceConfiguration } from '@foundationjs/typedefs/persistence'
+import Logger from '@harmonyjs/logger'
+import { Model, ModelElasticsearchField, PersistenceConfiguration } from '@harmonyjs/typedefs/persistence'
 
 // Import elasticsearch so that Mixt knows to bundle it
 import 'elasticsearch'
@@ -146,7 +146,7 @@ export const Types = {
 }
 
 /**
- * Class Persistence: initialize a Persistence configuration for a Foundation App.
+ * Class Persistence: initialize a Persistence configuration for a Harmony App.
  */
 export default class Persistence {
   logger : Logger

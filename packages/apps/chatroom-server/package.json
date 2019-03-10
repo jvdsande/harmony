@@ -1,6 +1,6 @@
 {
   "name": "chatroom-server",
-  "version": "0.1.10",
+  "version": "0.1.0",
   "private": true,
   "description": "",
   "main": "index.js",

@@ -1,10 +1,10 @@
 {
-  "name": "@foundationjs/typedefs",
-  "version": "0.2.0",
+  "name": "@harmonyjs/typedefs",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
   },
-  "description": "Typescript definitions for Foundation Framework",
+  "description": "Typescript definitions for Harmony",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

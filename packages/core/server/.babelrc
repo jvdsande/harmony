@@ -1,14 +1,5 @@
 {
-  "presets": [
-    [
-      "@babel/env",
-      {
-        "targets": "> 0.25%, not dead"
-      }
-    ]
-  ],
   "plugins": [
-    "transform-flow-strip-types",
     "@babel/plugin-proposal-class-properties"
   ]
 }

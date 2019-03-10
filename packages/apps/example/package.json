@@ -1,8 +1,8 @@
 {
   "private": true,
-  "name": "@foundationjs/example",
-  "version": "0.1.10",
-  "description": "Example app using the Foundation Framework",
+  "name": "@harmonyjs/example",
+  "version": "0.1.0",
+  "description": "Example Harmony app",
   "main": "index.js",
   "scripts": {
     "build": "webpack --mode production --env.production",

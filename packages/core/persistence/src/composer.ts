@@ -1,5 +1,5 @@
 import { composeWithMongoose } from 'graphql-compose-mongoose/node8'
-import { MakeComposerArguments, Model } from '@foundationjs/typedefs/persistence'
+import { MakeComposerArguments, Model } from '@harmonyjs/typedefs/persistence'
 
 export function capitalize(name : string) : string {
   if (!name) {

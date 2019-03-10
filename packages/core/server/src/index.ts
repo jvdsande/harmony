@@ -15,14 +15,14 @@ import Sticky from 'socketio-sticky-session'
 import JWT from 'jsonwebtoken'
 
 // Require Logger for logs
-import Logger from '@foundationjs/logger'
+import Logger from '@harmonyjs/logger'
 
 import {
   ServerConfiguration, GraphqlConfig, Address,
-} from '@foundationjs/typedefs/server'
+} from '@harmonyjs/typedefs/server'
 import {
   LogConfig,
-} from '@foundationjs/typedefs/logger'
+} from '@harmonyjs/typedefs/logger'
 
 // Require controllers
 import ControllerAuth from './controllers/auth'
@@ -36,7 +36,7 @@ import PluginSPA from './plugins/spa'
 export const ControllerSPA = PluginSPA
 
 /*
- * Class Server : initialize a Server instance for a Foundation App
+ * Class Server : initialize a Server instance for a Harmony App
  */
 export default class Server {
   logger: Logger
@@ -125,13 +125,15 @@ export default class Server {
   logBanner = () => {
     const { logger } = this
 
-    logger.info(`Powered by 
-  ______                    _       _   _                    _  _____ 
- |  ____|                  | |     | | (_)                  | |/ ____|
- | |__ ___  _   _ _ __   __| | __ _| |_ _  ___  _ __        | | (___  
- |  __/ _ \\| | | | '_ \\ / _\` |/ _\` | __| |/ _ \\| '_ \\   _   | |\\___ \\ 
- | | | (_) | |_| | | | | (_| | (_| | |_| | (_) | | | | | |__| |____) |
- |_|  \\___/ \\__,_|_| |_|\\__,_|\\__,_|\\__|_|\\___/|_| |_|  \\____/|_____/`)
+    logger.info(`Powered by
+  _    _                                        
+ | |  | |                                       
+ | |__| | __ _ _ __ _ __ ___   ___  _ __  _   _ 
+ |  __  |/ _\` | '__| '_ \` _ \\ / _ \\| '_ \\| | | |
+ | |  | | (_| | |  | | | | | | (_) | | | | |_| |
+ |_|  |_|\\__,_|_|  |_| |_| |_|\\___/|_| |_|\\__, |
+                                           __/ |
+                                          |___/`)
   }
 
   master = async ({
@@ -161,7 +163,7 @@ export default class Server {
 
     // Create Socket.IO instance
     const io = IO(server.listener, {
-      path: '/foundationjs-socket',
+      path: '/harmonyjs-socket',
     })
     if (cluster && cluster.redis) {
       io.adapter(IORedis(cluster.redis))
@@ -221,7 +223,7 @@ export default class Server {
 
     // Create Socket.IO instance
     const io = IO(server.listener, {
-      path: '/foundationjs-socket',
+      path: '/harmonyjs-socket',
     })
     if (cluster && cluster.redis) {
       io.adapter(IORedis(cluster.redis))
@@ -350,7 +352,7 @@ export default class Server {
 
       await Promise.all(controllers.map((c, i) => {
         const plugin = {
-          name: `foundationjs-${i}`,
+          name: `harmonyjs-${i}`,
           register: c.initialize,
         }
 

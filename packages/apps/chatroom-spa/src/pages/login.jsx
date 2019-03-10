@@ -1,5 +1,5 @@
 import React from 'react'
-import Query from '@foundationjs/query'
+import Query from '@harmonyjs/query'
 import { navigate } from '@reach/router'
 
 export default class Login extends React.Component {

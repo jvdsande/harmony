@@ -4,7 +4,7 @@ import * as Winston from 'winston'
 import moment from 'moment'
 import colors from 'colors/safe'
 
-import { LoggerClass, LogConfig, LogLevel } from '@foundationjs/typedefs/logger'
+import { LoggerClass, LogConfig, LogLevel } from '@harmonyjs/typedefs/logger'
 
 export default class Logger implements LoggerClass {
   logger: any
@@ -85,7 +85,7 @@ export default class Logger implements LoggerClass {
         silent: disabled,
         level: level || 'info',
         transports: [new Winston.transports.File({
-          filename: filename ? (suffix + filename) : `${suffix}foundation-framework.log`,
+          filename: filename ? (suffix + filename) : `${suffix}harmony.log`,
         })],
         format: Winston.format.combine(
           Winston.format.timestamp(),

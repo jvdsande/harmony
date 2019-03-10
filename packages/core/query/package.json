@@ -1,6 +1,6 @@
 {
-  "name": "@foundationjs/query",
-  "version": "0.2.0",
+  "name": "@harmonyjs/query",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
   },
@@ -17,12 +17,12 @@
       ]
     ]
   },
-  "description": "Client-side request handler for the Foundation Framework",
+  "description": "Client-side request handler for Harmony",
   "main": "dist/index.js",
   "scripts": {},
   "repository": {
     "type": "git",
-    "url": "https://github.com/jvdsande/foundationjs.git"
+    "url": "https://github.com/jvdsande/harmonyjs.git"
   },
   "author": "Jérémie VAN DER SANDE <jeremie.vandersande@gmail.com>",
   "license": "ISC",

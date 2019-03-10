@@ -31,7 +31,7 @@ class Index extends React.Component {
   render() {
     return (
       <Layout>
-        <Helmet title="Foundation Framework" />
+        <Helmet title="Harmony" />
 
         <Header />
 
@@ -49,7 +49,7 @@ class Index extends React.Component {
                 <header className="major">
                   <h2>Introduction</h2>
                   <p>
-                    Foundation Framework aims to be a full-featured, easy to use and fully upgradable framework
+                    Harmony aims to be a full-featured, easy to use and fully upgradable framework
                     for building fast and reactive web applications.
                   </p>
                 </header>
@@ -69,7 +69,7 @@ class Index extends React.Component {
                   <br />
                   <b>Step 1: Creating the server</b>
                   <br />
-                      In this step we will show how Foundation Framework allows us to rapidly setup a production-ready
+                      In this step we will show how Harmony allows us to rapidly setup a production-ready
                       web server, helps us define models for our persistent data, and exposes a ready to use API over a
                       GraphQL endpoint.
 
@@ -79,14 +79,14 @@ class Index extends React.Component {
                   <b>Step 2: Adding the frontend</b>
                   <br />
                       Once our backend is ready, we will develop a Single-Page Frontend Application using Webpack and
-                      React, and connect it to our backend using the Frontend tools provided by Foundation.
+                      React, and connect it to our backend using the Frontend tools provided by Harmony.
 
                   <br />
                   <br />
 
                   <b>Step 3: Supercharging the frontend using GatsbyJS</b>
                   <br />
-                      Finally, we will take advantage of Foundation modular backend to convert our Frontend to a
+                      Finally, we will take advantage of Harmony's modular backend to convert our Frontend to a
                       Gatsby static site, merging the best of the static and dynamic worlds.
                 </p>
               </div>
@@ -98,7 +98,7 @@ class Index extends React.Component {
               <h2>Step 1: Creating a server</h2>
               <p>
                 The first step of creating a custom web application is to deploy the underlying server app.
-                Without further ado, here is how to do it using Foundation Framework.
+                Without further ado, here is how to do it using Harmony.
               </p>
             </header>
 
@@ -109,7 +109,7 @@ class Index extends React.Component {
                 First, we will create the NPM package that will be holding our server code.
                 Let's call it <b>chatroom-server</b>.
                 <br />
-                Once created, we will simply add the <b>server</b> package of Foundation Framework.
+                Once created, we will simply add the <b>server</b> package of Harmony.
               </p>
               <pre>
                 <code>
@@ -119,7 +119,7 @@ class Index extends React.Component {
                   <br />
                   $ npm init
                   <br />
-                  $ npm install --save @foundationjs/server
+                  $ npm install --save @harmonyjs/server
                 </code>
               </pre>
 
@@ -145,17 +145,17 @@ class Index extends React.Component {
               <h2>1.2 - Create an empty server</h2>
               <p>
                 Next, let's create the entry point of our app: <b>index.js</b>!
-                Here is what it looks like for a minimal setup of Foundation Server:
+                Here is what it looks like for a minimal setup of Harmony Server:
               </p>
 
               <Highlight className="javascript">
                 {
-                  `import Server from '@foundationjs/server'
+                  `import Server from '@harmonyjs/server'
 
 const server = new Server()
 
 server.init({
-  // This is the configuration object of Foundation Server
+  // This is the configuration object of Harmony Server
 
   // Setup the main endpoint on which our application will be served
   endpoint: {
@@ -174,24 +174,26 @@ server.init({
               </Highlight>
 
               <p>
-                This simple code creates a new Foundation Server instance, and initializes it with the given parameters.
+                This simple code creates a new Harmony Server instance, and initializes it with the given parameters.
                 For now, we simply set the endpoint on which our application needs to be served, and we enable logging
                 to be able to track what happens more easily.
               </p>
               <p>
                 Running our code using <code>node -r esm index.js</code>, we get the following output, showing that
-                Foundation has correctly initialized our server:
+                Harmony has correctly initialized our server:
               </p>
 
               <pre>
                 <code>
                   {`19/01/16 16:22:16.650 Server            [INFO   ] Powered by
- ______                    _       _   _                    _  _____
-|  ____|                  | |     | | (_)                  | |/ ____|
-| |__ ___  _   _ _ __   __| | __ _| |_ _  ___  _ __        | | (___
-|  __/ _ \\| | | | '_ \\ / _\` |/ _\` | __| |/ _ \\| '_ \\   _   | |\\___ \\
-| | | (_) | |_| | | | | (_| | (_| | |_| | (_) | | | | | |__| |____) |
-|_|  \\___/ \\__,_|_| |_|\\__,_|\\__,_|\\__|_|\\___/|_| |_|  \\____/|_____/
+  _    _
+ | |  | |
+ | |__| | __ _ _ __ _ __ ___   ___  _ __  _   _
+ |  __  |/ _\` | '__| '_ \` _ \\ / _ \\| '_ \\| | | |
+ | |  | | (_| | |  | | | | | | (_) | | | | |_| |
+ |_|  |_|\\__,_|_|  |_| |_| |_|\\___/|_| |_|\\__, |
+                                           __/ |
+                                          |___/
 19/01/16 16:22:16.678 Server            [INFO   ] Initializing Authentications service...
 19/01/16 16:22:16.681 Server            [INFO   ] Authentication service initialized successfully
 19/01/16 16:22:16.686 Server            [INFO   ] All initialization successful
@@ -210,7 +212,7 @@ server.init({
               <h2>1.3 - Adding data persistence</h2>
 
               <p>
-                An application is no use if it cannot store and provide data. In order to do that, Foundation Framework
+                An application is no use if it cannot store and provide data. In order to do that, Harmony
                 provides a simple way of adding a persistence layer: the <b>persistence</b> module!
               </p>
               <p>
@@ -220,7 +222,7 @@ server.init({
               </p>
               <pre>
                 <code>
-                  $ npm install --save @foundationjs/persistence
+                  $ npm install --save @harmonyjs/persistence
                 </code>
               </pre>
               <p>
@@ -230,8 +232,8 @@ server.init({
 
               <Highlight className="javascript">
                 {
-                  `import Server from '@foundationjs/server'
-import Persistence from '@foundationjs/persistence'
+                  `import Server from '@harmonyjs/server'
+import Persistence from '@harmonyjs/persistence'
 
 const persistence = new Persistence()
 
@@ -273,12 +275,14 @@ server.init({
 19/01/16 16:48:27.137 Persistence       [ERROR  ] Cannot initialize Persistence without any model!
 19/01/16 16:48:27.141 Persistence       [INFO   ] Connecting to Mongo at mongodb://127.0.0.1/chatroom.
 19/01/16 16:48:27.174 Server            [INFO   ] Powered by
-  ______                    _       _   _                    _  _____
- |  ____|                  | |     | | (_)                  | |/ ____|
- | |__ ___  _   _ _ __   __| | __ _| |_ _  ___  _ __        | | (___
- |  __/ _ \\| | | | '_ \\ / _\` |/ _\` | __| |/ _ \\| '_ \\   _   | |\\___ \\
- | | | (_) | |_| | | | | (_| | (_| | |_| | (_) | | | | | |__| |____) |
- |_|  \\___/ \\__,_|_| |_|\\__,_|\\__,_|\\__|_|\\___/|_| |_|  \\____/|_____/
+  _    _
+ | |  | |
+ | |__| | __ _ _ __ _ __ ___   ___  _ __  _   _
+ |  __  |/ _\` | '__| '_ \` _ \\ / _ \\| '_ \\| | | |
+ | |  | | (_| | |  | | | | | | (_) | | | | |_| |
+ |_|  |_|\\__,_|_|  |_| |_| |_|\\___/|_| |_|\\__, |
+                                           __/ |
+                                          |___/
 19/01/16 16:48:27.223 Server            [INFO   ] Initializing Authentications service...
 19/01/16 16:48:27.228 Server            [INFO   ] Authentication service initialized successfully
 19/01/16 16:48:27.229 Server            [INFO   ] Persistence found! Adding Socket.IO layer...
@@ -377,7 +381,7 @@ export default {
 
               <Highlight className="javascript">
                 {
-                  `import { Types } from '@foundationjs/persistence'
+                  `import { Types } from '@harmonyjs/persistence'
 
 export default {
   username: {
@@ -398,7 +402,7 @@ export default {
 
               <Highlight className="javascript">
                 {
-                  `import { Types } from '@foundationjs/persistence'
+                  `import { Types } from '@harmonyjs/persistence'
 
 export default {
   usernames: [Types.String],
@@ -418,7 +422,7 @@ export default {
 
               <Highlight className="javascript">
                 {
-                  `import { Types } from '@foundationjs/persistence'
+                  `import { Types } from '@harmonyjs/persistence'
 import Users from '../users'
 
 export default {
@@ -438,7 +442,7 @@ export default {
                 ref.
                 That is because we might need to display information about a message's author, but we only care
                 about the ID of the room, not its information, to retrieve a message. Using a ref field allows
-                Foundation to retrieve the complete document upon request.
+                Harmony to retrieve the complete document upon request.
               </p>
 
               <p>
@@ -447,8 +451,8 @@ export default {
 
               <Highlight className="javascript">
                 {
-                  `import Server from '@foundationjs/server'
-import Persistence from '@foundationjs/persistence'
+                  `import Server from '@harmonyjs/server'
+import Persistence from '@harmonyjs/persistence'
 import models from './models'
 
 ...
@@ -496,7 +500,7 @@ persistence.init({
                 data.
               </p>
               <p>
-                Foundation Framework provides a way to expose a <b>GraphQL</b> endpoint,
+                Harmony provides a way to expose a <b>GraphQL</b> endpoint,
                 simply by adding the <b>graphql</b> configuration field to our server initialization:
               </p>
 
@@ -602,7 +606,7 @@ server.init({
                 adding custom fields to our GraphQL schema. Using it, we can choose to extend our models by adding new,
                 virtual fields that we will be able to read just like any other field. We can also extend the root Query
                 and Mutation objects of our GraphQL schema, either by adding custom queries and mutations, or by
-                overriding the ones generated by Foundation.
+                overriding the ones generated by Harmony.
               </p>
 
               <p>
@@ -693,7 +697,7 @@ export default {
               <p>
                 The query here is straightforward: we use the <b>User composer</b> to get access to
                 our <b>users</b> model. We first try to get our user, then we create it if it does not exist yet.
-                We then use the <b>authentication</b> object provided in the resolver context by Foundation to create
+                We then use the <b>authentication</b> object provided in the resolver context by Harmony to create
                 a new authentication token, which we send back to the client as a response.
               </p>
 
@@ -780,7 +784,7 @@ export default {
                 We also slightly modified the exported function by adding a <b>typeComposers</b> argument, which allows
                 us to get type information about our composers. Using this type information, we are able to simply
                 extends the update method to create our new one, this way we keep the arguments and return type
-                definition generated by Foundation.
+                definition generated by Harmony.
               </p>
 
               <h3>Automatically adding timestamps</h3>
@@ -922,7 +926,7 @@ export default {
               </p>
 
               <Highlight className="javascript">
-                import Server, {'{ ControllerSPA }'} from '@foundationjs/server'
+                import Server, {'{ ControllerSPA }'} from '@harmonyjs/server'
               </Highlight>
 
               <p>
@@ -969,13 +973,13 @@ export default {
               <p>
                 Now is the time to add the dependencies our application will be needing. Since we are building a really
                 simple app, we will only be needing two dependencies: <b>@reach/router</b> for handling our client-side
-                routes, and <b>@foundationjs/query</b> for handling queries from the client to our Foundation
+                routes, and <b>@harmonyjs/query</b> for handling queries from the client to our Harmony
                 server. Go ahead and install them:
               </p>
 
               <pre>
                 <code>
-                  npm install --save @reach/router @foundationjs/query
+                  npm install --save @reach/router @harmonyjs/query
                 </code>
               </pre>
 
@@ -1018,7 +1022,7 @@ export default {
               <Highlight className="javascript">
                 {`import React from 'react';
 import { Router } from '@reach/router'
-import Query from '@foundationjs/query'
+import Query from '@harmonyjs/query'
 
 import './App.css'
 
@@ -1076,7 +1080,7 @@ export default class Login extends React.Component {
 
               <Highlight className="javascript">
                 {`import React from 'react'
-import Query from '@foundationjs/query'
+import Query from '@harmonyjs/query'
 import { navigate } from '@reach/router'
 
 export default class Login extends React.Component {
@@ -1124,7 +1128,7 @@ export default class Login extends React.Component {
               </Highlight>
 
               <p>
-                The login page contains a simple login form asking for a username. Upon submit, we use the Foundation
+                The login page contains a simple login form asking for a username. Upon submit, we use the Harmony
                 Query module to launch our <b>login</b> query. This query is the one we created earlier, which takes
                 a username and returns a token. We then simply store the token into our local storage, and navigate to
                 <b>/chat</b>
@@ -1305,7 +1309,7 @@ export default class UserRoom extends React.Component {
 
               <Highlight className="javascript">
                 {`import React from 'react'
-import { Controller } from '@foundationjs/query'
+import { Controller } from '@harmonyjs/query'
 
 const RoomController = new Controller('room')
 const MessageController = new Controller('message')

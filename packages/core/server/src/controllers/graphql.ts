@@ -1,4 +1,4 @@
-import { GraphqlConfig } from '@foundationjs/typedefs/server'
+import { GraphqlConfig } from '@harmonyjs/typedefs/server'
 import { graphqlHapi, graphiqlHapi } from 'apollo-server-hapi'
 
 // Import GraphQL so that Mixt knows to bundle it

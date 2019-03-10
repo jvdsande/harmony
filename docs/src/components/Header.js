@@ -4,7 +4,7 @@ import logo from '../assets/images/logo.svg'
 
 const Header = props => (
   <header id="header" className="alt">
-    <h1>Foundation JS</h1>
+    <h1>Harmony</h1>
     <p>
       Full-featured Node Framework for amazing websites
       <br />

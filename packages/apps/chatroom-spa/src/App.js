@@ -1,6 +1,6 @@
 import React from 'react';
 import { Router, navigate } from '@reach/router'
-import Query from '@foundationjs/query'
+import Query from '@harmonyjs/query'
 
 import './App.css'
 

@@ -2,8 +2,8 @@
 
 import path from 'path'
 
-import Server, { ControllerSPA } from '@foundationjs/server'
-import Persistence from '@foundationjs/persistence'
+import Server, { ControllerSPA } from '@harmonyjs/server'
+import Persistence from '@harmonyjs/persistence'
 
 import models from './persistence/models'
 
@@ -13,7 +13,7 @@ const persistence = new Persistence({
 })
 
 persistence.connect({
-  endpoint: 'mongodb://127.0.0.1/dazzled-framework-example',
+  endpoint: 'mongodb://127.0.0.1/harmony-example',
 })
 
 server.init({

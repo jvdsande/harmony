@@ -1,5 +1,5 @@
 import React from 'react'
-import { Controller } from '@foundationjs/query'
+import { Controller } from '@harmonyjs/query'
 
 const RoomController = new Controller('room')
 const MessageController = new Controller('message')

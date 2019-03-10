@@ -1,5 +1,5 @@
 import JWT from 'hapi-auth-jwt2'
-import { AuthenticationConfig } from '@foundationjs/typedefs/server'
+import { AuthenticationConfig } from '@harmonyjs/typedefs/server'
 
 export default async function (server: any, { secret, validate }: AuthenticationConfig) {
   await server.register(JWT)

@@ -8,7 +8,7 @@ import {
   MutationType,
   QueryArgs, QueryConfiguration, QueryDefinition, QueryType,
   PureQuerySelect, QueryArgsMap, QueryCallback, QueryField,
-} from '@foundationjs/typedefs/query'
+} from '@harmonyjs/typedefs/query'
 
 const transformJSQ = (q: QueryDefinition) => {
   const query = {}
@@ -35,7 +35,7 @@ const transformJSQ = (q: QueryDefinition) => {
 
 class Query {
   static io = IO({
-    path: '/foundationjs-socket',
+    path: '/harmonyjs-socket',
   })
 
   client: ApolloClient<any>

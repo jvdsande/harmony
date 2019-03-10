@@ -1,6 +1,6 @@
 {
-  "name": "@foundationjs/persistence",
-  "version": "0.2.1",
+  "name": "@harmonyjs/persistence",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
   },
@@ -14,12 +14,12 @@
       ]
     ]
   },
-  "description": "Persistence handling for the Foundation Framework",
+  "description": "Persistence handling for Harmony",
   "main": "dist/index.js",
   "scripts": {},
   "repository": {
     "type": "git",
-    "url": "https://github.com/jvdsande/foundationjs.git"
+    "url": "https://github.com/jvdsande/harmonyjs.git"
   },
   "author": "Jérémie VAN DER SANDE <jeremie.vandersande@gmail.com>",
   "license": "ISC",

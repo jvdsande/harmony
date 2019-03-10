@@ -8,7 +8,7 @@ import { store, collect } from 'react-recollect'
 
 import _ from 'lodash'
 
-import Query, { Controller } from '@foundationjs/query'
+import Query, { Controller } from '@harmonyjs/query'
 
 import './style.scss'
 

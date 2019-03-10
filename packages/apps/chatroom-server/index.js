@@ -1,5 +1,5 @@
-import Server, { ControllerSPA } from '@foundationjs/server'
-import Persistence from '@foundationjs/persistence'
+import Server, { ControllerSPA } from '@harmonyjs/server'
+import Persistence from '@harmonyjs/persistence'
 import path from 'path'
 import models from './models'
 
@@ -20,7 +20,7 @@ persistence.init({
 })
 
 server.init({
-  // This is the configuration object of Foundation Server
+  // This is the configuration object of Harmony Server
 
   // Setup the main endpoint on which our application will be served
   endpoint: {

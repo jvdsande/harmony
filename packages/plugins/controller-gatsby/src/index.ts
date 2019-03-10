@@ -5,9 +5,9 @@ import httpProxy from 'http-proxy'
 import fs from 'fs'
 import path from 'path'
 
-import Logger from '@foundationjs/logger'
+import Logger from '@harmonyjs/logger'
 
-import { ServerController } from '@foundationjs/typedefs/server'
+import { ServerController } from '@harmonyjs/typedefs/server'
 import { ControllerGatsbyConfiguration } from './types'
 
 const logger : Logger = new Logger('GatsbyController')
@@ -52,7 +52,7 @@ const GatsbyController = function (options : ControllerGatsbyConfiguration) : Se
         })
 
         // We also need to proxy socket.io, since Gatsby development uses the standard socket.io path
-        // This means that any other socket.io used for Dazzled need to be on a different path
+        // This means that any other socket.io used for Harmony need to be on a different path
         server.route({
           method: ['POST', 'GET'],
           path: '/socket.io/{path*}',

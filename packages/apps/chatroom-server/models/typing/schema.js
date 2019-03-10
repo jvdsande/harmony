@@ -1,4 +1,4 @@
-import { Types } from '@foundationjs/persistence'
+import { Types } from '@harmonyjs/persistence'
 import Users from '../users'
 
 export default {

@@ -1,7 +1,7 @@
 import Inert from 'inert'
 import Vision from 'vision'
 import HapiReactViews from 'hapi-react-views'
-import { WebConfig } from '@foundationjs/typedefs/server'
+import { WebConfig } from '@harmonyjs/typedefs/server'
 
 // Import React and React DOM so that Mixt knows to bundle them
 import 'react'

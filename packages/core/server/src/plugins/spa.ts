@@ -4,9 +4,9 @@ import Vision from 'vision'
 
 import HapiReactViews from 'hapi-react-views'
 
-import Logger from '@foundationjs/logger'
+import Logger from '@harmonyjs/logger'
 
-import { ServerController, ControllerSPAConfiguration } from '@foundationjs/typedefs/server'
+import { ServerController, ControllerSPAConfiguration } from '@harmonyjs/typedefs/server'
 
 const logger : Logger = new Logger('SPAController')
 

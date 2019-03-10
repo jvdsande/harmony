@@ -12,7 +12,7 @@ class Generic extends React.Component {
         <Helmet title="API Reference" />
         <HeaderGeneric
           title="API Reference"
-          description="Reference of the complete Foundation Framework API"
+          description="Reference of the complete Harmony API"
         />
         <div id="main">
           <section id="content" className="main">
