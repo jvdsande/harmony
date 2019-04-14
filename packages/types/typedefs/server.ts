@@ -104,7 +104,7 @@ export type ControllerSPAConfiguration = {
 
 // Configuration
 export type ServerConfiguration = {
-  addresses: AddressesConfig, // Deprecated
+  addresses?: AddressesConfig, // Deprecated
   endpoint: EndpointConfig,
   persistence?: PersistenceConfig,
   cluster?: ClusterConfig,

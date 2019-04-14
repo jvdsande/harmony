@@ -234,7 +234,7 @@ export default class Server {
     const registeredPlugins = []
 
     // Add Authentication
-    logger.info('Initializing Authentications service...')
+    logger.info('Initializing Authentication service...')
     const secret = authentication ? authentication.secret || '-' : '-'
     await ControllerAuth(server, authentication || { secret })
     logger.info('Authentication service initialized successfully')

@@ -1,0 +1,31 @@
+{
+  "name": "@harmonyjs/eslint-config-eslint",
+  "version": "1.0.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "ESLint config for Harmony projects",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "major": "git commit -a && npm version major && npm publish",
+    "minor": "git commit -a && npm version minor && npm publish",
+    "patch": "git commit -a && npm version patch && npm publish",
+    "dev": "npm run build && git commit -a && git push"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jvdsande/harmonyjs-eslint.git"
+  },
+  "author": "Jérémie VAN DER SANDE <jeremie.vandersande@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "babel-eslint": "^10.0.1",
+    "eslint": "^5.14.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-plugin-compat": "^2.6.1",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-jsx-a11y": "^6.1.1",
+    "eslint-plugin-react": "^7.11.1"
+  }
+}

@@ -1,15 +1,16 @@
 import { LogConfig } from './logger'
 
+// TODO: Strongly type
 
 type FieldFunctionParameters = {
-  schemaComposer: Object,
-  composers: Object,
-  scopeAccessResolver: (any, string) => Object,
-  models: Object,
+  schemaComposer: any,
+  composers: any,
+  scopeAccessResolver: (any, string) => any,
+  models: any,
 }
 
 type FieldDescriptor = {
-  [key: string]: any, // TODO: Strongly type
+  [key: string]: any,
 }
 
 type FieldFunction = (FieldFunctionParamters) => {
@@ -24,7 +25,7 @@ type FieldFunction = (FieldFunctionParamters) => {
   },
 }
 
-type ScopeFunction = () => Promise<Object>
+type ScopeFunction = () => Promise<any>
 
 export type ModelElasticsearchField = {
   [key: string]: {
@@ -64,7 +65,7 @@ export type PersistenceConfiguration = {
 }
 
 export type MakeComposerArguments = {
-  schemaComposer: Object,
+  schemaComposer: any,
   models: {
     [key: string]: Model
   },
@@ -76,22 +77,22 @@ export type MakeComposerArguments = {
 }
 
 export type ScopeFunctionArguments = {
-  source: Object,
-  args: Object,
-  context: Object,
-  info: Object,
-  composers: Object,
+  source: any,
+  args: any,
+  context: any,
+  info: any,
+  composers: any,
   type: 'get' | 'list' | 'count' | 'create' | 'createMany' | 'update' | 'delete',
 }
 
 export type FieldFunctionArguments = {
-  typeComposers: Object,
+  typeComposers: any,
 }
 
 export type FieldResolveArguments = {
-  source: Object,
-  args: Object,
-  context: Object,
-  info: Object,
-  composers: Object,
+  source: any,
+  args: any,
+  context: any,
+  info: any,
+  composers: any,
 }

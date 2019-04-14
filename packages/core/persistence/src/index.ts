@@ -231,7 +231,7 @@ export default class Persistence {
       const schema = new Mongoose.Schema(model.schema, params)
       const name = modelName(model.name)
 
-      schema.post('save', (doc) => {
+      const saveHook = (doc) => {
         logger.debug(`${name} updated`)
 
         if (model.onPostSave) {
@@ -242,8 +242,9 @@ export default class Persistence {
           this.io.to('updates').emit(`${name.toLowerCase()}-updated`, doc._id)
           this.io.to('updates').emit(`${name.toLowerCase()}-saved`, doc._id)
         }
-      })
-      schema.post('remove', (doc) => {
+      }
+
+      const deleteHook = (doc) => {
         logger.debug(`${name} updated`)
 
         if (model.onPostRemove) {
@@ -254,7 +255,17 @@ export default class Persistence {
           this.io.to('updates').emit(`${name.toLowerCase()}-updated`, doc._id)
           this.io.to('updates').emit(`${name.toLowerCase()}-removed`, doc._id)
         }
-      })
+      }
+
+      schema.post('save', saveHook)
+      schema.post('findOneAndUpdate', saveHook)
+      schema.post('update', saveHook)
+      schema.post('updateOne', saveHook)
+      schema.post('updateMany', saveHook)
+
+      schema.post('remove', deleteHook)
+      schema.post('deleteOne', deleteHook)
+      schema.post('deleteMany', deleteHook)
 
       if (model.elasticsearch) {
         // Get the list of path to populate
