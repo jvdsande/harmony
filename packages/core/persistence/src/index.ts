@@ -273,7 +273,16 @@ export default class Persistence {
         if (model.elasticsearch.fields) {
           Object.values(model.elasticsearch.fields).forEach((field: ModelElasticsearchField) => {
             if (field.es_populate) {
-              paths.push(...Object.entries(field.es_populate).filter(p => p[1]).map(([path]) => path))
+              paths.push(...Object.entries(field.es_populate).filter(p => p[1]).map(([path, config]) => {
+                if(config === true) {
+                  return path
+                }
+
+                return ({
+                  path: path,
+                  populate: config,
+                })
+              }))
             }
           })
         }
