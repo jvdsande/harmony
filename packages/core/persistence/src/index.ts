@@ -268,33 +268,23 @@ export default class Persistence {
       schema.post('deleteMany', deleteHook)
 
       if (model.elasticsearch) {
-        // Get the list of path to populate
-        const paths = []
-        if (model.elasticsearch.fields) {
-          Object.values(model.elasticsearch.fields).forEach((field: ModelElasticsearchField) => {
-            if (field.es_populate) {
-              paths.push(...Object.entries(field.es_populate).filter(p => p[1]).map(([path, config]) => {
-                if(config === true) {
-                  return path
-                }
-
-                return ({
-                  path: path,
-                  populate: config,
-                })
-              }))
-            }
-          })
-        }
-
         schema.post('save', async (doc, next) => {
-          if (paths.length) {
+          if (model.elasticsearch.populate) {
             let exec = doc
-            paths.forEach((path) => {
-              exec = exec.populate(path)
-            })
 
-            await doc.execPopulate()
+            Object.keys(model.elasticsearch.populate)
+                .forEach(p => {
+                  if(model.elasticsearch.populate[p] === true) {
+                    exec = exec.populate(p)
+                  } else {
+                    exec = exec.populate({
+                      path: p,
+                      populate: model.elasticsearch.populate[p]
+                    })
+                  }
+                })
+
+            await exec.execPopulate()
           }
           next()
         })
