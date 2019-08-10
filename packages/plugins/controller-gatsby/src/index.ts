@@ -65,7 +65,7 @@ const GatsbyController = function (options : ControllerGatsbyConfiguration) : Se
           },
         })
 
-        // Finally, we proxy the upgrade request is they start by /socket.io
+        // Finally, we proxy the upgrade request if they start by /socket.io
         const wsProxy = httpProxy.createProxyServer({ target: `http://${options.hmr.endpoint}:${options.hmr.port}` })
         wsProxy.on('error', error => logger.error(error))
 

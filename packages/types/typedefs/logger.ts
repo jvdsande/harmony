@@ -11,11 +11,11 @@ export interface LoggerClass {
   fileLogger: Object,
   logger: Object,
 
-  error: (any) => void,
-  warn: (any) => void,
-  info: (any) => void,
-  verbose: (any) => void,
-  debug: (any) => void,
-  silly: (any) => void,
-  log: (any) => void,
+  error: (...args: any[]) => void,
+  warn: (...args: any[]) => void,
+  info: (...args: any[]) => void,
+  verbose: (...args: any[]) => void,
+  debug: (...args: any[]) => void,
+  silly: (...args: any[]) => void,
+  log: (...args: any[]) => void,
 }

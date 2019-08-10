@@ -1,466 +1,162 @@
-import Cluster from 'cluster'
+import SchemaTypes from './schema-types'
 
-import Mongoose from 'mongoose'
-import Mexp from 'mongoose-elasticsearch-xp'
-import { schemaComposer } from 'graphql-compose'
-import Logger from '@harmonyjs/logger'
-import { Model, ModelElasticsearchField, PersistenceConfiguration } from '@harmonyjs/typedefs/persistence'
+import { Model, sanitizeModel, FieldMode as FieldModeExport } from './utils/model'
+import {
+  extractTypesFromModelTo,
+  generateFilterTypes,
+  generateInputTypes, generateMutationType,
+  generateOutputTypes, generateQueryType,
+  TypeNameMap,
+} from './utils/types'
+import AccessorClass from './accessor'
 
-// Import elasticsearch so that Mixt knows to bundle it
-import 'elasticsearch'
+export const Types = SchemaTypes
+export const FieldMode = FieldModeExport
+export const Accessor = AccessorClass
+export { SchemaType } from './schema-types'
+export { SchemaEntry } from './utils/model'
 
-import createComposer, { getComposerName } from './composer'
+export class Persistence {
+    typeNames : TypeNameMap = {}
 
-Mongoose.Promise = global.Promise
+    rootTypeNames : TypeNameMap = {}
 
-function composerName(model : Model) {
-  return getComposerName(model)
-}
+    constructor(private models?: [Model], private accessors?: [AccessorClass]) {
+      const extractTypesFromModel = extractTypesFromModelTo(this.typeNames, this.rootTypeNames)
 
-function modelName(name) {
-  return name.replace(/^([a-z])/, (f, l) => l.toUpperCase())
-}
+      models
+        .map(sanitizeModel)
+        .map(extractTypesFromModel)
 
-/**
- * Return a list of pre-configured composers
- * @param {object} composers - Map of composers
- * @param {object} context - Request context
- * @returns {object} - Map of context-injected composers
- */
-function scopeComposers(composers, context) {
-  const scopedComposers = {}
+      if (!accessors) {
+        this.accessors = [new Accessor()]
+      }
 
-  const queryResolvers = [
-    'get', 'list', 'count',
-  ]
-
-  const recordResolvers = [
-    'create', 'update',
-  ]
-
-  const recordsResolvers = [
-    'createMany',
-  ]
-
-  const idResolvers = [
-    'delete',
-  ]
-
-  Object.keys(composers).forEach((key) => {
-    const composer = composers[key]
-    scopedComposers[key] = {
-      model: composers[key].model,
+      this.accessors.map(a => a.initialize({ models }))
     }
 
-    queryResolvers.forEach((rs) => {
-      scopedComposers[key][rs] = (filter, {
-        skip = undefined,
-        sort = undefined,
-        limit = undefined,
-      } = {}) => composer[rs].resolve({
-        args: {
-          filter,
-          skip,
-          sort,
-          limit,
-        },
-        context,
+    get graphqlTypes() {
+      const outputTypes = generateOutputTypes(this.typeNames)
+      const inputTypes = generateInputTypes(this.typeNames)
+      const filterTypes = generateFilterTypes(this.rootTypeNames, this.typeNames)
+
+      const queryType = generateQueryType(this.rootTypeNames)
+      const mutationType = generateMutationType(this.rootTypeNames)
+
+      return `
+${outputTypes}
+
+${inputTypes}
+
+${filterTypes}
+
+
+${queryType}
+          
+${mutationType}
+`
+    }
+
+    get resolvers() {
+      const resolvers : {[key: string]: any } = {}
+
+      // Compute accessors resolvers
+      this.models.forEach((model) => {
+        resolvers.Query = resolvers.Query || {}
+        resolvers.Mutation = resolvers.Mutation || {}
+
+        // Query
+        resolvers.Query[model.name] = async (source, args, context, info) => this.accessors[0]
+          .read({
+            source, args, context, info, model,
+          })
+        resolvers.Query[`${model.name}List`] = async (source, args, context, info) => this.accessors[0]
+          .readMany({
+            source, args, context, info, model,
+          })
+        resolvers.Query[`${model.name}Count`] = async (source, args, context, info) => this.accessors[0]
+          .count({
+            source, args, context, info, model,
+          })
+
+        // Mutations
+        resolvers.Mutation[`${model.name}Create`] = async (source, args, context, info) => this.accessors[0]
+          .create({
+            source, args, context, info, model,
+          })
+        resolvers.Mutation[`${model.name}CreateMany`] = async (source, args, context, info) => this.accessors[0]
+          .createMany({
+            source, args, context, info, model,
+          })
+        resolvers.Mutation[`${model.name}Update`] = async (source, args, context, info) => this.accessors[0]
+          .update({
+            source, args, context, info, model,
+          })
+        resolvers.Mutation[`${model.name}UpdateMany`] = async (source, args, context, info) => this.accessors[0]
+          .updateMany({
+            source, args, context, info, model,
+          })
+        resolvers.Mutation[`${model.name}Delete`] = async (source, args, context, info) => this.accessors[0]
+          .delete({
+            source, args, context, info, model,
+          })
+        resolvers.Mutation[`${model.name}DeleteMany`] = async (source, args, context, info) => this.accessors[0]
+          .deleteMany({
+            source, args, context, info, model,
+          })
       })
-      scopedComposers[key][rs].unscoped = (filter, {
-        skip = undefined,
-        sort = undefined,
-        limit = undefined,
-      } = {}) => composer[rs].unscoped.resolve({
-        args: {
-          filter,
-          skip,
-          sort,
-          limit,
-        },
-        context,
-      })
-    })
 
-    recordResolvers.forEach((rs) => {
-      scopedComposers[key][rs] = record => composer[rs].resolve({ args: { record }, context })
-      scopedComposers[key][rs].unscoped = record => composer[rs].unscoped.resolve({ args: { record }, context })
-    })
-
-    recordsResolvers.forEach((rs) => {
-      scopedComposers[key][rs] = records => composer[rs].resolve({ args: { records }, context })
-      scopedComposers[key][rs].unscoped = records => composer[rs].unscoped.resolve({ args: { records }, context })
-    })
-
-    idResolvers.forEach((rs) => {
-      scopedComposers[key][rs] = _id => composer[rs].resolve({ args: { _id }, context })
-      scopedComposers[key][rs].unscoped = _id => composer[rs].unscoped.resolve({ args: { _id }, context })
-    })
-  })
-
-  return scopedComposers
-}
-
-/**
- * Add a field to a composer, with scoped request
- * @param {string} field - Name of the field to add
- * @param {string} kind - Whether it's a field, a query or a mutation
- * @param {*} to - Composer to add the field to
- * @param {*} composers - Map of composers to inject
- */
-function addField(field, kind, to, composers) {
-  const config = kind[field]
-  to.addFields({
-    [field]: {
-      projection: config.needs || config.projection,
-      type: config.type || (config.extends ? config.extends.type : undefined),
-      args: config.args || (config.extends ? config.extends.args : undefined),
-      resolve: async (source, args, context, info) => config.resolve({
-        source,
-        args,
-        context,
-        info,
-        composers: scopeComposers(composers, context),
-      }),
-    },
-  })
-}
-
-function makeEsExtend(fields) {
-  const esFields = {}
-
-  Object.keys(fields).forEach((f) => {
-    const field = fields[f]
-
-    esFields[f] = {
-      es_value: field.value || field.es_value,
-      es_type: field.type || field.es_type,
-    }
-  })
-
-  return esFields
-}
-
-export const Types = {
-  ...Mongoose.Schema.Types,
-  Map: Mongoose.Schema.Types.Mixed,
-}
-
-/**
- * Class Persistence: initialize a Persistence configuration for a Harmony App.
- */
-export default class Persistence {
-  logger : Logger
-
-  schema : Object
-
-  io : any
-
-  typeComposers : Object
-
-  Mutation : Object
-
-  Query : Object
-
-  /**
-   * Constructor
-   * @param {PersistenceConfiguration} config - Optional config object
-   */
-  constructor(config?: PersistenceConfiguration) {
-    if (config) {
-      this.init(config)
-    }
-  }
-
-  /**
-   * Function configuring the Persistence instance
-   * @param {PersistenceConfiguration} config - Configuration
-   * @returns {boolean} - Successful initialization
-   */
-  async init(config : PersistenceConfiguration) {
-    const {
-      models: modelsConfig,
-      query,
-      mutation,
-      log,
-      endpoint,
-      elasticsearch,
-    } = config
-
-    // Prepare the logger
-    const logConfig = log || {}
-
-    if (!Cluster.isMaster) {
-      logConfig.filename = logConfig.filename && `[${Cluster.worker.id}]_${(logConfig.filename)}`
-    }
-
-    // Prepare the logger
-    this.logger = new Logger('Persistence', logConfig)
-
-    const { logger } = this
-
-    if (!Cluster.isMaster) {
-      logger.info(`Cluster Mode! Instance ${Cluster.worker.id} running`)
-      logger.level = 'error'
-    }
-
-    logger.info('Initializing Persistence')
-
-    const scopes = {}
-    const models = {}
-    const refMap = {}
-
-    if (!modelsConfig.length) {
-      logger.error('Cannot initialize Persistence without any model!')
-      return false
-    }
-
-    logger.info(`Found ${modelsConfig.length} models. Importing...`)
-
-    modelsConfig.forEach((model) => {
-      scopes[composerName(model)] = model.scope
-      refMap[model.name] = model
-
-      let params
-
-      if (model.elasticsearch && model.elasticsearch.fields) {
-        params = {
-          es_extend: makeEsExtend(model.elasticsearch.fields),
-        }
-      }
-
-      const schema = new Mongoose.Schema(model.schema, params)
-      const name = modelName(model.name)
-
-      const saveHook = (doc) => {
-        logger.debug(`${name} updated`)
-
-        if (model.onPostSave) {
-          model.onPostSave(doc)
-        }
-
-        if (this.io) {
-          this.io.to('updates').emit(`${name.toLowerCase()}-updated`, doc._id)
-          this.io.to('updates').emit(`${name.toLowerCase()}-saved`, doc._id)
-        }
-      }
-
-      const deleteHook = (doc) => {
-        logger.debug(`${name} updated`)
-
-        if (model.onPostRemove) {
-          model.onPostRemove(doc)
-        }
-
-        if (this.io) {
-          this.io.to('updates').emit(`${name.toLowerCase()}-updated`, doc._id)
-          this.io.to('updates').emit(`${name.toLowerCase()}-removed`, doc._id)
-        }
-      }
-
-      schema.post('save', saveHook)
-      schema.post('findOneAndUpdate', saveHook)
-      schema.post('update', saveHook)
-      schema.post('updateOne', saveHook)
-      schema.post('updateMany', saveHook)
-
-      schema.post('remove', deleteHook)
-      schema.post('deleteOne', deleteHook)
-      schema.post('deleteMany', deleteHook)
-
-      if (model.elasticsearch) {
-        schema.post('save', async (doc, next) => {
-          if (model.elasticsearch.populate) {
-            let exec = doc
-
-            Object.keys(model.elasticsearch.populate)
-                .forEach(p => {
-                  if(model.elasticsearch.populate[p] === true) {
-                    exec = exec.populate(p)
-                  } else {
-                    exec = exec.populate({
-                      path: p,
-                      populate: model.elasticsearch.populate[p]
-                    })
-                  }
+      // Compute ref resolvers
+      Object.entries(this.typeNames)
+        .forEach(([name, type]) => {
+          // Search for ref fields
+          Object.entries(type.schema)
+            .filter(([fieldName, fieldType]) => fieldType.type === 'reference')
+            .forEach(([fieldName, fieldType]) => {
+              resolvers[type.output] = resolvers[type.output] || {}
+              resolvers[type.output][fieldName] = async (source, args, context, info) => this.accessors[0]
+                .resolveRef({
+                  source,
+                  args,
+                  context,
+                  info,
+                  fieldName,
+                  model: this.models.find(m => m.name === fieldType.of),
                 })
+            })
 
-            await exec.execPopulate()
-          }
-          next()
+          // Search for array ref fields
+          Object.entries(type.schema)
+            .filter(([fieldName, fieldType]) => fieldType.type === 'array' && fieldType.of.type === 'reference')
+            .forEach(([fieldName, fieldType]) => {
+              resolvers[type.output] = resolvers[type.output] || {}
+              resolvers[type.output][fieldName] = async (source, args, context, info) => this.accessors[0]
+                .resolveRefs({
+                  source,
+                  args,
+                  context,
+                  info,
+                  fieldName,
+                  model: this.models.find(m => m.name === fieldType.of.of),
+                })
+            })
         })
 
-        const mexpParams: any = { hydrate: true }
+      // Compute fields resolvers
+      this.models.forEach((model) => {
+        const rootName = this.rootTypeNames[model.name].output
 
-        if (elasticsearch) {
-          if (elasticsearch.host) {
-            mexpParams.host = elasticsearch.host
-          }
-          if (elasticsearch.auth) {
-            mexpParams.auth = elasticsearch.auth
-          }
-          if (elasticsearch.port) {
-            mexpParams.port = elasticsearch.port
-          }
-          if (elasticsearch.protocol) {
-            mexpParams.protocol = elasticsearch.protocol
-          }
-
-          if (elasticsearch.prefix) {
-            mexpParams.index = `${elasticsearch.prefix}_${name}`.toLowerCase()
-            mexpParams.type = `${elasticsearch.prefix}_${name}`.toLowerCase()
-          }
-        }
-
-        schema.plugin(Mexp, mexpParams)
-      }
-
-      models[name] = Mongoose.model(model.name, schema, model.collection) // Force the collection name if provided
-      models[name].composer = model.composer
-
-      logger.info(`Model '${name}' imported.`)
-    })
-
-    const scopeAccessResolver = composers => (resolver, name, type) => resolver.wrapResolve(next => async ({
-      source, args, context, info,
-    }) => {
-      if (!scopes[name] || !(scopes[name] instanceof Function)) {
-        return next({
-          source, args, context, info,
-        })
-      }
-
-      const newArgs = (await scopes[name]({
-        source,
-        args,
-        context,
-        info,
-        models, // Deprecated
-        composers: scopeComposers(composers, context),
-        type,
-      })) || args
-
-      return next({
-        source, args: newArgs, context, info,
+        Object.entries(model.fields || {})
+          .forEach(([name, field]) => {
+            if (field.resolve) {
+              resolvers[rootName] = resolvers[rootName] || {}
+              resolvers[rootName][name] = async (source, args, context, info) => field.resolve({
+                source, args, context, info,
+              })
+            }
+          })
       })
-    })
 
-    const composers = createComposer({
-      schemaComposer,
-      models,
-      scopeAccessResolver,
-      refMap,
-    })
-
-    if (query) {
-      logger.info('Importing custom Query...')
-      query({
-        schemaComposer,
-        composers,
-        scopeAccessResolver: scopeAccessResolver(composers),
-        models,
-      })
-      logger.info('Imported.')
+      return resolvers
     }
-    if (mutation) {
-      logger.info('Importing custom Mutation...')
-      mutation({
-        schemaComposer,
-        composers,
-        scopeAccessResolver: scopeAccessResolver(composers),
-        models,
-      })
-      logger.info('Imported.')
-    }
-
-    const typeComposers = {}
-
-    Object.keys(composers).forEach((comp) => {
-      typeComposers[comp] = composers[comp] // Deprecated
-      typeComposers[`${comp}TC`] = composers[comp]
-    })
-
-    this.typeComposers = typeComposers
-    this.Query = schemaComposer.Query
-    this.Mutation = schemaComposer.Mutation
-
-    logger.info('Adding custom fields to models...')
-    modelsConfig.forEach((model) => {
-      const { fields } = model
-
-      if (fields) {
-        const fieldsConfig = fields({
-          schemaComposer, // Deprecated
-          composers, // Deprecated
-          scopeAccessResolver: scopeAccessResolver(composers), // Deprecated
-          models, // Deprecated
-
-          typeComposers,
-        })
-
-        if (fieldsConfig) {
-          if (fieldsConfig.fields) {
-            Object.keys(fieldsConfig.fields)
-              .forEach(
-                field => addField(field, fieldsConfig.fields, composers[composerName(model)], composers),
-              )
-          }
-
-          if (fieldsConfig.queries) {
-            Object.keys(fieldsConfig.queries)
-              .forEach(field => addField(field, fieldsConfig.queries, schemaComposer.Query, composers))
-          }
-
-          if (fieldsConfig.mutations) {
-            Object.keys(fieldsConfig.mutations)
-              .forEach(field => addField(field, fieldsConfig.mutations, schemaComposer.Mutation, composers))
-          }
-        }
-      }
-    })
-    logger.info('Done.')
-
-    logger.info('Building GraphQL schema...')
-    this.schema = schemaComposer.buildSchema()
-    logger.info('GraphQL schema available.')
-
-    if (endpoint) {
-      return this.connect({ endpoint })
-    }
-
-    return true
-  }
-
-  async connect({ endpoint } : { endpoint: string }) {
-    return new Promise((resolve, reject) => {
-      const { logger } = this
-
-      logger.info(`Connecting to Mongo at ${endpoint}.`)
-      Mongoose.connect(
-        endpoint,
-        {
-          useNewUrlParser: true,
-        },
-        () => {
-          logger.info('Mongo connected.')
-          resolve(true)
-        },
-        (error) => {
-          reject(error)
-        },
-      )
-    })
-  }
-
-  configureIO = ({ io } : { io: any }) => {
-    const { logger } = this
-
-    logger.info('New Socket.IO service available. Connecting...')
-    this.io = io
-
-    io.on('connection', (socket) => {
-      socket.join('updates')
-    })
-
-    logger.info('Socket.IO connected.')
-  }
 }

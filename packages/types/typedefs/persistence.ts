@@ -33,6 +33,12 @@ export type ModelElasticsearchField = {
   }
 }
 
+export type ModelElasticsearchPopulate = {
+  [key: string]: {
+    path: string,
+  } | boolean
+}
+
 export type Model = {
   name: string,
   schema: any,
@@ -46,6 +52,7 @@ export type Model = {
 
   elasticsearch?: {
     fields: ModelElasticsearchField
+    populate: ModelElasticsearchPopulate
   },
 }
 

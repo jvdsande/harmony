@@ -107,7 +107,7 @@ export default class Logger implements LoggerClass {
     }
   }
 
-  error = (...args: any) => {
+  error = (...args: any[]) => {
     if (this.logger) {
       this.logger.error(...args)
     }
@@ -116,7 +116,7 @@ export default class Logger implements LoggerClass {
     }
   }
 
-  warn = (...args: any) => {
+  warn = (...args: any[]) => {
     if (this.logger) {
       this.logger.warn(...args)
     }
@@ -125,7 +125,7 @@ export default class Logger implements LoggerClass {
     }
   }
 
-  info = (...args: any) => {
+  info = (...args: any[]) => {
     if (this.logger) {
       this.logger.info(...args)
     }
@@ -134,7 +134,7 @@ export default class Logger implements LoggerClass {
     }
   }
 
-  verbose = (...args: any) => {
+  verbose = (...args: any[]) => {
     if (this.logger) {
       this.logger.verbose(...args)
     }
@@ -143,7 +143,7 @@ export default class Logger implements LoggerClass {
     }
   }
 
-  debug = (...args: any) => {
+  debug = (...args: any[]) => {
     if (this.logger) {
       this.logger.debug(...args)
     }
@@ -152,7 +152,7 @@ export default class Logger implements LoggerClass {
     }
   }
 
-  silly = (...args: any) => {
+  silly = (...args: any[]) => {
     if (this.logger) {
       this.logger.silly(...args)
     }
@@ -161,7 +161,7 @@ export default class Logger implements LoggerClass {
     }
   }
 
-  log = (...args: any) => {
+  log = (...args: any[]) => {
     if (this.logger) {
       this.logger.warn('Avoid using the \'log\' command, prefer \'info\', \'debug\' or \'warn\'')
       this.logger.debug(...args)

@@ -52,6 +52,7 @@
     "socketio-sticky-session": "^0.4.3",
     "typescript": "^3.3.3",
     "vision": "^5.4.4",
+    "voca": "^1.4.0",
     "winston": "^3.2.1"
   },
   "devDependencies": {
@@ -69,6 +70,7 @@
     "babel-plugin-transform-flow-strip-types": "^6.22.0",
     "eslint": "^5.14.0",
     "eslint-import-resolver-typescript": "^1.1.1",
+    "eslint-plugin-compat": "^3.1.2",
     "eslint-plugin-import": "^2.16.0",
     "eslint-plugin-typescript": "^0.14.0",
     "typescript-eslint-parser": "^22.0.0"
