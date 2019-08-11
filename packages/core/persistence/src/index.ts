@@ -1,3 +1,6 @@
+import GraphQLJson from 'graphql-type-json'
+import GraphQLDate from 'graphql-date'
+
 import SchemaTypes from './schema-types'
 
 import { Model, sanitizeModel, FieldMode as FieldModeExport } from './utils/model'
@@ -6,9 +9,11 @@ import {
   generateFilterTypes,
   generateInputTypes, generateMutationType,
   generateOutputTypes, generateQueryType,
+  combineTypes,
   TypeNameMap,
 } from './utils/types'
 import AccessorClass from './accessor'
+import ControllerPersistence from './controller'
 
 export const Types = SchemaTypes
 export const FieldMode = FieldModeExport
@@ -21,18 +26,39 @@ export class Persistence {
 
     rootTypeNames : TypeNameMap = {}
 
-    constructor(private models?: [Model], private accessors?: [AccessorClass]) {
+    models: [Model]
+
+    accessors: { [key: string]: AccessorClass }
+
+    constructor(config) {
+      this.initializeProperties(config)
+    }
+
+    initializeProperties(config) {
+      if (!config) {
+        return
+      }
+
+      this.accessors = config.accessors || this.accessors
+      this.models = config.models || this.models
+
+      if (!config.accessors) {
+        this.accessors = { empty: new Accessor() }
+      }
+    }
+
+    async init(config) {
+      this.initializeProperties(config)
+
       const extractTypesFromModel = extractTypesFromModelTo(this.typeNames, this.rootTypeNames)
 
-      models
+      this.models
         .map(sanitizeModel)
         .map(extractTypesFromModel)
 
-      if (!accessors) {
-        this.accessors = [new Accessor()]
-      }
+      Object.keys(this.accessors).map(a => this.accessors[a].initialize({ models: this.models }))
 
-      this.accessors.map(a => a.initialize({ models }))
+      return this
     }
 
     get graphqlTypes() {
@@ -43,22 +69,20 @@ export class Persistence {
       const queryType = generateQueryType(this.rootTypeNames)
       const mutationType = generateMutationType(this.rootTypeNames)
 
-      return `
-${outputTypes}
+      return combineTypes({
+        outputTypes,
+        inputTypes,
+        filterTypes,
 
-${inputTypes}
-
-${filterTypes}
-
-
-${queryType}
-          
-${mutationType}
-`
+        queryType,
+        mutationType,
+      })
     }
 
     get resolvers() {
       const resolvers : {[key: string]: any } = {}
+
+      const defaultAccessor = this.accessors[Object.keys(this.accessors)[0]]
 
       // Compute accessors resolvers
       this.models.forEach((model) => {
@@ -66,44 +90,57 @@ ${mutationType}
         resolvers.Mutation = resolvers.Mutation || {}
 
         // Query
-        resolvers.Query[model.name] = async (source, args, context, info) => this.accessors[0]
-          .read({
-            source, args, context, info, model,
-          })
-        resolvers.Query[`${model.name}List`] = async (source, args, context, info) => this.accessors[0]
-          .readMany({
-            source, args, context, info, model,
-          })
-        resolvers.Query[`${model.name}Count`] = async (source, args, context, info) => this.accessors[0]
-          .count({
-            source, args, context, info, model,
-          })
+        const queryResolvers = [
+          {
+            suffix: '',
+            accessor: defaultAccessor.read,
+          }, {
+            suffix: 'List',
+            accessor: defaultAccessor.readMany,
+          }, {
+            suffix: 'Count',
+            accessor: defaultAccessor.count,
+          },
+        ]
+
+        queryResolvers.forEach((res) => {
+          resolvers.Query[model.name + res.suffix] = async (source, args, context, info) => res.accessor.apply(
+            defaultAccessor, [{
+              source, args, context, info, model,
+            }],
+          )
+        })
 
         // Mutations
-        resolvers.Mutation[`${model.name}Create`] = async (source, args, context, info) => this.accessors[0]
-          .create({
-            source, args, context, info, model,
-          })
-        resolvers.Mutation[`${model.name}CreateMany`] = async (source, args, context, info) => this.accessors[0]
-          .createMany({
-            source, args, context, info, model,
-          })
-        resolvers.Mutation[`${model.name}Update`] = async (source, args, context, info) => this.accessors[0]
-          .update({
-            source, args, context, info, model,
-          })
-        resolvers.Mutation[`${model.name}UpdateMany`] = async (source, args, context, info) => this.accessors[0]
-          .updateMany({
-            source, args, context, info, model,
-          })
-        resolvers.Mutation[`${model.name}Delete`] = async (source, args, context, info) => this.accessors[0]
-          .delete({
-            source, args, context, info, model,
-          })
-        resolvers.Mutation[`${model.name}DeleteMany`] = async (source, args, context, info) => this.accessors[0]
-          .deleteMany({
-            source, args, context, info, model,
-          })
+        const mutationResolvers = [
+          {
+            suffix: 'Create',
+            accessor: defaultAccessor.create,
+          }, {
+            suffix: 'CreateMany',
+            accessor: defaultAccessor.createMany,
+          }, {
+            suffix: 'Update',
+            accessor: defaultAccessor.update,
+          }, {
+            suffix: 'UpdateMany',
+            accessor: defaultAccessor.updateMany,
+          }, {
+            suffix: 'Delete',
+            accessor: defaultAccessor.delete,
+          }, {
+            suffix: 'DeleteMany',
+            accessor: defaultAccessor.deleteMany,
+          },
+        ]
+
+        mutationResolvers.forEach((res) => {
+          resolvers.Mutation[model.name + res.suffix] = async (source, args, context, info) => res.accessor.apply(
+            defaultAccessor, [{
+              source, args, context, info, model,
+            }],
+          )
+        })
       })
 
       // Compute ref resolvers
@@ -114,7 +151,7 @@ ${mutationType}
             .filter(([fieldName, fieldType]) => fieldType.type === 'reference')
             .forEach(([fieldName, fieldType]) => {
               resolvers[type.output] = resolvers[type.output] || {}
-              resolvers[type.output][fieldName] = async (source, args, context, info) => this.accessors[0]
+              resolvers[type.output][fieldName] = async (source, args, context, info) => defaultAccessor
                 .resolveRef({
                   source,
                   args,
@@ -130,7 +167,7 @@ ${mutationType}
             .filter(([fieldName, fieldType]) => fieldType.type === 'array' && fieldType.of.type === 'reference')
             .forEach(([fieldName, fieldType]) => {
               resolvers[type.output] = resolvers[type.output] || {}
-              resolvers[type.output][fieldName] = async (source, args, context, info) => this.accessors[0]
+              resolvers[type.output][fieldName] = async (source, args, context, info) => defaultAccessor
                 .resolveRefs({
                   source,
                   args,
@@ -157,6 +194,18 @@ ${mutationType}
           })
       })
 
+      resolvers.JSON = GraphQLJson
+      resolvers.Date = GraphQLDate
+
       return resolvers
+    }
+
+    controller({ path, enablePlayground }) {
+      return ControllerPersistence({
+        path,
+        enablePlayground,
+        graphqlTypes: this.graphqlTypes,
+        resolvers: this.resolvers,
+      })
     }
 }

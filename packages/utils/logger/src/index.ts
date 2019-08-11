@@ -48,7 +48,7 @@ export default class Logger implements LoggerClass {
 
     const timeFormat = 'YY/MM/DD HH:mm:ss.SSS'
 
-    const suffix = Cluster.isMaster ? '' : `[Instance ${Cluster.worker.id}]`
+    const suffix = Cluster.isMaster ? '' : `[Instance ${Cluster.worker.id}] `
 
     const logFormat = Winston.format.printf(
       i => (
@@ -105,6 +105,14 @@ export default class Logger implements LoggerClass {
     if (this.fileLogger) {
       this.fileLogger.level = level
     }
+  }
+
+  get level() {
+    if (this.logger) {
+      return this.logger.level
+    }
+
+    return 'info'
   }
 
   error = (...args: any[]) => {

@@ -1,122 +1,125 @@
-// @flow
-
-// Require Cluster
-import Cluster from 'cluster'
-
 // Require Hapi
-import Hapi from 'hapi'
+import Hapi from '@hapi/hapi'
 
 // Require SocketIO
 import IO from 'socket.io'
 import IORedis from 'socket.io-redis'
-import Sticky from 'socketio-sticky-session'
 
-// Require JWT
-import JWT from 'jsonwebtoken'
-
-// Require Logger for logs
+// Require logger
+import { LogConfig } from '@harmonyjs/typedefs/logger'
 import Logger from '@harmonyjs/logger'
 
-import {
-  ServerConfiguration, GraphqlConfig, Address,
-} from '@harmonyjs/typedefs/server'
-import {
-  LogConfig,
-} from '@harmonyjs/typedefs/logger'
+// Require utils
+import { getPluginsFromControllers, registerControllers, registerPlugins } from './utils/controllers'
+import { executeOnCluster, ifMaster, ifWorker } from './utils/cluster'
 
-// Require controllers
-import ControllerAuth from './controllers/auth'
-import ControllerWeb from './controllers/web'
-import ControllerHMR from './controllers/hmr'
-import ControllerGraphQL from './controllers/graphql'
+// Require Auth Controller
+import ControllerAuth from './auth'
 
-// Require plugins to export them
-import PluginSPA from './plugins/spa'
+type ServerConfig = {
+  endpoint?: any,
+  controllers?: any,
+  authentication?: any,
+  cluster?: any,
+  log?: LogConfig,
+}
 
-export const ControllerSPA = PluginSPA
-
-/*
- * Class Server : initialize a Server instance for a Harmony App
- */
 export default class Server {
-  logger: Logger
+  config: ServerConfig = null
 
-  server: any
+  logger = null
 
-  port?: number
+  server = null
 
-  usingGraphQL: boolean = false
-
-  /**
-   * Constructor function
-   * @param {object} config - Configuration options (optional)
-   */
-  constructor(config?: ServerConfiguration) {
-    if (config) {
-      this.init(config)
-    }
+  constructor(config: ServerConfig) {
+    this.initializeProperties(config)
   }
 
-  /**
-   * Init function
-   * @param {object} config - Configuration options
-   */
-  init = async (config: ServerConfiguration) => {
+  initializeProperties(config: ServerConfig = {}) {
     const {
-      cluster,
-      graphql,
-      log = {},
+      endpoint, controllers, authentication, cluster, log,
     } = config
 
-    this.createLogger(log)
+    this.config = this.config || {}
+    this.config.endpoint = endpoint || this.config.endpoint || { host: 'localhost', port: 3000 }
+    this.config.controllers = controllers || this.config.controllers
+    this.config.authentication = authentication || this.config.authentication
+    this.config.cluster = cluster || this.config.cluster
+    this.config.log = log || this.config.log
+  }
 
-    // Launch the actual init only on forks in clustered mode, and in master if not in clustered mode
-    if (!cluster || !cluster.sticky || cluster.sticky.size < 2 || !Cluster.isMaster) {
-      await this.slave(config)
-    } else {
-      Cluster.on('exit', (worker) => {
-        this.logger.info(`worker ${worker.process.pid} died`)
-      })
-    }
+  async init(config: ServerConfig) {
+    this.initializeProperties(config)
 
-    if (cluster && cluster.sticky && cluster.sticky.size > 2) {
-      if (Cluster.isMaster) {
-        await this.master(config)
-      }
+    await this.createLogger()
 
-      Sticky(
-        {
-          proxy: cluster.sticky.proxy, // activate layer 4 patching
-          header: cluster.sticky.header || 'x-forwarded-for',
-          ignoreMissingHeader: true,
-          num: (cluster.sticky.size) || 1,
-        },
-        () => {
-          this.logger.level = log.level || 'info'
-          return this.server.listener
-        },
-      )
-        .listen(this.port, () => {
-          this.success({
-            endpoint: `${this.server.info && this.server.info.uri}:${Number(this.port)}`,
-            graphql,
-          })
-        })
-    } else {
-      this.success({
-        endpoint: this.server.info.uri,
-        graphql,
-      })
+    await this.createCluster()
+  }
+
+  async launch() {
+    await this.logBanner()
+
+    await this.createServer()
+
+    await this.configureSocketIO()
+
+    await this.configureAuthentication()
+
+    await this.configureControllers()
+  }
+
+  async createServer() {
+    const { endpoint } = this.config
+
+    this.logger.info('Initializing Hapi Server')
+    this.server = new Hapi.Server(endpoint)
+  }
+
+  async configureSocketIO() {
+    const { cluster } = this.config
+
+    // Create Socket.IO instance
+    const io = IO(this.server.listener, {
+      path: '/harmonyjs-socket',
+    })
+
+    // Add Redis layer if required
+    if (cluster && cluster.redis) {
+      io.adapter(IORedis(cluster.redis))
     }
   }
 
-  createLogger = (log: LogConfig) => {
+  async configureAuthentication() {
+    const { authentication } = this.config
+
+    // Add Authentication
+    this.logger.info('Initializing Authentication service...')
+    const secret = authentication ? authentication.secret || '-' : '-'
+    await ControllerAuth(this.server, authentication || { secret })
+    this.logger.info('Authentication service initialized successfully')
+  }
+
+  async configureControllers() {
+    const { controllers } = this.config
+
+    // Check if any custom controllers need to be initialized
+    if (controllers && controllers.length) {
+      const plugins = getPluginsFromControllers({ controllers })
+
+      await registerPlugins({ plugins, server: this.server })
+
+      await registerControllers({ controllers, server: this.server, log: this.logger })
+    }
+  }
+
+  createLogger = () => {
+    const { log } = this.config
     const logConfig = log || {}
 
     // Append worker id to forks' filename
-    if (!Cluster.isMaster) {
-      logConfig.filename = logConfig.filename && `[${Cluster.worker.id}]_${(logConfig.filename)}`
-    }
+    ifWorker((worker) => {
+      logConfig.filename = logConfig.filename && `[${worker.id}]_${(logConfig.filename)}`
+    })
 
     // Prepare the logger
     this.logger = new Logger('Server', logConfig)
@@ -126,9 +129,9 @@ export default class Server {
     const { logger } = this
 
     logger.info(`Powered by
-  _    _                                        
- | |  | |                                       
- | |__| | __ _ _ __ _ __ ___   ___  _ __  _   _ 
+  _    _
+ | |  | |
+ | |__| | __ _ _ __ _ __ ___   ___  _ __  _   _
  |  __  |/ _\` | '__| '_ \` _ \\ / _ \\| '_ \\| | | |
  | |  | | (_| | |  | | | | | | (_) | | | | |_| |
  |_|  |_|\\__,_|_|  |_| |_| |_|\\___/|_| |_|\\__, |
@@ -136,258 +139,52 @@ export default class Server {
                                           |___/`)
   }
 
-  master = async ({
-    addresses,
-    cluster,
-    graphql,
-    persistence,
-    endpoint,
-  }: ServerConfiguration) => {
-    this.logBanner()
+  // Node Cluster handling
+  // Launch worker instances if required, connecting them to a master listener
+  // for routing Socket.IO calls
+  async createCluster() {
+    const { cluster, endpoint, log } = this.config
 
-    const address: Address = endpoint || addresses.endpoint || {
-      host: 'localhost',
-    }
+    executeOnCluster({
+      cluster,
+      prepare: () => {
+        // Do not specify a listening port, and disable autoListen: the listening will be done on master
+        const { port } = endpoint
+        delete endpoint.port
+        endpoint.autoListen = false
 
-    if (!endpoint && addresses.endpoint) {
-      this.logger.warn('\'addresses.endpoint\' has been deprecated. Please use \'endpoint\' directly.')
-    }
+        return port
+      },
+      main: async () => this.launch(),
+      worker: () => {
+        // After initialization is done, re-enable logs
+        this.logger.level = (log && log.level) || 'info'
 
-    this.port = address.port
-    delete address.port
-    address.autoListen = false
-
-    // Create the server
-    const server = Hapi.server(address)
-    this.server = server
-
-    // Create Socket.IO instance
-    const io = IO(server.listener, {
-      path: '/harmonyjs-socket',
-    })
-    if (cluster && cluster.redis) {
-      io.adapter(IORedis(cluster.redis))
-    }
-
-    // Checking if GraphQL will be used
-    this.usingGraphQL = (!!graphql) && (!!graphql.schema || (!!persistence && !!persistence.schema))
-  }
-
-  slave = async ({
-    addresses, // Deprecated
-    endpoint,
-    persistence,
-    cluster,
-    authentication,
-    web,
-    graphql,
-    log,
-    controllers,
-  }: ServerConfiguration) => {
-    const logConfig = log || {}
-    const { logger } = this
-
-    // Disable startup logs for workers > 1
-    if (!Cluster.isMaster) {
-      logger.info(`Cluster Mode! Instance ${Cluster.worker.id} running`)
-
-      if (Cluster.worker.id > 1) {
-        logger.level = 'error'
-      }
-    }
-
-    if (Cluster.isMaster) {
-      this.logBanner()
-
-      // Checking if GraphQL will be used
-      this.usingGraphQL = (!!graphql) && (!!graphql.schema || (!!persistence && !!persistence.schema))
-    }
-
-    const address: Address = endpoint || addresses.endpoint || {
-      host: 'localhost',
-    }
-
-    if (!endpoint && addresses.endpoint) {
-      this.logger.warn('\'addresses.endpoint\' has been deprecated. Please use \'endpoint\' directly.')
-    }
-
-    if (!Cluster.isMaster) {
-      this.port = address.port
-      delete address.port
-      address.autoListen = false
-    }
-
-    // Create the server
-    const server = Hapi.server(address)
-    this.server = server
-
-    // Create Socket.IO instance
-    const io = IO(server.listener, {
-      path: '/harmonyjs-socket',
-    })
-    if (cluster && cluster.redis) {
-      io.adapter(IORedis(cluster.redis))
-    }
-
-    // Call all controllers
-
-    const registeredPlugins = []
-
-    // Add Authentication
-    logger.info('Initializing Authentication service...')
-    const secret = authentication ? authentication.secret || '-' : '-'
-    await ControllerAuth(server, authentication || { secret })
-    logger.info('Authentication service initialized successfully')
-
-    // Deprecated: Web configuration
-    if (web) {
-      logger.warn(
-        'Using the built-in Web service is now Deprecated. Please use SPAController or GatsbyController instead',
-      )
-
-      // Add Web routes (static serving + global redirect)
-      logger.info('Initializing Web routes service...')
-      await ControllerWeb(server, {
-        ...web,
-        logger: this.logger,
-      })
-      logger.info('Web routes service initialized successfully')
-
-      // In dev mode, add Webpack redirect
-      if (process.env.NODE_ENV === 'development') {
-        logger.info('Initializing HMR service...')
-        await ControllerHMR(server, addresses.webpack)
-        logger.info('HMR service initialized successfully')
-      }
-
-      registeredPlugins.push('h2o2', 'vision', 'inert')
-    }
-
-
-    // If a persistence object has been given, initialize the Persistence system
-    if (persistence) {
-      logger.info('Persistence found! Adding Socket.IO layer...')
-
-      persistence.configureIO({ io })
-
-      logger.info('Socket.IO layer added successfully.')
-    }
-
-    // If a graphql object has been given, initialize the GraphQL engine
-    if (graphql) {
-      logger.info('GraphQL config found! Adding GraphQL engine...')
-
-      // Create GraphQL schema
-      const schema = graphql.schema || (persistence && persistence.schema)
-
-      if (persistence && persistence.schema && schema === persistence.schema) {
-        logger.info('GraphQL is using the Persistence instance as schema')
-      } else if (schema === graphql.schema) {
-        logger.info('Using custom GraphQL schema provided')
-      }
-
-      if (!schema) {
-        logger.error(
-          'You must provide a GraphQL schema to use GraphQL! '
-          + 'Either use `graphql.schema` or provide a Persistence instance.',
-        )
-        logger.error('Failed to add GraphQL engine, GraphQL will not work.')
-      } else {
-        // Add GraphQL engine and routes
-
-        await ControllerGraphQL(server, {
-          ...graphql,
-          graphqlOptions: async (req) => {
-            const res = graphql.graphqlOptions ? await graphql.graphqlOptions(req) : {}
-
-            return {
-              context: {
-                ...res,
-                authentication: {
-                  create: (payload, options) => JWT.sign(payload, secret, options),
-                  get: () => req.auth.credentials,
-                },
-              },
-              schema,
-            }
-          },
+        // Then return the worker's listener
+        return this.server.listener
+      },
+      onWorkerMount: (worker) => {
+        // Disable logs for workers except the first one
+        if (worker.id > 1) {
+          this.logger.level = 'error'
+        }
+      },
+      onWorkerExit: (worker) => {
+        this.logger.info(`Worker ${worker.id} (${worker.process.pid}) died`)
+      },
+      listen: (port) => {
+        ifMaster(() => {
+          // Add short delay to allow workers to get started
+          setTimeout(() => {
+            this.logger.info(
+              `Master has created main server on port ${endpoint.host}:${port || endpoint.port}`,
+            )
+          }, 750)
         })
-
-
-        logger.info('GraphQL engine added successfully')
-      }
-    }
-
-    const pluginsToRegister = []
-
-    // Check if any custom controllers need to be initialized
-    if (controllers && controllers.length) {
-      controllers.forEach((c) => {
-        if (c.plugins && c.plugins.length) {
-          c.plugins.forEach((plugin) => {
-            let name = null
-
-            // Check if the plugin is using the ".plugin" definition
-            if (plugin.plugin) {
-              // If it is, check if we are embedding it in a plugin/options object
-              if (plugin.plugin.plugin) {
-                name = plugin.plugin.plugin.pkg.name
-              } else {
-                name = plugin.plugin.pkg.name
-              }
-            } else {
-              name = plugin.pkg.name
-            }
-
-            if (registeredPlugins.indexOf(name) < 0) {
-              pluginsToRegister.push(plugin)
-              registeredPlugins.push(name)
-            }
-          })
-        }
-      })
-
-      // Register all necessary plugins
-      await Promise.all(pluginsToRegister.map(p => server.register(p)))
-
-      await Promise.all(controllers.map((c, i) => {
-        const plugin = {
-          name: `harmonyjs-${i}`,
-          register: c.initialize,
-        }
-
-        return server.register(plugin)
-      }))
-    }
-
-    // Start the server
-    await server.start()
-
-    // Re-enable logs for workers > 1
-    if (!Cluster.isMaster && Cluster.worker.id > 1 && logConfig.level) {
-      logger.level = logConfig.level
-    }
-
-    logger.info('All initialization successful')
-  }
-
-  success = ({
-    endpoint,
-    graphql,
-  } : {
-    endpoint: string,
-    graphql?: GraphqlConfig,
-  }) => {
-    if (Cluster.isMaster) {
-      this.logger.info(`App running at: ${endpoint}`)
-
-      if (this.usingGraphQL && !!graphql) {
-        this.logger.info(`GraphQL endpoint at: ${endpoint}${graphql.graphql}`)
-
-        if (graphql.enableGraphiQL && !!graphql.graphiql) {
-          this.logger.info(`Graph(i)QL dashboard at: ${endpoint}${graphql.graphiql}`)
-        }
-      }
-    }
+        ifWorker(worker => this.logger.info(
+          `Worker ${worker.id} initialized`,
+        ))
+      },
+    })
   }
 }

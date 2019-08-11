@@ -1,5 +1,5 @@
-import Inert from 'inert'
-import H2O2 from 'h2o2'
+import Inert from '@hapi/inert'
+import H2O2 from '@hapi/h2o2'
 import httpProxy from 'http-proxy'
 
 import fs from 'fs'

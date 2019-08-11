@@ -1,11 +1,11 @@
 {
-  "parser": "typescript-eslint-parser",
+  "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "sourceType": "module",
     "allowImportExportEverywhere": true
   },
   "extends": [
-    "@harmonyjs/eslint"
+    "@harmonyjs"
   ],
   "rules": {
     "react/no-unescaped-entities": "off",
@@ -13,7 +13,7 @@
     "compat/compat": "off",
     "camelcase": "warn"
   },
-  "plugins": [ "typescript", "import" ],
+  "plugins": [ "@typescript-eslint", "import" ],
   "settings": {
     "import/resolver": {
       "typescript": {}

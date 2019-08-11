@@ -250,3 +250,27 @@ ${Object.entries(typeNames).map(generateDeleteMany).join('\n')}
 }
   `
 }
+
+export function combineTypes({
+  outputTypes,
+  inputTypes,
+  filterTypes,
+  queryType,
+  mutationType,
+}) {
+  return `
+  scalar JSON
+  scalar Date
+  
+${outputTypes}
+
+${inputTypes}
+
+${filterTypes}
+
+
+${queryType}
+          
+${mutationType}
+`
+}

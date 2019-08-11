@@ -31,6 +31,6 @@
     "typescript": "^3.3.3"
   },
   "dependencies": {
-    "@babel/runtime-corejs2": "^7.3.1"
+    "@babel/runtime-corejs2": "^7.5.5"
   }
 }

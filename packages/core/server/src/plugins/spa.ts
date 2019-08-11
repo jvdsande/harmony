@@ -1,6 +1,6 @@
-import Inert from 'inert'
-import H2O2 from 'h2o2'
-import Vision from 'vision'
+import Inert from '@hapi/inert'
+import H2O2 from '@hapi/h2o2'
+import Vision from '@hapi/vision'
 
 import HapiReactViews from 'hapi-react-views'
 

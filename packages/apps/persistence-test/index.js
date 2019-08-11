@@ -2,6 +2,10 @@ const {
   Types, FieldMode, Persistence, Accessor,
 } = require('@harmonyjs/persistence')
 
+const {
+  default: Server,
+} = require('@harmonyjs/server')
+
 const { default: MemoryAccessor } = require('@harmonyjs/accessor-memory')
 const { default: MongooseAccessor } = require('@harmonyjs/accessor-mongoose')
 
@@ -65,31 +69,51 @@ const Book = {
       },
       mode: [FieldMode.INPUT],
     },
+
+    source: {
+      type: Types.JSON,
+      async resolve({ source }) { return source },
+    },
+
+    context: {
+      type: Types.JSON,
+      async resolve({ context }) {
+        console.log({ context })
+        return context
+      },
+    },
+
+    authentication: {
+      type: Types.JSON,
+      async resolve({ context }) {
+        return {
+          next: context.authentication.create({ hello: 'world' }),
+          current: context.authentication.get(),
+        }
+      },
+    },
   },
 }
 
-const persistence = new Persistence([Author, Book], [new MongooseAccessor({
-  host: 'mongodb://localhost:27017/',
-  database: 'test',
-})])
-
-const { graphqlTypes, resolvers } = persistence
-
-const { ApolloServer, gql } = require('apollo-server')
-
-// The GraphQL schema
-const typeDefs = gql(graphqlTypes)
-
-const server = new ApolloServer({
-  typeDefs,
-  mocks: false,
-  mockEntireSchema: false,
-  resolvers,
-  dataSources: () => ({
-    test: new Accessor(),
-  }),
+const persistence = new Persistence()
+persistence.init({
+  models: [Author, Book],
+  accessors: {
+    mongo: new MongooseAccessor({
+      host: 'mongodb://localhost:27017/',
+      database: 'test',
+    }),
+  },
 })
 
-server.listen().then(({ url }) => {
-  console.log(`🚀 Server ready at ${url}`)
+const server = new Server({
+  cluster: {
+    forks: {
+      size: 3,
+    },
+  },
+  controllers: [
+    persistence.controller({ path: '/graphql', enablePlayground: true }),
+  ],
 })
+server.init()
