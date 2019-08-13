@@ -1,0 +1,40 @@
+{
+  "name": "@harmonyjs/controller-spa",
+  "version": "0.0.1",
+  "description": "Single Page Application controller for Harmony",
+  "main": "index.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "@pika/pack": {
+    "pipeline": [
+      [
+        "@pika/plugin-ts-standard-pkg"
+      ],
+      [
+        "@pika/plugin-build-node"
+      ],
+      [
+        "@pika/plugin-build-web"
+      ]
+    ]
+  },
+  "mixt": {
+    "builder": "pika-pack"
+  },
+  "keywords": [
+    "SPA",
+    "Harmony",
+    "HarmonyJS"
+  ],
+  "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^3.5.3"
+  },
+  "dependencies": {
+    "hapi-react-views": "^10.0.1",
+    "react": "^16.9.0",
+    "react-dom": "^16.9.0"
+  }
+}

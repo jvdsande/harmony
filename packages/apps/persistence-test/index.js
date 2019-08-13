@@ -1,13 +1,9 @@
-const {
-  Types, FieldMode, Persistence, Accessor,
-} = require('@harmonyjs/persistence')
+import Server from '@harmonyjs/server'
+import Persistence, { Types, FieldMode } from '@harmonyjs/persistence'
 
-const {
-  default: Server,
-} = require('@harmonyjs/server')
+import MongooseAccessor from '@harmonyjs/accessor-mongoose'
 
-const { default: MemoryAccessor } = require('@harmonyjs/accessor-memory')
-const { default: MongooseAccessor } = require('@harmonyjs/accessor-mongoose')
+import ControllerApolloFederation from '@harmonyjs/controller-apollo-federation'
 
 const Author = {
   name: 'author',
@@ -106,14 +102,20 @@ persistence.init({
   },
 })
 
-const server = new Server({
-  cluster: {
-    forks: {
-      size: 3,
-    },
-  },
+const server = new Server()
+
+server.init({
   controllers: [
-    persistence.controller({ path: '/graphql', enablePlayground: true }),
+    ControllerApolloFederation({
+      path: '/graphql',
+      enablePlayground: true,
+      services: [
+        { name: 'example', url: 'http://localhost:3000/graphql' },
+      ],
+    }),
   ],
+  endpoint: {
+    host: 'localhost',
+    port: 8080,
+  },
 })
-server.init()

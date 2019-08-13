@@ -1,0 +1,36 @@
+{
+  "name": "@harmonyjs/controller-apollo-federation",
+  "version": "0.0.1",
+  "description": "Apollo controller for Harmony",
+  "main": "index.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "@pika/pack": {
+    "pipeline": [
+      [
+        "@pika/plugin-ts-standard-pkg"
+      ],
+      [
+        "@pika/plugin-build-node"
+      ],
+      [
+        "@pika/plugin-build-web"
+      ]
+    ]
+  },
+  "mixt": {
+    "builder": "pika-pack"
+  },
+  "keywords": [
+    "Apollo",
+    "GraphQL",
+    "Harmony",
+    "HarmonyJS"
+  ],
+  "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^3.5.3"
+  }
+}

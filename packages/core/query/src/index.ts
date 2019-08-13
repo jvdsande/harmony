@@ -14,7 +14,7 @@ const transformJSQ = (q: QueryDefinition) => {
   const query = {}
 
   Object.keys(q)
-    .map(key => ([key, q[key]]))
+    .map((key) => ([key, q[key]]))
     .forEach(([name, content]: [string, QueryField | boolean]) => {
       if (typeof content === 'boolean') {
         query[name] = true
@@ -100,7 +100,7 @@ export default query
  * @returns {string} - Formatted name
  */
 function eventName(name: string) {
-  return `${name.replace(/[A-Z]/g, m => m.toLowerCase())}s`
+  return `${name.replace(/[A-Z]/g, (m) => m.toLowerCase())}`
 }
 
 
@@ -260,7 +260,7 @@ class QueryBuilderInternal extends Promise<any> {
   then = (callback?: QueryCallback) => {
     const request = this.build()
     return query(request)
-      .then(response => response[Object.keys(request)[0]])
+      .then((response) => response[Object.keys(request)[0]])
       .then(callback)
   }
 
@@ -276,7 +276,7 @@ class QueryBuilderInternal extends Promise<any> {
   subscription = async (force?: boolean) => {
     const request = this.build()
     const response = await query(request)
-      .then(res => res[Object.keys(request)[0]])
+      .then((res) => res[Object.keys(request)[0]])
 
     const stringifiedResponse = JSON.stringify(response)
     if ((force || stringifiedResponse !== this.lastResponse) && !!this.subscriptionCallback) {
@@ -493,7 +493,7 @@ export class MutationBuilderInternal extends Promise<any> {
   then = (callback?: QueryCallback) => {
     const request = this.build()
     return query.mutate(request)
-      .then(response => response[Object.keys(request)[0]])
+      .then((response) => response[Object.keys(request)[0]])
       .then(callback)
   }
 }

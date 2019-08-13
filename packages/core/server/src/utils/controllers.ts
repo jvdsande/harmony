@@ -41,7 +41,7 @@ export function getPluginsFromControllers({ controllers }) {
 }
 
 export async function registerPlugins({ plugins, server }) {
-  await Promise.all(plugins.map(p => server.register(p)))
+  await Promise.all(plugins.map(async (p) => server.register(p)))
 }
 
 export async function registerControllers({ controllers, server, log }) {

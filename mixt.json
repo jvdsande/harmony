@@ -4,6 +4,7 @@
     "types",
     "utils",
     "core",
-    "plugins"
+    "plugins/accessors",
+    "plugins/controllers"
   ]
 }

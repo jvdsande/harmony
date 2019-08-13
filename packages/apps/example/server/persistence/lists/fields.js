@@ -1,16 +1,4 @@
-export default ({ typeComposers: { List: ListTC } }) => ({
-  fields: {
-    numberOfTasks: {
-      type: 'Int',
-      resolve: async ({ source, composers: { Task } }) => Task.count({ list: source._id }),
-    },
-
-    numberOfDone: {
-      type: 'Int',
-      resolve: async ({ source, composers: { Task } }) => Task.count({ list: source._id, done: true }),
-    },
-  },
-
+/* export default ({ typeComposers: { List: ListTC } }) => ({
   mutations: {
     listCreate: {
       extends: ListTC.create,
@@ -34,6 +22,40 @@ export default ({ typeComposers: { List: ListTC } }) => ({
         // Delete the List
         return List.delete(args._id)
       },
+    },
+  },
+})
+*/
+
+import { Types } from '@harmonyjs/persistence'
+
+export default ({
+  fields: {
+    numberOfTasks: {
+      type: Types.Number,
+      resolve: async ({ source, resolvers: { Task } }) => Task.count({ filter: { list: source._id } }),
+    },
+
+    numberOfDone: {
+      type: Types.Number,
+      args: {
+        isDone: Types.Boolean,
+        nestedArgs: {
+          someInt: Types.Number,
+          someString: Types.String,
+          someNested: {
+            nestedBoolean: Types.Boolean,
+          },
+        },
+      },
+      resolve: async ({ source, resolvers: { Task } }) => Task.count({ filter: { list: source._id, done: true } }),
+    },
+
+    nestedTransient: {
+      type: {
+        hello: Types.String,
+      },
+      resolve: () => null,
     },
   },
 })

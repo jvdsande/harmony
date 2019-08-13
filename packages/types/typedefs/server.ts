@@ -42,7 +42,7 @@ export type ClusterConfig = {
 // Authentication Controller
 export type AuthenticationConfig = {
   secret: string,
-  validate?: () => Promise<boolean>
+  validate?: (decoded: any, request: any, h: any) => Promise<boolean>
 }
 
 // Web Controller

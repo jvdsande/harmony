@@ -11,7 +11,8 @@
     "react/no-unescaped-entities": "off",
     "no-unused-vars": "off",
     "compat/compat": "off",
-    "camelcase": "warn"
+    "camelcase": "warn",
+    "max-classes-per-file": "off"
   },
   "plugins": [ "@typescript-eslint", "import" ],
   "settings": {

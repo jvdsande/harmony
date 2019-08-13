@@ -17,24 +17,6 @@ Query.configure()
 const ListController = new Controller('list')
 const TaskController = new Controller('task')
 
-
-type ListElement = {
-  _id: string,
-  name: string,
-  description: string,
-  numberOfTasks: number,
-  numberOfDone: number,
-}
-
-type TaskElement = {
-  _id: string,
-  name: string,
-  done: boolean,
-  list: {
-    _id: string,
-  },
-}
-
 const listSubscribe = ListController.query
   .list()
   .select({
@@ -44,7 +26,7 @@ const listSubscribe = ListController.query
     numberOfDone: true,
     description: true,
   })
-  .subscribe((lists: Array<ListElement>) => {
+  .subscribe((lists) => {
     store.lists = lists
   }, ['task'])
 
@@ -58,7 +40,7 @@ TaskController.query
       _id: true,
     },
   })
-  .subscribe((tasks: Array<TaskElement>) => {
+  .subscribe((tasks) => {
     store.tasks = tasks
   })
 
@@ -72,9 +54,7 @@ const Input = collect(({ value }) => (
   />
 ))
 
-class _Task extends React.Component<{
-  task: TaskElement
-}> {
+class _Task extends React.Component {
   updateTask = _.debounce(async () => {
     const { task } = this.props
     await TaskController.mutate.update().withId(task._id).withContent({ name: task.name })
@@ -114,9 +94,7 @@ class _Task extends React.Component<{
 
 const Task = collect(_Task)
 
-class _List extends React.Component<{
-  list: ListElement
-}> {
+class _List extends React.Component {
   updateList = _.debounce(async () => {
     const { list } = this.props
     await ListController.mutate.update().withId(list._id).withContent({ description: list.description, name: list.name })
@@ -157,7 +135,7 @@ class _List extends React.Component<{
         />
         <div className="tasks">
           {
-            store.tasks && store.tasks.filter(task => task.list._id === list._id).map(task => <Task key={task._id} task={task} />)
+            store.tasks && store.tasks.filter((task) => task.list._id === list._id).map((task) => <Task key={task._id} task={task} />)
           }
         </div>
         <div className="new">
@@ -185,7 +163,7 @@ class _List extends React.Component<{
 
 const List = collect(_List)
 
-class _App extends React.Component<void> {
+class _App extends React.Component {
   render() {
     return (
       <div className="container">
@@ -194,7 +172,7 @@ class _App extends React.Component<void> {
         </h1>
         <div className="lists">
           {
-            store.lists && store.lists.map(list => <List key={list._id} list={list} />)
+            store.lists && store.lists.map((list) => <List key={list._id} list={list} />)
           }
         </div>
         <div className="config">

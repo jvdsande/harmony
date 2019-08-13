@@ -1,11 +1,8 @@
-import { SchemaTypes as Types } from 'mongoose'
+import { Types } from '@harmonyjs/persistence'
 
 export default {
   name: Types.String,
   done: Types.Boolean,
-  list: {
-    type: Types.ObjectId,
-    ref: 'lists',
-  },
+  list: Types.Reference.of('list'),
   updateDate: Types.Date,
 }

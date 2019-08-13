@@ -23,9 +23,8 @@
             "@babel/plugin-transform-runtime",
             {
                 "regenerator": true,
-                "corejs": 2 
+                "corejs": 2
             }
-        ],
-        "transform-flow-strip-types"
+        ]
     ]
 }

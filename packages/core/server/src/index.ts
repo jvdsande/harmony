@@ -66,6 +66,9 @@ export default class Server {
     await this.configureAuthentication()
 
     await this.configureControllers()
+
+    // Start the server
+    await this.server.start()
   }
 
   async createServer() {
@@ -87,6 +90,8 @@ export default class Server {
     if (cluster && cluster.redis) {
       io.adapter(IORedis(cluster.redis))
     }
+
+    this.server.io = io
   }
 
   async configureAuthentication() {
@@ -145,7 +150,7 @@ export default class Server {
   async createCluster() {
     const { cluster, endpoint, log } = this.config
 
-    executeOnCluster({
+    await executeOnCluster({
       cluster,
       prepare: () => {
         // Do not specify a listening port, and disable autoListen: the listening will be done on master
@@ -181,7 +186,7 @@ export default class Server {
             )
           }, 750)
         })
-        ifWorker(worker => this.logger.info(
+        ifWorker((worker) => this.logger.info(
           `Worker ${worker.id} initialized`,
         ))
       },

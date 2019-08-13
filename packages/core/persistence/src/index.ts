@@ -1,211 +1,133 @@
 import GraphQLJson from 'graphql-type-json'
 import GraphQLDate from 'graphql-date'
 
-import SchemaTypes from './schema-types'
+import ControllerApollo from '@harmonyjs/controller-apollo'
+import ControllerPersistenceEvents from '@harmonyjs/controller-persistence-events'
 
-import { Model, sanitizeModel, FieldMode as FieldModeExport } from './utils/model'
-import {
-  extractTypesFromModelTo,
-  generateFilterTypes,
-  generateInputTypes, generateMutationType,
-  generateOutputTypes, generateQueryType,
-  combineTypes,
-  TypeNameMap,
-} from './utils/types'
-import AccessorClass from './accessor'
-import ControllerPersistence from './controller'
+import Logger from '@harmonyjs/logger'
 
-export const Types = SchemaTypes
-export const FieldMode = FieldModeExport
-export const Accessor = AccessorClass
-export { SchemaType } from './schema-types'
-export { SchemaEntry } from './utils/model'
+// Import helpers and types
+import SchemaModel, { NestedProperty } from './entities/schema-model'
+import Accessor from './entities/accessor'
+import { sanitizeModel } from './utils/model'
+import Events from './entities/events'
+import { computeFieldResolvers, computeMainResolvers, computeReferenceResolvers } from './utils/resolvers'
 
-export class Persistence {
-    typeNames : TypeNameMap = {}
+// Export utility types and classes
+export { default as Types, SchemaType } from './entities/schema-types'
+export { default as Accessor } from './entities/accessor'
+export { FieldMode, SchemaEntry } from './entities/model'
 
-    rootTypeNames : TypeNameMap = {}
+const logger = new Logger('Persistence')
 
-    models: [Model]
+export default class Persistence {
+  models = []
 
-    accessors: { [key: string]: AccessorClass }
+  accessors : {[key: string]: Accessor}= {}
 
-    constructor(config) {
-      this.initializeProperties(config)
+  defaultAccessor = null
+
+  schemaModels : SchemaModel[] = []
+
+  events = new Events()
+
+  constructor(config) {
+    this.initializeProperties(config)
+  }
+
+  initializeProperties(config) {
+    if (!config) {
+      return
     }
 
-    initializeProperties(config) {
-      if (!config) {
-        return
-      }
+    this.models = config.models || this.models
+    this.accessors = config.accessors || this.accessors
+    this.defaultAccessor = config.defaultAccessor || this.defaultAccessor
+  }
 
-      this.accessors = config.accessors || this.accessors
-      this.models = config.models || this.models
+  async init(config) {
+    this.initializeProperties(config)
 
-      if (!config.accessors) {
-        this.accessors = { empty: new Accessor() }
-      }
+    if (!this.defaultAccessor) {
+      logger.warn(`No default accessor was specified. Will fallback to accessor '${Object.keys(this.accessors)[0]}"`)
+      this.defaultAccessor = Object.keys(this.accessors)[0]
     }
 
-    async init(config) {
-      this.initializeProperties(config)
+    logger.info(`Initializing Persistence instance with ${this.models.length} models`)
+    logger.info(`Accessors: [${Object.keys(this.accessors)}] - default: ${this.defaultAccessor}`)
 
-      const extractTypesFromModel = extractTypesFromModelTo(this.typeNames, this.rootTypeNames)
+    this.schemaModels = this.models
+      .map(sanitizeModel)
+      .map((model) => new SchemaModel(model))
 
-      this.models
-        .map(sanitizeModel)
-        .map(extractTypesFromModel)
+    await Promise.all(
+      Object.values(this.accessors)
+        .map((accessor) => accessor.initialize({
+          models: this.models,
+          events: this.events,
+        })),
+    )
+  }
 
-      Object.keys(this.accessors).map(a => this.accessors[a].initialize({ models: this.models }))
+  get schema() {
+    return `
+scalar Date
+scalar JSON
+    
+${this.schemaModels
+    .map((schemaModel) => schemaModel.types)
+    .join('\n')}`
+  }
 
-      return this
-    }
+  get resolvers() {
+    const resolvers: { [key: string]: any } = {}
 
-    get graphqlTypes() {
-      const outputTypes = generateOutputTypes(this.typeNames)
-      const inputTypes = generateInputTypes(this.typeNames)
-      const filterTypes = generateFilterTypes(this.rootTypeNames, this.typeNames)
+    const localResolvers: { [key: string]: any } = {}
 
-      const queryType = generateQueryType(this.rootTypeNames)
-      const mutationType = generateMutationType(this.rootTypeNames)
+    const defaultAccessor = this.accessors[this.defaultAccessor]
 
-      return combineTypes({
-        outputTypes,
-        inputTypes,
-        filterTypes,
+    resolvers.Query = {}
+    resolvers.Mutation = {}
 
-        queryType,
-        mutationType,
-      })
-    }
+    computeMainResolvers({
+      models: this.models,
+      accessors: this.accessors,
+      defaultAccessor,
+      resolvers,
+      localResolvers,
+    })
 
-    get resolvers() {
-      const resolvers : {[key: string]: any } = {}
+    computeReferenceResolvers({
+      models: this.models,
+      accessors: this.accessors,
+      schemaModels: this.schemaModels,
+      defaultAccessor,
+      resolvers,
+    })
 
-      const defaultAccessor = this.accessors[Object.keys(this.accessors)[0]]
+    computeFieldResolvers({
+      models: this.models,
+      resolvers,
+      localResolvers,
+    })
 
-      // Compute accessors resolvers
-      this.models.forEach((model) => {
-        resolvers.Query = resolvers.Query || {}
-        resolvers.Mutation = resolvers.Mutation || {}
+    resolvers.JSON = GraphQLJson
+    resolvers.Date = GraphQLDate
 
-        // Query
-        const queryResolvers = [
-          {
-            suffix: '',
-            accessor: defaultAccessor.read,
-          }, {
-            suffix: 'List',
-            accessor: defaultAccessor.readMany,
-          }, {
-            suffix: 'Count',
-            accessor: defaultAccessor.count,
-          },
-        ]
+    return resolvers
+  }
 
-        queryResolvers.forEach((res) => {
-          resolvers.Query[model.name + res.suffix] = async (source, args, context, info) => res.accessor.apply(
-            defaultAccessor, [{
-              source, args, context, info, model,
-            }],
-          )
-        })
-
-        // Mutations
-        const mutationResolvers = [
-          {
-            suffix: 'Create',
-            accessor: defaultAccessor.create,
-          }, {
-            suffix: 'CreateMany',
-            accessor: defaultAccessor.createMany,
-          }, {
-            suffix: 'Update',
-            accessor: defaultAccessor.update,
-          }, {
-            suffix: 'UpdateMany',
-            accessor: defaultAccessor.updateMany,
-          }, {
-            suffix: 'Delete',
-            accessor: defaultAccessor.delete,
-          }, {
-            suffix: 'DeleteMany',
-            accessor: defaultAccessor.deleteMany,
-          },
-        ]
-
-        mutationResolvers.forEach((res) => {
-          resolvers.Mutation[model.name + res.suffix] = async (source, args, context, info) => res.accessor.apply(
-            defaultAccessor, [{
-              source, args, context, info, model,
-            }],
-          )
-        })
-      })
-
-      // Compute ref resolvers
-      Object.entries(this.typeNames)
-        .forEach(([name, type]) => {
-          // Search for ref fields
-          Object.entries(type.schema)
-            .filter(([fieldName, fieldType]) => fieldType.type === 'reference')
-            .forEach(([fieldName, fieldType]) => {
-              resolvers[type.output] = resolvers[type.output] || {}
-              resolvers[type.output][fieldName] = async (source, args, context, info) => defaultAccessor
-                .resolveRef({
-                  source,
-                  args,
-                  context,
-                  info,
-                  fieldName,
-                  model: this.models.find(m => m.name === fieldType.of),
-                })
-            })
-
-          // Search for array ref fields
-          Object.entries(type.schema)
-            .filter(([fieldName, fieldType]) => fieldType.type === 'array' && fieldType.of.type === 'reference')
-            .forEach(([fieldName, fieldType]) => {
-              resolvers[type.output] = resolvers[type.output] || {}
-              resolvers[type.output][fieldName] = async (source, args, context, info) => defaultAccessor
-                .resolveRefs({
-                  source,
-                  args,
-                  context,
-                  info,
-                  fieldName,
-                  model: this.models.find(m => m.name === fieldType.of.of),
-                })
-            })
-        })
-
-      // Compute fields resolvers
-      this.models.forEach((model) => {
-        const rootName = this.rootTypeNames[model.name].output
-
-        Object.entries(model.fields || {})
-          .forEach(([name, field]) => {
-            if (field.resolve) {
-              resolvers[rootName] = resolvers[rootName] || {}
-              resolvers[rootName][name] = async (source, args, context, info) => field.resolve({
-                source, args, context, info,
-              })
-            }
-          })
-      })
-
-      resolvers.JSON = GraphQLJson
-      resolvers.Date = GraphQLDate
-
-      return resolvers
-    }
-
-    controller({ path, enablePlayground }) {
-      return ControllerPersistence({
+  get controllers() {
+    return ({
+      ControllerGraphQL: ({ path, enablePlayground }) => ControllerApollo({
         path,
         enablePlayground,
-        graphqlTypes: this.graphqlTypes,
+        schema: this.schema,
         resolvers: this.resolvers,
-      })
-    }
+      }),
+      ControllerEvents: () => ControllerPersistenceEvents({
+        events: this.events,
+      }),
+    })
+  }
 }
