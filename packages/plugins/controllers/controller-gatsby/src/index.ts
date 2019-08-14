@@ -5,18 +5,23 @@ import httpProxy from 'http-proxy'
 import fs from 'fs'
 import path from 'path'
 
-import Logger from '@harmonyjs/logger'
+import { Controller } from '@harmonyjs/server'
 
-import { ServerController } from '@harmonyjs/typedefs/server'
 import { ControllerGatsbyConfiguration } from './types'
-
-const logger : Logger = new Logger('GatsbyController')
 
 // Only the first instance will be functional in development
 let nbInstance = 0
 
-const GatsbyController = function (options : ControllerGatsbyConfiguration) : ServerController {
-  async function initialize(server) {
+export default class ControllerGatsby extends Controller {
+  name = 'ControllerGatbsy'
+
+  plugins = [Inert, H2O2]
+
+  config: ControllerGatsbyConfiguration
+
+  async initialize({ server, logger }) {
+    const options = this.config
+
     // Gatsby needs two things to for a start: a static folder serving, and a proxy for development mode
     // In development, we can use options.forceStatic to run in production-like mode
     const production = process.env.NODE_ENV === 'production' || options.forceStatic
@@ -67,7 +72,7 @@ const GatsbyController = function (options : ControllerGatsbyConfiguration) : Se
 
         // Finally, we proxy the upgrade request if they start by /socket.io
         const wsProxy = httpProxy.createProxyServer({ target: `http://${options.hmr.endpoint}:${options.hmr.port}` })
-        wsProxy.on('error', error => logger.error(error))
+        wsProxy.on('error', (error) => logger.error(error))
 
         server.listener.on('upgrade', (req, socket, head) => {
           if (req.url.startsWith('/socket.io')) wsProxy.ws(req, socket, head)
@@ -145,14 +150,4 @@ const GatsbyController = function (options : ControllerGatsbyConfiguration) : Se
 
     logger.info(`Gatsby static site served on ${options.path} (${options.dir})`)
   }
-
-  return {
-    initialize,
-    plugins: [
-      Inert,
-      H2O2,
-    ],
-  }
 }
-
-export default GatsbyController

@@ -1,3 +1,5 @@
+import Logger from '@harmonyjs/logger'
+
 function getPluginsFromController({
   controller,
   registeredPlugins,
@@ -48,7 +50,11 @@ export async function registerControllers({ controllers, server, log }) {
   await Promise.all(controllers.map((c, i) => {
     const plugin = {
       name: `harmonyjs-${i}`,
-      register: () => c.initialize({ server, log }),
+      register: () => {
+        const logger = new Logger(c.name)
+        logger.level = log.level
+        c.initialize({ server, logger })
+      },
     }
 
     return server.register(plugin)

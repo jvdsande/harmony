@@ -8,7 +8,8 @@ import Persistence from '@harmonyjs/persistence'
 import ControllerSPA from '@harmonyjs/controller-spa'
 
 // Require Accessors for Persistence
-import MongooseAccessor from '@harmonyjs/accessor-mongoose'
+import AccessorMongoose from '@harmonyjs/accessor-mongoose'
+import AccessorMongoosePluginElasticSerach from '@harmonyjs/accessor-mongoose-plugin-elasticsearch'
 
 // Load models
 import models from './persistence/models'
@@ -21,9 +22,16 @@ const persistence = new Persistence()
 persistence.init({
   models,
   accessors: {
-    mongo: new MongooseAccessor({
+    mongo: new AccessorMongoose({
       host: 'mongodb://localhost:27017/',
       database: 'harmony-example',
+      plugins: [
+        new AccessorMongoosePluginElasticSerach({
+          host: 'localhost',
+          port: 9200,
+          prefix: 'development',
+        }),
+      ],
     }),
   },
   defaultAccessor: 'mongo',
@@ -42,17 +50,17 @@ server.init({
 
   controllers: [
     // Exposing the GraphQL schema on /graphql
-    ControllerGraphQL({
+    new ControllerGraphQL({
       path: '/graphql',
       enablePlayground: true,
     }),
 
     // Forwarding the Persistence events on SocketIO
-    ControllerEvents(),
+    new ControllerEvents(),
 
     // Exposing an SPA from static files (production) or by proxying Webpack (development), using
     // Hapi Views
-    ControllerSPA({
+    new ControllerSPA({
       path: '/',
 
       statics: {

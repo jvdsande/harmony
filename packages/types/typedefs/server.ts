@@ -78,6 +78,7 @@ export type GraphqlConfig = {
 export type ServerController = {
   initialize: (Object) => Promise<void>,
   plugins: Array<any>,
+  name: string,
 }
 
 export type ControllerSPAConfiguration = {

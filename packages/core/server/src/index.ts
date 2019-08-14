@@ -16,6 +16,9 @@ import { executeOnCluster, ifMaster, ifWorker } from './utils/cluster'
 // Require Auth Controller
 import ControllerAuth from './auth'
 
+// Export utility types and classes
+export { default as Controller } from './entities/controller'
+
 type ServerConfig = {
   endpoint?: any,
   controllers?: any,

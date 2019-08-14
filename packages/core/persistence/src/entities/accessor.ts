@@ -1,5 +1,7 @@
 export default class Accessor {
-  async initialize({ models, events }) {
+  name: string = 'Accessor'
+
+  async initialize({ models, events, logger }) {
     return null
   }
 

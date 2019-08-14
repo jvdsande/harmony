@@ -85,40 +85,44 @@ function sanitizeFilter(filter) {
   return newFilter
 }
 
-export default class MongooseAccessor extends Accessor {
-  private models = {}
+export default class AccessorMongoose extends Accessor {
+  public models = {}
+
+  public logger = null
+
+  public name = 'AccessorMongoose'
 
   constructor(private config : any) {
     super()
-
-    Mongoose.connect(
-      config.host,
-      {
-        useNewUrlParser: true,
-        useCreateIndex: true,
-        useFindAndModify: false,
-        dbName: config.database,
-      },
-    )
   }
 
-  async initialize({ models, events }) {
-    // Convert Persistence Models to Mongoose Models
+  async initialize({ models, events, logger }) {
+    // Convert Persistence Models to Mongoose Schemas
+    const schemas = {}
+
+    const { plugins } = this.config
+    this.logger = logger
+
+    logger.info('Initializing Mongoose Accessor')
+    logger.info('Converting Schemas')
+
     models.forEach((model) => {
       const schema = new Mongoose.Schema(toMongooseSchema(model.schema))
 
-      const updateHook = (document) => {
+      const updateHook = (document, next) => {
         events.updated({
           model,
           document,
         })
+        next()
       }
 
-      const removeHook = (document) => {
+      const removeHook = (document, next) => {
         events.removed({
           model,
           document,
         })
+        next()
       }
 
       // Create
@@ -139,8 +143,36 @@ export default class MongooseAccessor extends Accessor {
       schema.post('deleteMany', removeHook)
       schema.post('findOneAndRemove', removeHook)
 
-      this.models[model.name] = Mongoose.model(model.name, schema)
+      schemas[model.name] = schema
     })
+
+    logger.info('Registering plugins')
+
+    plugins.forEach((plugin) => plugin.initialize({
+      models, schemas, events, logger,
+    }))
+
+    logger.info('Creating Mongoose models')
+
+    // Convert Mongoose Schemas to Mongoose models
+    models.forEach((model) => {
+      this.models[model.name] = Mongoose.model(model.name, schemas[model.name])
+    })
+
+    logger.info('Connecting to MongoDB')
+
+    Mongoose.connect(
+      this.config.host,
+      {
+        useNewUrlParser: true,
+        useCreateIndex: true,
+        useFindAndModify: false,
+        dbName: this.config.database,
+      },
+    )
+      .then(() => {
+        logger.info('Mongoose Accessor successfully initialized')
+      })
   }
 
 

@@ -1,21 +1,13 @@
-// Require ApolloGraphql
-import { ApolloServer, gql } from 'apollo-server-hapi'
-
-// Require logger
-import Logger from '@harmonyjs/logger'
-
-import { ServerController } from '@harmonyjs/typedefs/server'
-
-const logger : Logger = new Logger('GraphQLController')
+import { Controller } from '@harmonyjs/server'
 
 /*
  * The Persistence Events Controller transfers Persistence Events to SocketIO layer
  */
-const ControllerPersistenceEvents = function (options) : ServerController {
-  const { events } = options
+export default class ControllerPersistenceEvents extends Controller {
+  name = 'ControllerPersistenceEvents'
 
-  async function initialize({ server, log }) {
-    logger.level = log.level
+  async initialize({ server, logger }) {
+    const { events } = this.config
 
     events.on('updated', ({ model, document }) => {
       server.io.to('persistence-events').emit(`${model.name.toLowerCase()}-updated`, document)
@@ -33,11 +25,4 @@ const ControllerPersistenceEvents = function (options) : ServerController {
 
     logger.info('Persistence events are forwarded to Socket.IO')
   }
-
-  return {
-    initialize,
-    plugins: [],
-  }
 }
-
-export default ControllerPersistenceEvents

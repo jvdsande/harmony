@@ -1,26 +1,28 @@
 // Require ApolloGraphql
 import { ApolloServer } from 'apollo-server-hapi'
 import { ApolloGateway, RemoteGraphQLDataSource } from '@apollo/gateway'
+import { ServiceDefinition } from '@apollo/federation'
 
-// Require logger
-import Logger from '@harmonyjs/logger'
-
-import { ServerController } from '@harmonyjs/typedefs/server'
-
-const logger : Logger = new Logger('GraphQLController')
+import { Controller } from '@harmonyjs/server'
 
 /*
  * The Apollo Gateway Controller exposes a GraphQL endpoint through an Apollo Federation Gateway
  */
-const ControllerApollo = function (options) : ServerController {
-  const {
-    path,
-    enablePlayground,
-    services,
-  } = options
+export default class ControllerApolloGateway extends Controller {
+  name = 'ControllerApolloGateway'
 
-  async function initialize({ server, log }) {
-    logger.level = log.level
+  config : {
+    path: string,
+    enablePlayground?: boolean,
+    services: ServiceDefinition[]
+  }
+
+  async initialize({ server, logger }) {
+    const {
+      path,
+      enablePlayground,
+      services,
+    } = this.config
     logger.info('Registering GraphQL Federation endpoint...')
 
     const gateway = new ApolloGateway({
@@ -66,11 +68,4 @@ const ControllerApollo = function (options) : ServerController {
       logger.info(`GraphQL Federation playground at ${path}`)
     }
   }
-
-  return {
-    initialize,
-    plugins: [],
-  }
 }
-
-export default ControllerApollo

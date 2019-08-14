@@ -4,28 +4,30 @@ import Vision from '@hapi/vision'
 
 import HapiReactViews from 'hapi-react-views'
 
-import Logger from '@harmonyjs/logger'
+import { Controller } from '@harmonyjs/server'
+import { ControllerSPAConfiguration } from '@harmonyjs/typedefs/server'
 
-import { ServerController, ControllerSPAConfiguration } from '@harmonyjs/typedefs/server'
-
-const logger : Logger = new Logger('SPAController')
 
 /*
  * The SPA Controller exposes a single-page app on a given path,
  * statically built using Webpack, or served by Webpack-Dev-Server in development
  */
-const ControllerSPA = function (options : ControllerSPAConfiguration) : ServerController {
-  const {
-    path,
-    forceStatic,
-    hmr,
+export default class ControllerSPA extends Controller {
+  name = 'ControllerSPA'
 
-    statics,
-    views,
-  } = options
+  plugins = [Inert, H2O2, Vision]
 
-  async function initialize({ server, log }) {
-    logger.level = log.level
+  config : ControllerSPAConfiguration
+
+  async initialize({ server, logger }) {
+    const {
+      path,
+      forceStatic,
+      hmr,
+
+      statics,
+      views,
+    } = this.config
 
     // The SPA Controller is made of two parts: a static serving system for resources,
     // and a view system for rendering the initial page(s)
@@ -33,7 +35,7 @@ const ControllerSPA = function (options : ControllerSPAConfiguration) : ServerCo
     // In development, we can use options.forceStatic to run in production-like mode
     const production = process.env.NODE_ENV === 'production' || forceStatic
 
-    logger.info(`Initializing SPA Controller on path ${options.path} (Environment: ${
+    logger.info(`Initializing SPA Controller on path ${path} (Environment: ${
       process.env.NODE_ENV || 'development'
     }, Mode: ${
       production ? 'static' : 'webpack'
@@ -106,17 +108,6 @@ const ControllerSPA = function (options : ControllerSPAConfiguration) : ServerCo
       logger.info(`Webpack proxy established to address ${hmr.endpoint}:${hmr.port}`)
     }
 
-    logger.info(`SPA site served on ${options.path}`)
-  }
-
-  return {
-    initialize,
-    plugins: [
-      Vision,
-      Inert,
-      H2O2,
-    ],
+    logger.info(`SPA site served on ${path}`)
   }
 }
-
-export default ControllerSPA

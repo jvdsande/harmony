@@ -62,10 +62,16 @@ export default class Persistence {
 
     await Promise.all(
       Object.values(this.accessors)
-        .map((accessor) => accessor.initialize({
-          models: this.models,
-          events: this.events,
-        })),
+        .map((accessor) => {
+          const accessorLogger = new Logger(accessor.name)
+          accessorLogger.level = logger.level
+
+          return accessor.initialize({
+            models: this.models,
+            events: this.events,
+            logger: accessorLogger,
+          })
+        }),
     )
   }
 
@@ -118,16 +124,29 @@ ${this.schemaModels
   }
 
   get controllers() {
+    const {
+      schema,
+      resolvers,
+      events,
+    } = this
+
     return ({
-      ControllerGraphQL: ({ path, enablePlayground }) => ControllerApollo({
-        path,
-        enablePlayground,
-        schema: this.schema,
-        resolvers: this.resolvers,
-      }),
-      ControllerEvents: () => ControllerPersistenceEvents({
-        events: this.events,
-      }),
+      ControllerGraphQL: class ControllerGraphQL extends ControllerApollo {
+        constructor(config) {
+          super({
+            ...config,
+            schema,
+            resolvers,
+          })
+        }
+      },
+      ControllerEvents: class ControllerEvents extends ControllerPersistenceEvents {
+        constructor() {
+          super({
+            events,
+          })
+        }
+      },
     })
   }
 }

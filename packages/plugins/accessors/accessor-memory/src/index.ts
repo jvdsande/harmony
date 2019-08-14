@@ -1,8 +1,16 @@
 import { Accessor } from '@harmonyjs/persistence'
 
-export default class MemoryAccessor extends Accessor {
+export default class AccessorMemory extends Accessor {
+  public name = 'AccessorMemory'
+
   constructor(private store) {
     super()
+  }
+
+  async initialize({ models, events, logger }) {
+    logger.info('Initializing Memory Accessor with store', this.store)
+
+    return null
   }
 
   // Queries
@@ -17,7 +25,7 @@ export default class MemoryAccessor extends Accessor {
     source, args, context, info, model,
   }) {
     this.store[model.name] = this.store[model.name] || {}
-    return args.filter._ids.map(id => this.store[model.name][id])
+    return args.filter._ids.map((id) => this.store[model.name][id])
   }
 
   async count({
@@ -30,7 +38,7 @@ export default class MemoryAccessor extends Accessor {
     }
 
     if (args._ids) {
-      count += args.filter._ids.filter(id => this.store[model.name][id]).length
+      count += args.filter._ids.filter((id) => this.store[model.name][id]).length
     }
 
     return count
@@ -62,7 +70,7 @@ export default class MemoryAccessor extends Accessor {
     source, args, context, info, model,
   }) {
     this.store[model.name] = this.store[model.name] || {}
-    const created : Array<any> = await Promise.all(args.records.map(record => this.create({
+    const created : Array<any> = await Promise.all(args.records.map((record) => this.create({
       source,
       context,
       info,
@@ -73,8 +81,8 @@ export default class MemoryAccessor extends Accessor {
     })))
 
     return ({
-      records: created.map(c => c.record),
-      recordIds: created.map(c => c.recordId),
+      records: created.map((c) => c.record),
+      recordIds: created.map((c) => c.recordId),
     })
   }
 
@@ -97,7 +105,7 @@ export default class MemoryAccessor extends Accessor {
     source, args, context, info, model,
   }) {
     this.store[model.name] = this.store[model.name] || {}
-    const updated : Array<any> = await Promise.all(args.records.map(record => this.update({
+    const updated : Array<any> = await Promise.all(args.records.map((record) => this.update({
       source,
       context,
       info,
@@ -108,8 +116,8 @@ export default class MemoryAccessor extends Accessor {
     })))
 
     return ({
-      records: updated.map(c => c.record),
-      recordIds: updated.map(c => c.recordId),
+      records: updated.map((c) => c.record),
+      recordIds: updated.map((c) => c.recordId),
     })
   }
 
@@ -129,7 +137,7 @@ export default class MemoryAccessor extends Accessor {
     source, args, context, info, model,
   }) {
     this.store[model.name] = this.store[model.name] || {}
-    const deleted : Array<any> = await Promise.all(args.records.map(record => this.delete({
+    const deleted : Array<any> = await Promise.all(args.records.map((record) => this.delete({
       source,
       context,
       info,
@@ -140,8 +148,8 @@ export default class MemoryAccessor extends Accessor {
     })))
 
     return ({
-      records: deleted.map(c => c.record),
-      recordIds: deleted.map(c => c.recordId),
+      records: deleted.map((c) => c.record),
+      recordIds: deleted.map((c) => c.recordId),
     })
   }
 }

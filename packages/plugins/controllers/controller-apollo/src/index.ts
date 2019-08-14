@@ -2,27 +2,33 @@
 import { ApolloServer, gql } from 'apollo-server-hapi'
 import { buildFederatedSchema } from '@apollo/federation'
 
-// Require logger
-import Logger from '@harmonyjs/logger'
-
-import { ServerController } from '@harmonyjs/typedefs/server'
-
-const logger : Logger = new Logger('GraphQLController')
+import { Controller } from '@harmonyjs/server'
 
 /*
  * The Apollo Controller exposes a GraphQL endpoint through an Apollo Server
  */
-const ControllerApollo = function (options) : ServerController {
-  const {
-    path,
-    enablePlayground,
+export default class ControllerApollo extends Controller {
+  name = 'ControllerApollo'
 
-    schema,
-    resolvers,
-  } = options
+  config : {
+    path: string,
+    enablePlayground?: boolean,
 
-  async function initialize({ server, log }) {
-    logger.level = log.level
+    schema: string,
+    resolvers: {
+      [key: string]: any
+    }
+  }
+
+  async initialize({ server, logger }) {
+    const {
+      path,
+      enablePlayground,
+
+      schema,
+      resolvers,
+    } = this.config
+
     logger.info('Registering GraphQL endpoint...')
 
     const typeDefs = gql(schema)
@@ -55,11 +61,4 @@ const ControllerApollo = function (options) : ServerController {
       logger.info(`GraphQL playground at ${path}`)
     }
   }
-
-  return {
-    initialize,
-    plugins: [],
-  }
 }
-
-export default ControllerApollo
