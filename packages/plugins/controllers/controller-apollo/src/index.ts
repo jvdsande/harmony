@@ -13,6 +13,7 @@ export default class ControllerApollo extends Controller {
   config : {
     path: string,
     enablePlayground?: boolean,
+    mock?: boolean,
 
     schema: string,
     resolvers: {
@@ -27,6 +28,7 @@ export default class ControllerApollo extends Controller {
 
       schema,
       resolvers,
+      mock,
     } = this.config
 
     logger.info('Registering GraphQL endpoint...')
@@ -37,6 +39,8 @@ export default class ControllerApollo extends Controller {
       schema: buildFederatedSchema([{ typeDefs, resolvers }]),
       playground: !!enablePlayground,
       introspection: !!enablePlayground,
+      mocks: mock,
+      mockEntireSchema: mock,
       context: ({ request }) => ({
         authentication: request.authentication,
       }),

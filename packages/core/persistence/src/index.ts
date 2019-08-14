@@ -11,7 +11,11 @@ import SchemaModel, { NestedProperty } from './entities/schema-model'
 import Accessor from './entities/accessor'
 import { sanitizeModel } from './utils/model'
 import Events from './entities/events'
-import { computeFieldResolvers, computeMainResolvers, computeReferenceResolvers } from './utils/resolvers'
+import {
+  computeFieldResolvers,
+  computeMainResolvers,
+  computeReferenceResolvers,
+} from './utils/resolvers'
 
 // Export utility types and classes
 export { default as Types, SchemaType } from './entities/schema-types'
@@ -49,8 +53,10 @@ export default class Persistence {
     this.initializeProperties(config)
 
     if (!this.defaultAccessor) {
-      logger.warn(`No default accessor was specified. Will fallback to accessor '${Object.keys(this.accessors)[0]}"`)
-      this.defaultAccessor = Object.keys(this.accessors)[0]
+      logger.warn(`No default accessor was specified. Will fallback to accessor '${
+        Object.keys(this.accessors || { default: 'mock' })[0]
+      }"`)
+      this.defaultAccessor = Object.keys(this.accessors || { default: null })[0]
     }
 
     logger.info(`Initializing Persistence instance with ${this.models.length} models`)
@@ -61,7 +67,7 @@ export default class Persistence {
       .map((model) => new SchemaModel(model))
 
     await Promise.all(
-      Object.values(this.accessors)
+      Object.values(this.accessors || {})
         .map((accessor) => {
           const accessorLogger = new Logger(accessor.name)
           accessorLogger.level = logger.level
@@ -95,27 +101,29 @@ ${this.schemaModels
     resolvers.Query = {}
     resolvers.Mutation = {}
 
-    computeMainResolvers({
-      models: this.models,
-      accessors: this.accessors,
-      defaultAccessor,
-      resolvers,
-      localResolvers,
-    })
+    if (defaultAccessor) {
+      computeMainResolvers({
+        models: this.models,
+        accessors: this.accessors,
+        defaultAccessor,
+        resolvers,
+        localResolvers,
+      })
 
-    computeReferenceResolvers({
-      models: this.models,
-      accessors: this.accessors,
-      schemaModels: this.schemaModels,
-      defaultAccessor,
-      resolvers,
-    })
+      computeReferenceResolvers({
+        models: this.models,
+        accessors: this.accessors,
+        schemaModels: this.schemaModels,
+        defaultAccessor,
+        resolvers,
+      })
 
-    computeFieldResolvers({
-      models: this.models,
-      resolvers,
-      localResolvers,
-    })
+      computeFieldResolvers({
+        models: this.models,
+        resolvers,
+        localResolvers,
+      })
+    }
 
     resolvers.JSON = GraphQLJson
     resolvers.Date = GraphQLDate
@@ -128,6 +136,7 @@ ${this.schemaModels
       schema,
       resolvers,
       events,
+      defaultAccessor,
     } = this
 
     return ({
@@ -137,6 +146,7 @@ ${this.schemaModels
             ...config,
             schema,
             resolvers,
+            mock: defaultAccessor == null,
           })
         }
       },

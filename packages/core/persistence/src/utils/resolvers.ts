@@ -3,13 +3,15 @@ import SchemaModel, { NestedProperty } from '../entities/schema-model'
 import { Field } from '../entities/model'
 
 // Query
-const queryResolvers = [
+export const queryResolvers = [
   {
     type: 'read',
     suffix: '',
+    alias: ['get'],
   }, {
     type: 'readMany',
     suffix: 'List',
+    alias: ['list'],
   }, {
     type: 'count',
     suffix: 'Count',
@@ -17,7 +19,7 @@ const queryResolvers = [
 ]
 
 // Mutations
-const mutationResolvers = [
+export const mutationResolvers = [
   {
     type: 'create',
     suffix: 'Create',
@@ -79,6 +81,12 @@ export function computeMainResolvers({
       }
 
       localResolvers[extractModelType(model.name)][res.type] = resolvers.Query[model.name + res.suffix]
+
+      if (res.alias) {
+        res.alias.forEach((alias) => {
+          localResolvers[extractModelType(model.name)][alias] = resolvers.Query[model.name + res.suffix]
+        })
+      }
     })
 
     mutationResolvers.forEach((res) => {
@@ -103,18 +111,15 @@ export function computeMainResolvers({
 
     // Reference Resolver for Federation
     resolvers[extractModelType(model.name)] = resolvers[extractModelType(model.name)] || {}
-    resolvers[extractModelType(model.name)].__resolveReference = async (reference) => {
-      console.log(`__resolveReference called for model ${model.name}`)
-      return accessor.read({
-        args: {
-          _id: reference._id,
-        },
-        model,
-        source: null,
-        context: null,
-        info: null,
-      })
-    }
+    resolvers[extractModelType(model.name)].__resolveReference = async (reference) => accessor.read({
+      args: {
+        _id: reference._id,
+      },
+      model,
+      source: null,
+      context: null,
+      info: null,
+    })
   })
 }
 
@@ -125,7 +130,7 @@ export function computeReferenceResolvers({
   defaultAccessor,
   resolvers,
 }) {
-  const nestedTypes = schemaModels.flatMap((model) => model.flattenNestedTypes())
+  const nestedTypes = schemaModels.flatMap((model) => model.fields.flattenNestedTypes())
   const types : (SchemaModel | NestedProperty)[] = [...schemaModels, ...nestedTypes]
 
   const makeReferenceResolver = (typeName, fieldName, comparator) => {
@@ -159,10 +164,10 @@ export function computeReferenceResolvers({
   }
 
   types.forEach((type) => {
-    const references = type.getPrimitiveProperties()
+    const references = type.fields.getPrimitiveProperties()
       .filter((prop) => prop.type.type === 'reference')
 
-    const composedReferences = type.getPrimitiveProperties()
+    const composedReferences = type.fields.getPrimitiveProperties()
       .filter((prop) => (prop.type.of && prop.type.of.type === 'reference'))
 
     // Make direct reference fields
@@ -180,37 +185,53 @@ export function computeFieldResolvers({
 }) {
   // Compute fields resolvers
   models.forEach((model) => {
-    const rootName = extractModelType(model.name)
+    function computeResolver({ fields, rootName } : { fields: {[key: string]: Field}, rootName: string}) {
+      Object.entries(fields)
+        .forEach(([name, field]) => {
+          if (field.resolve) {
+            console.log(`Found field ${name} on root ${rootName}`)
+            resolvers[rootName] = resolvers[rootName] || {}
+            resolvers[rootName][name] = async (source, args, context, info) => {
+              const wrappedResolvers = {}
+
+              Object.keys(localResolvers)
+                .forEach((mod) => {
+                  wrappedResolvers[mod] = {}
+                  Object.keys(localResolvers[mod])
+                    .forEach((resolver) => {
+                      wrappedResolvers[mod][resolver] = (localArgs) => localResolvers[mod][resolver](
+                        source,
+                        localArgs,
+                        context,
+                        info,
+                      )
+                    })
+                })
+
+              return field.resolve({
+                source, args, context, info, resolvers: wrappedResolvers,
+              })
+            }
+          }
+        })
+    }
 
     const fields : {[key: string]: Field} = (model.fields ? model.fields.fields : {}) || {}
+    const queries : {[key: string]: Field} = (model.fields ? model.fields.queries : {}) || {}
+    const mutations : {[key: string]: Field} = (model.fields ? model.fields.mutations : {}) || {}
 
-    Object.entries(fields)
-      .forEach(([name, field]) => {
-        if (field.resolve) {
-          resolvers[rootName] = resolvers[rootName] || {}
-          resolvers[rootName][name] = async (source, args, context, info) => {
-            const wrappedResolvers = {}
-
-            Object.keys(localResolvers)
-              .forEach((mod) => {
-                wrappedResolvers[mod] = {}
-                Object.keys(localResolvers[mod])
-                  .forEach((resolver) => {
-                    wrappedResolvers[mod][resolver] = (localArgs) => localResolvers[mod][resolver](
-                      source,
-                      localArgs,
-                      context,
-                      info,
-                    )
-                  })
-              })
-
-            return field.resolve({
-              source, args, context, info, resolvers: wrappedResolvers,
-            })
-          }
-        }
-      })
+    computeResolver({
+      fields,
+      rootName: extractModelType(model.name),
+    })
+    computeResolver({
+      fields: queries,
+      rootName: 'Query',
+    })
+    computeResolver({
+      fields: mutations,
+      rootName: 'Mutation',
+    })
   })
 }
 /* eslint-enable no-param-reassign */

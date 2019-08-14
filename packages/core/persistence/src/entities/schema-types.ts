@@ -14,6 +14,7 @@ export type SchemaEnum =
   | 'id'
 
   | 'nested'
+  | 'raw'
 
 export class SchemaType {
   _object = 'SchemaType'
@@ -87,6 +88,8 @@ export class SchemaType {
         return `[${value}]`
       case 'nested':
         return '{{nested}}'
+      case 'raw':
+        return this.of
       default:
         return ''
     }
@@ -119,6 +122,8 @@ export class SchemaType {
         return `[${value}]`
       case 'nested':
         return '{{nested}}'
+      case 'raw':
+        return this.of
       default:
         return ''
     }

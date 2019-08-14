@@ -1,5 +1,5 @@
 import {
-  FieldMode, FieldModeEnum, Model, Schema, SchemaEntry,
+  FieldMode, FieldModeEnum, Fields, Model, Schema, SchemaEntry,
 } from './model'
 import {
   extractModelType, printGraphqlInputType, printGraphqlProp, printGraphqlType,
@@ -7,136 +7,9 @@ import {
 import { extractNestedType, isNestedType } from '../utils/model'
 import Types, { SchemaType } from './schema-types'
 
-export class NestedProperty {
-  primitiveProperties : {[key: string]: SchemaType} = {}
 
-  nestedProperties: {[key: string]: NestedProperty} = {}
-
-  typeName = null
-
-  schema : Schema = null
-
-  constructor(public type: SchemaEntry, parentName, property) {
-    this.typeName = parentName + extractModelType(property)
-
-    this.schema = extractNestedType(type)
-
-    Object.entries(this.schema)
-      .forEach(([prop, t]) => {
-        if (isNestedType(t)) {
-          this.nestedProperties[prop] = new NestedProperty(t, this.typeName, prop)
-        } else {
-          this.primitiveProperties[prop] = t as SchemaType
-        }
-      })
-  }
-
-  flattenNestedTypes() {
-    return Object.values(this.nestedProperties)
-      .flatMap((nestedType) => [nestedType, ...nestedType.flattenNestedTypes()])
-  }
-
-  get outputTypeName() {
-    return this.typeName
-  }
-
-  get inputTypeName() {
-    return `${this.typeName}Input`
-  }
-
-  getPrimitiveProperties() {
-    return Object.entries(this.primitiveProperties)
-      .map(([property, type]) => ({ property, type }))
-  }
-
-  getNestedProperties() {
-    return Object.entries(this.nestedProperties)
-      .map(([property, nested]) => {
-        const wrapper = nested.type instanceof SchemaType ? nested.type : new SchemaType('nested')
-
-        return ({
-          property,
-          type: wrapper,
-          nested,
-        })
-      })
-  }
-
-  getPrimitivePropertiesOutput() {
-    return this.getPrimitiveProperties()
-  }
-
-  getNestedPropertiesOutput() {
-    return this.getNestedProperties()
-      .map((prop) => ({ ...prop, nested: prop.nested.outputTypeName }))
-  }
-
-  getPrimitivePropertiesInput() {
-    return this.getPrimitiveProperties()
-      .map((prop) => ({ ...prop, input: true }))
-  }
-
-  getNestedPropertiesInput() {
-    return this.getNestedProperties()
-      .map((prop) => ({ ...prop, input: true }))
-      .map((prop) => ({ ...prop, nested: prop.nested.inputTypeName }))
-  }
-
-  getPrimitivePropertiesArgs() {
-    return this.getPrimitiveProperties()
-      .map((prop) => ({ ...prop, input: true }))
-  }
-
-  getNestedPropertiesArgs() {
-    return this.getNestedProperties()
-      .map((prop) => ({ ...prop, input: true }))
-      .map((prop) => ({ ...prop, nested: prop.nested.outputTypeName }))
-  }
-
-  get outputType() {
-    return printGraphqlType({
-      name: this.outputTypeName,
-      properties: [
-        ...this.getPrimitivePropertiesOutput(),
-        ...this.getNestedPropertiesOutput(),
-      ],
-    })
-  }
-
-  get inputType() {
-    return printGraphqlInputType({
-      name: this.inputTypeName,
-      properties: [
-        ...this.getPrimitivePropertiesInput(),
-        ...this.getNestedPropertiesInput(),
-      ],
-    })
-  }
-
-  get argumentType() {
-    return `${Object.values(this.nestedProperties).map((p) => p.argumentType).join('')}
-    
-${printGraphqlInputType({
-    name: this.outputTypeName,
-    properties: [
-      ...this.getPrimitivePropertiesArgs(),
-      ...this.getNestedPropertiesArgs(),
-    ],
-  })}`
-  }
-
-  get types() {
-    return `
-${Object.values(this.nestedProperties).map((p) => p.types).join('')}
-
-${this.outputType}
-${this.inputType}
-`
-  }
-}
-
-export default class SchemaModel {
-  primitiveProperties : {[key: string]: SchemaType} = {}
+class PropertiesInfo {
+  primitiveProperties: {[key: string]: SchemaType} = {}
 
   nestedProperties: {[key: string]: NestedProperty} = {}
 
@@ -144,112 +17,9 @@ export default class SchemaModel {
 
   fieldsMode: {[key: string] : FieldModeEnum[]} = {}
 
-  typeName = null
-
-  constructor(private model: Model) {
-    this.typeName = extractModelType(model.name)
-
-    // Compute schema
-    Object.entries(model.schema)
-      .forEach(([property, type]) => {
-        if (isNestedType(type)) {
-          this.nestedProperties[property] = new NestedProperty(type, this.typeName, property)
-        } else {
-          this.primitiveProperties[property] = type as SchemaType
-        }
-      })
-
-    // Compute transient fields
-    if (model.fields && model.fields.fields) {
-      Object.entries(model.fields.fields)
-        .forEach(([property, field]) => {
-          delete this.primitiveProperties[property]
-          delete this.nestedProperties[property]
-
-          if (isNestedType(field.type)) {
-            this.nestedProperties[property] = new NestedProperty(field.type, this.typeName, property)
-            this.propertiesArgs[property] = field.args
-            this.fieldsMode[property] = field.mode as FieldModeEnum[]
-          } else {
-            this.primitiveProperties[property] = field.type as SchemaType
-            this.propertiesArgs[property] = field.args
-            this.fieldsMode[property] = field.mode as FieldModeEnum[]
-          }
-        })
-
-      // Compute transient nested arguments
-      Object.entries(this.propertiesArgs)
-        .forEach(([property, args]) => {
-          if (args) {
-            Object.entries(args)
-              .forEach(([prop, type]) => {
-                if (isNestedType(type as SchemaEntry)) {
-                  this.propertiesArgs[property][prop] = new NestedProperty(
-                    type as SchemaEntry, `${this.typeName}${extractModelType(property)}Args`, prop,
-                  )
-                }
-              })
-          }
-        })
-    }
-  }
-
   flattenNestedTypes() {
     return Object.values(this.nestedProperties)
-      .flatMap((nestedType) => [nestedType, ...nestedType.flattenNestedTypes()])
-  }
-
-  get outputTypeName() {
-    return this.typeName
-  }
-
-  get payloadTypeName() {
-    return `${this.typeName}Payload`
-  }
-
-  get payloadManyTypeName() {
-    return `${this.typeName}PayloadMany`
-  }
-
-  get inputTypeName() {
-    return `${this.typeName}Input`
-  }
-
-  get inputTypeNameWithID() {
-    return `${this.typeName}InputWithID`
-  }
-
-  get inputTypeNameFilter() {
-    return `${this.typeName}InputFilter`
-  }
-
-  get queries() {
-    const { name } = this.model
-
-    return `
-extend type Query {
-  ${name}(filter: ${this.inputTypeNameFilter}) : ${this.outputTypeName}
-  ${name}List(filter: ${this.inputTypeNameFilter}, skip: Int, limit: Int, sort: Int) : [${this.outputTypeName}]
-  ${name}Count(filter: ${this.inputTypeNameFilter}) : Int
-}
-    `
-  }
-
-  get mutations() {
-    const { name } = this.model
-
-    return `
-extend type Mutation {
-  ${name}Create(record: ${this.inputTypeName}) : ${this.payloadTypeName}
-  ${name}CreateMany(records: [${this.inputTypeName}]) : ${this.payloadManyTypeName}
-  
-  ${name}Update(record: ${this.inputTypeNameWithID}) : ${this.payloadTypeName}
-  ${name}UpdateMany(records: [${this.inputTypeNameWithID}]) : ${this.payloadManyTypeName}
-  
-  ${name}Delete(_id: ID!) : ${this.payloadTypeName}
-  ${name}DeleteMany(_ids: [ID!]) : ${this.payloadManyTypeName}
-}
-    `
+      .flatMap((nestedType) => [nestedType, ...nestedType.fields.flattenNestedTypes()])
   }
 
   getArgs(args) {
@@ -263,16 +33,18 @@ extend type Mutation {
           return {
             property: arg,
             type,
+            input: true,
           }
         }
 
-        if (type instanceof NestedProperty) {
+        if (type instanceof NestedProperty) { // eslint-disable-line
           const wrapper = type.type instanceof SchemaType ? type.type : new SchemaType('nested')
 
           return ({
             property: arg,
             type: wrapper,
-            nested: type.outputTypeName,
+            nested: type.inputTypeName,
+            input: true,
           })
         }
 
@@ -280,6 +52,7 @@ extend type Mutation {
       })
       .filter((arg) => !!arg)
   }
+
 
   getPrimitiveProperties() {
     return Object.entries(this.primitiveProperties)
@@ -323,13 +96,248 @@ extend type Mutation {
       .map((prop) => ({ ...prop, input: true, args: null }))
       .map((prop) => ({ ...prop, nested: prop.nested.inputTypeName }))
   }
+}
+
+export class NestedProperty {
+  fields = new PropertiesInfo()
+
+  typeName = null
+
+  schema: Schema = null
+
+  modes = null
+
+  constructor(public type: SchemaEntry, parentName, property, modes) {
+    this.typeName = parentName + extractModelType(property)
+
+    this.schema = extractNestedType(type)
+
+    this.modes = modes
+
+    Object.entries(this.schema)
+      .forEach(([prop, t]) => {
+        if (isNestedType(t)) {
+          this.fields.nestedProperties[prop] = new NestedProperty(t, this.typeName, prop, modes)
+        } else {
+          this.fields.primitiveProperties[prop] = t as SchemaType
+        }
+      })
+  }
+
+  get outputTypeName() {
+    return this.typeName
+  }
+
+  get inputTypeName() {
+    return `${this.typeName}Input`
+  }
 
   get outputType() {
     return printGraphqlType({
       name: this.outputTypeName,
       properties: [
-        ...this.getPrimitivePropertiesOutput(),
-        ...this.getNestedPropertiesOutput(),
+        ...this.fields.getPrimitivePropertiesOutput(),
+        ...this.fields.getNestedPropertiesOutput(),
+      ],
+    })
+  }
+
+  get inputType() {
+    return printGraphqlInputType({
+      name: this.inputTypeName,
+      properties: [
+        ...this.fields.getPrimitivePropertiesInput(),
+        ...this.fields.getNestedPropertiesInput(),
+      ],
+    })
+  }
+
+  get argumentType() {
+    return `${Object.values(this.fields.nestedProperties).map((p) => p.argumentType).join('')}
+    
+${printGraphqlInputType({
+    name: this.inputTypeName,
+    properties: [
+      ...this.fields.getPrimitivePropertiesInput(),
+      ...this.fields.getNestedPropertiesInput(),
+    ],
+  })}`
+  }
+
+  get types() {
+    return `
+${Object.values(this.fields.nestedProperties).map((p) => p.types).join('')}
+
+${(this.modes.includes(FieldMode.OUTPUT)) ? this.outputType : ''}
+${(this.modes.includes(FieldMode.INPUT)) ? this.inputType : ''}
+`
+  }
+}
+
+// Compute transient queries
+/* eslint-disable no-param-reassign */
+function computeTransient({
+  fields,
+  fieldsInfo,
+  typeName = '',
+} : {
+  fields: Fields,
+  fieldsInfo: PropertiesInfo,
+  typeName?: string
+}) {
+  if (fields) {
+    Object.entries(fields)
+      .forEach(([property, field]) => {
+        delete fieldsInfo.primitiveProperties[property]
+        delete fieldsInfo.nestedProperties[property]
+
+        if (isNestedType(field.type)) {
+          fieldsInfo.nestedProperties[property] = new NestedProperty(
+            field.type, typeName, property, field.mode,
+          )
+          fieldsInfo.propertiesArgs[property] = field.args
+          fieldsInfo.fieldsMode[property] = field.mode as FieldModeEnum[]
+        } else {
+          fieldsInfo.primitiveProperties[property] = field.type as SchemaType
+          fieldsInfo.propertiesArgs[property] = field.args
+          fieldsInfo.fieldsMode[property] = field.mode as FieldModeEnum[]
+        }
+      })
+
+    // Compute transient nested arguments
+    Object.entries(fieldsInfo.propertiesArgs)
+      .forEach(([property, args]) => {
+        if (args) {
+          Object.entries(args)
+            .forEach(([prop, type]) => {
+              if (isNestedType(type as SchemaEntry)) {
+                fieldsInfo.propertiesArgs[property][prop] = new NestedProperty(
+                  type as SchemaEntry, `${typeName}${extractModelType(property)}Args`, prop, [],
+                )
+              }
+            })
+        }
+      })
+  }
+}
+/* eslint-enable no-param-reassign */
+
+export default class SchemaModel {
+  typeName = null
+
+  fields = new PropertiesInfo()
+
+  fieldQueries = new PropertiesInfo()
+
+  fieldMutations = new PropertiesInfo()
+
+  constructor(private model: Model) {
+    this.typeName = extractModelType(model.name)
+
+    // Compute schema
+    Object.entries(model.schema)
+      .forEach(([property, type]) => {
+        if (isNestedType(type)) {
+          this.fields.nestedProperties[property] = new NestedProperty(
+            type, this.typeName, property, [FieldMode.INPUT, FieldMode.OUTPUT],
+          )
+        } else {
+          this.fields.primitiveProperties[property] = type as SchemaType
+        }
+      })
+
+    // Compute transient
+    if (model.fields) {
+      computeTransient({ fields: model.fields.fields, fieldsInfo: this.fields, typeName: this.typeName })
+      computeTransient({ fields: model.fields.queries, fieldsInfo: this.fieldQueries })
+      computeTransient({ fields: model.fields.mutations, fieldsInfo: this.fieldMutations })
+    }
+  }
+
+  get outputTypeName() {
+    return this.typeName
+  }
+
+  get payloadTypeName() {
+    return `${this.typeName}Payload`
+  }
+
+  get payloadManyTypeName() {
+    return `${this.typeName}PayloadMany`
+  }
+
+  get inputTypeName() {
+    return `${this.typeName}Input`
+  }
+
+  get inputTypeNameWithID() {
+    return `${this.typeName}InputWithID`
+  }
+
+  get inputTypeNameFilter() {
+    return `${this.typeName}InputFilter`
+  }
+
+  get queries() {
+    const queryExtension = `${this.fieldQueries.getPrimitivePropertiesOutput().map(printGraphqlProp).join('\n')}
+${this.fieldQueries.getNestedPropertiesOutput().map(printGraphqlProp).join('\n')}`
+      .split('\n').filter((l) => !!l.trim()).join('\n').trim()
+
+    if (queryExtension) {
+      return `
+${Object.values(this.fieldQueries.nestedProperties).map((p) => p.types).join('')}
+
+${Object.values(this.fieldQueries.propertiesArgs)
+    .filter((args) => !!args)
+    .flatMap(
+      (args) => Object.values(args)
+        .map((p) => (p instanceof NestedProperty ? p.argumentType : null))
+        .filter((t) => !!t),
+    ).join('')
+}
+
+extend type Query {
+${queryExtension}
+}
+`
+    }
+
+    return ''
+  }
+
+  get mutations() {
+    const mutationExtension = `${this.fieldMutations.getPrimitivePropertiesOutput().map(printGraphqlProp).join('\n')}
+${this.fieldMutations.getNestedPropertiesOutput().map(printGraphqlProp).join('\n')}`
+      .split('\n').filter((l) => !!l.trim()).join('\n').trim()
+
+    if (mutationExtension) {
+      return `
+${Object.values(this.fieldMutations.nestedProperties).map((p) => p.types).join('')}
+
+${Object.values(this.fieldMutations.propertiesArgs)
+    .filter((args) => !!args)
+    .flatMap(
+      (args) => Object.values(args)
+        .map((p) => (p instanceof NestedProperty ? p.argumentType : null))
+        .filter((t) => !!t),
+    ).join('')
+}
+
+extend type Mutation {
+${mutationExtension}
+}
+`
+    }
+
+    return ''
+  }
+
+  get outputType() {
+    return printGraphqlType({
+      name: this.outputTypeName,
+      properties: [
+        ...this.fields.getPrimitivePropertiesOutput(),
+        ...this.fields.getNestedPropertiesOutput(),
       ],
       external: this.model.external,
       root: true,
@@ -360,8 +368,8 @@ extend type Mutation {
     return printGraphqlInputType({
       name: this.inputTypeName,
       properties: [
-        ...this.getPrimitivePropertiesInput(),
-        ...this.getNestedPropertiesInput(),
+        ...this.fields.getPrimitivePropertiesInput(),
+        ...this.fields.getNestedPropertiesInput(),
       ],
     })
   }
@@ -371,8 +379,8 @@ extend type Mutation {
       name: this.inputTypeNameWithID,
       properties: [
         { property: '_id', type: Types.ID.required },
-        ...this.getPrimitivePropertiesInput(),
-        ...this.getNestedPropertiesInput(),
+        ...this.fields.getPrimitivePropertiesInput(),
+        ...this.fields.getNestedPropertiesInput(),
       ],
     })
   }
@@ -383,8 +391,8 @@ extend type Mutation {
       properties: [
         { property: '_id', type: Types.ID },
         { property: '_ids', type: Types.Array.of(Types.ID) },
-        ...this.getPrimitivePropertiesInput(),
-        ...this.getNestedPropertiesInput(),
+        ...this.fields.getPrimitivePropertiesInput(),
+        ...this.fields.getNestedPropertiesInput(),
         { property: '_operators', type: Types.Array.of(new SchemaType('nested')), nested: this.inputTypeName },
         { property: '_or', type: Types.Array.of(new SchemaType('nested')), nested: this.inputTypeName },
         { property: '_and', type: Types.Array.of(new SchemaType('nested')), nested: this.inputTypeName },
@@ -394,16 +402,21 @@ extend type Mutation {
 
   get types() {
     if (this.model.external) {
-      return this.outputType
+      return `
+${this.queries}
+${this.mutations}
+
+${this.outputType}
+`
     }
 
     return `
 ${this.queries}
 ${this.mutations}
 
-${Object.values(this.nestedProperties).map((p) => p.types).join('')}
+${Object.values(this.fields.nestedProperties).map((p) => p.types).join('')}
 
-${Object.values(this.propertiesArgs)
+${Object.values(this.fields.propertiesArgs)
     .filter((args) => !!args)
     .flatMap(
       (args) => Object.values(args)

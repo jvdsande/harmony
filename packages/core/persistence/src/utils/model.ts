@@ -1,7 +1,9 @@
 import Types, { SchemaType } from '../entities/schema-types'
 import {
-  Field, FieldMode, Fields, Model, Schema, SchemaEntry,
+  Field, FieldMode, FieldModeEnum, Fields, Model, Schema, SchemaEntry,
 } from '../entities/model'
+import { extractModelType } from './types'
+import { mutationResolvers, queryResolvers } from './resolvers'
 
 export function isNestedType(nested: SchemaEntry): boolean {
   // If it's not a type, treat it as nested
@@ -61,8 +63,91 @@ function sanitizeSchema(schema: Schema, name ?: string) {
     })
 }
 
-function sanitizeField(field: Field, name: string) {
-  if (!(field.type instanceof SchemaType)) {
+/* eslint-disable no-param-reassign */
+function extendField(field: Field, modelName: string) {
+  switch (field.extends) {
+    case 'get':
+    case 'read': {
+      field.type = new SchemaType('raw', `${extractModelType(modelName)}`)
+      field.args = {
+        filter: new SchemaType('raw', `${extractModelType(modelName)}InputFilter`),
+        skip: Types.Number,
+        sort: Types.Number,
+      }
+      break
+    }
+    case 'list':
+    case 'readMany': {
+      field.type = Types.Array.of(new SchemaType('raw', `${extractModelType(modelName)}`))
+      field.args = {
+        filter: new SchemaType('raw', `${extractModelType(modelName)}InputFilter`),
+        skip: Types.Number,
+        limit: Types.Number,
+        sort: Types.Number,
+      }
+      break
+    }
+    case 'count': {
+      field.type = Types.Number
+      field.args = {
+        filter: new SchemaType('raw', `${extractModelType(modelName)}InputFilter`),
+      }
+      break
+    }
+    case 'create': {
+      field.type = new SchemaType('raw', `${extractModelType(modelName)}Payload`)
+      field.args = {
+        record: new SchemaType('raw', `${extractModelType(modelName)}Input!`),
+      }
+      break
+    }
+    case 'createMany': {
+      field.type = new SchemaType('raw', `${extractModelType(modelName)}PayloadMany`)
+      field.args = {
+        records: Types.Array.of(new SchemaType('raw', `${extractModelType(modelName)}Input!`)),
+      }
+      break
+    }
+    case 'update': {
+      field.type = new SchemaType('raw', `${extractModelType(modelName)}Payload`)
+      field.args = {
+        record: new SchemaType('raw', `${extractModelType(modelName)}InputWithID!`),
+      }
+      break
+    }
+    case 'updateMany': {
+      field.type = new SchemaType('raw', `${extractModelType(modelName)}PayloadMany`)
+      field.args = {
+        records: Types.Array.of(new SchemaType('raw', `${extractModelType(modelName)}InputWithID!`)),
+      }
+      break
+    }
+    case 'delete': {
+      field.type = new SchemaType('raw', `${extractModelType(modelName)}Payload`)
+      field.args = {
+        _id: Types.ID.required,
+      }
+      break
+    }
+    case 'deleteMany': {
+      field.type = new SchemaType('raw', `${extractModelType(modelName)}PayloadMany`)
+      field.args = {
+        records: Types.Array.of(Types.ID.required),
+      }
+      break
+    }
+    default:
+      break
+  }
+}
+/* eslint-enable no-param-reassign */
+
+function sanitizeField(field: Field, name: string, modelName: string) {
+  if (field.extends) {
+    extendField(field, modelName)
+  }
+
+  if (!(field.type instanceof SchemaType) && field.type) {
     sanitizeSchema(field.type, name)
   }
 
@@ -76,21 +161,52 @@ function sanitizeField(field: Field, name: string) {
 }
 
 
-function sanitizeFields(fields: Fields, name: string) {
+function sanitizeFields(fields: Fields, name: string, force?: FieldModeEnum) {
   Object.entries(fields || {})
     .forEach(([key, field]: [string, Field]) => {
-      sanitizeField(field, `${name}.${key}`)
+      if (force !== undefined) {
+        field.mode = force // eslint-disable-line
+      }
+
+      sanitizeField(field, `${name}.${key}`, name)
     })
 }
 
 export function sanitizeModel(model: Model) {
   sanitizeSchema(model.schema, model.name)
 
-  if (model.fields) {
-    sanitizeFields(model.fields.fields, model.name)
-    sanitizeFields(model.fields.queries, model.name)
-    sanitizeFields(model.fields.mutations, model.name)
+
+  /* eslint-disable no-param-reassign */
+  if (!model.fields) {
+    model.fields = {
+      fields: {},
+      queries: {},
+      mutations: {},
+    }
   }
+
+  if (!model.external) {
+    model.fields.queries = model.fields.queries || {}
+    model.fields.mutations = model.fields.mutations || {}
+
+    queryResolvers.forEach((query) => {
+      model.fields.queries[model.name + query.suffix] = model.fields.queries[model.name + query.suffix] || {
+        extends: query.type,
+        resolve: null,
+      }
+    })
+    mutationResolvers.forEach((query) => {
+      model.fields.mutations[model.name + query.suffix] = model.fields.mutations[model.name + query.suffix] || {
+        extends: query.type,
+        resolve: null,
+      }
+    })
+    /* eslint-enable no-param-reassign */
+  }
+
+  sanitizeFields(model.fields.fields, model.name)
+  sanitizeFields(model.fields.queries, model.name, FieldMode.OUTPUT)
+  sanitizeFields(model.fields.mutations, model.name, FieldMode.OUTPUT)
 
   return model
 }

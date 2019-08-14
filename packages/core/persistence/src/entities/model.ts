@@ -27,13 +27,14 @@ export type Fields = {
 }
 
 export type Field = {
-  type: SchemaEntry
-  args: Schema,
-  needs: {
+  type?: SchemaEntry
+  args?: Schema,
+  extends?: string,
+  needs?: {
     [key: string]: boolean
   }
   resolve: (any: any) => any
-  mode: FieldModeEnum | FieldModeEnum[]
+  mode?: FieldModeEnum | FieldModeEnum[]
 }
 
 export type FieldModeEnum = 'OUTPUT' | 'INPUT'
