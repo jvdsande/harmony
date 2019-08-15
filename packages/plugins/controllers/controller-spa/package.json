@@ -1,6 +1,6 @@
 {
   "name": "@harmonyjs/controller-spa",
-  "version": "1.0.0-alpha.1",
+  "version": "1.0.0-alpha.2",
   "description": "Single Page Application controller for Harmony",
   "main": "index.js",
   "publishConfig": {
