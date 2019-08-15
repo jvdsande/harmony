@@ -1,6 +1,7 @@
+import { Field } from '@harmonyjs/types-persistence'
+
 import { extractModelType } from './types'
 import SchemaModel, { NestedProperty } from '../entities/schema-model'
-import { Field } from '../entities/model'
 
 // Query
 export const queryResolvers = [

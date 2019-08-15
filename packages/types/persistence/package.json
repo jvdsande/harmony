@@ -1,11 +1,27 @@
 {
-  "name": "@harmonyjs/typedefs",
-  "version": "2.0.0-alpha.1",
+  "name": "@harmonyjs/types-persistence",
+  "version": "0.1.0",
   "publishConfig": {
     "access": "public"
   },
   "description": "Typescript definitions for Harmony",
   "main": "index.js",
+  "mixt": {
+    "builder": "pika-pack"
+  },
+  "@pika/pack": {
+    "pipeline": [
+      [
+        "@pika/plugin-ts-standard-pkg"
+      ],
+      [
+        "@pika/plugin-build-node"
+      ],
+      [
+        "@pika/plugin-build-web"
+      ]
+    ]
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

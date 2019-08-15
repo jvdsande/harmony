@@ -1,12 +1,13 @@
 import {
-  FieldMode, FieldModeEnum, Fields, Model, Schema, SchemaEntry,
-} from './model'
+  SchemaType, FieldMode, FieldModeEnum, Fields, Model, SchemaEntry, Schema,
+} from '@harmonyjs/types-persistence'
+
 import {
   extractModelType, printGraphqlInputType, printGraphqlProp, printGraphqlType,
 } from '../utils/types'
 import { extractNestedType, isNestedType } from '../utils/model'
-import Types, { SchemaType } from './schema-types'
 
+import Types from './schema-types'
 
 class PropertiesInfo {
   primitiveProperties: {[key: string]: SchemaType} = {}

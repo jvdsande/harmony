@@ -3,8 +3,8 @@
   "sources": [
     "types",
     "utils",
-    "core",
     "plugins/accessors",
-    "plugins/controllers"
+    "plugins/controllers",
+    "core"
   ]
 }

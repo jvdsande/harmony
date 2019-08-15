@@ -5,7 +5,7 @@ import httpProxy from 'http-proxy'
 import fs from 'fs'
 import path from 'path'
 
-import { Controller } from '@harmonyjs/server'
+import { Controller } from '@harmonyjs/types-server'
 
 import { ControllerGatsbyConfiguration } from './types'
 
@@ -18,6 +18,10 @@ export default class ControllerGatsby extends Controller {
   plugins = [Inert, H2O2]
 
   config: ControllerGatsbyConfiguration
+
+  constructor(config) { // eslint-disable-line
+    super(config)
+  }
 
   async initialize({ server, logger }) {
     const options = this.config

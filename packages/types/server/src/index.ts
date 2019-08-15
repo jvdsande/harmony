@@ -1,4 +1,6 @@
-import { LogConfig, LoggerClass } from './logger'
+import { LogConfig, LoggerClass } from '@harmonyjs/types-logger'
+
+export { default as Controller } from './server/controller' // eslint-disable-line
 
 // Address
 export type Address = {

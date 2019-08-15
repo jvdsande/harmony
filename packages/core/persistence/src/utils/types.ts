@@ -1,6 +1,6 @@
 import Voca from 'voca'
 
-import { SchemaType } from '../entities/schema-types'
+import { SchemaType } from '@harmonyjs/types-persistence'
 
 export function extractModelType(name: string): string {
   return Voca.capitalize(Voca.camelCase(name))
@@ -24,7 +24,7 @@ export function printGraphqlProp({
   args,
 } : GraphqlPropArgs) {
   const propertyType = input ? type.graphqlInputType : type.graphqlType
-  const required = type._required ? '!' : ''
+  const required = type.isRequired ? '!' : ''
   const annotations = []
 
   const federation = type._federation || { external: false, provides: null }

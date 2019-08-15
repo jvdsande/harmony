@@ -8,7 +8,7 @@ import {
   MutationType,
   QueryArgs, QueryConfiguration, QueryDefinition, QueryType,
   PureQuerySelect, QueryArgsMap, QueryCallback, QueryField,
-} from '@harmonyjs/typedefs/query'
+} from '@harmonyjs/types-query'
 
 const transformJSQ = (q: QueryDefinition) => {
   const query = {}

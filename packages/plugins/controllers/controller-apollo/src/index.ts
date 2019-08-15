@@ -2,7 +2,7 @@
 import { ApolloServer, gql } from 'apollo-server-hapi'
 import { buildFederatedSchema } from '@apollo/federation'
 
-import { Controller } from '@harmonyjs/server'
+import { Controller } from '@harmonyjs/types-server'
 
 /*
  * The Apollo Controller exposes a GraphQL endpoint through an Apollo Server
@@ -19,6 +19,10 @@ export default class ControllerApollo extends Controller {
     resolvers: {
       [key: string]: any
     }
+  }
+
+  constructor(config) { // eslint-disable-line
+    super(config)
   }
 
   async initialize({ server, logger }) {

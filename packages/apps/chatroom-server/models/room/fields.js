@@ -1,10 +1,10 @@
-export default ({ typeComposers: { RoomTC } }) => ({
+export default {
   queries: {
     room: {
-      extends: RoomTC.get,
-      resolve: async ({ args, composers: { Room, User }, context: { authentication } }) => {
+      extends: 'get',
+      resolve: async ({ args, resolvers: { Room, User }, context: { authentication } }) => {
         // Get the current user object
-        const user = await User.get({ _id: authentication.get()._id })
+        const user = await User.get({ filter: { _id: authentication.get()._id } })
 
         // Update the list of users accordingly, and sort it so that it's always the same
         // no matter the connected user
@@ -12,13 +12,17 @@ export default ({ typeComposers: { RoomTC } }) => ({
 
         // Get the required room object
         const room = await Room.get({
-          usernames,
+          filter: {
+            usernames,
+          },
         })
 
         // Create the room if it does not exist
         if (!room) {
           const created = await Room.create({
-            usernames,
+            record: {
+              usernames,
+            },
           })
 
           return created.record
@@ -28,4 +32,4 @@ export default ({ typeComposers: { RoomTC } }) => ({
       },
     },
   },
-})
+}

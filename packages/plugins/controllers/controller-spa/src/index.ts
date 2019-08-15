@@ -3,9 +3,9 @@ import H2O2 from '@hapi/h2o2'
 import Vision from '@hapi/vision'
 
 import HapiReactViews from 'hapi-react-views'
+import httpProxy from 'http-proxy'
 
-import { Controller } from '@harmonyjs/server'
-import { ControllerSPAConfiguration } from '@harmonyjs/typedefs/server'
+import { Controller, ControllerSPAConfiguration } from '@harmonyjs/types-server'
 
 
 /*
@@ -18,6 +18,10 @@ export default class ControllerSPA extends Controller {
   plugins = [Inert, H2O2, Vision]
 
   config : ControllerSPAConfiguration
+
+  constructor(config) { // eslint-disable-line
+    super(config)
+  }
 
   async initialize({ server, logger }) {
     const {
@@ -103,6 +107,29 @@ export default class ControllerSPA extends Controller {
             passThrough: true,
           },
         },
+      })
+
+
+      // We also need to proxy sockjs-node, since Webpack development uses the standard sockjs path
+      // This means that any other sockjs used for Harmony need to be on a different path
+      server.route({
+        method: ['POST', 'GET'],
+        path: '/sockjs-node/{path*}',
+        handler: {
+          proxy: {
+            host: hmr.endpoint,
+            port: hmr.port,
+            passThrough: true,
+          },
+        },
+      })
+
+      // Finally, we proxy the upgrade request if they start by /socket.io
+      const wsProxy = httpProxy.createProxyServer({ target: `http://${hmr.endpoint}:${hmr.port}` })
+      wsProxy.on('error', (error) => logger.error(error))
+
+      server.listener.on('upgrade', (req, socket, head) => {
+        if (req.url.startsWith('/sockjs-node')) wsProxy.ws(req, socket, head)
       })
 
       logger.info(`Webpack proxy established to address ${hmr.endpoint}:${hmr.port}`)

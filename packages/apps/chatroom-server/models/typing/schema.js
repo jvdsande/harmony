@@ -1,14 +1,8 @@
 import { Types } from '@harmonyjs/persistence'
-import Users from '../users'
+import user from '../user'
 
 export default {
-  user: {
-    type: Types.ObjectId,
-    ref: Users.name,
-  },
-  room: Types.ObjectId,
-  timestamp: {
-    type: Types.Number,
-    index: true,
-  },
+  user: Types.Reference.of(user.name),
+  room: Types.ID,
+  timestamp: Types.Number.indexed,
 }

@@ -1,7 +1,7 @@
 // Require JWT
 import JWT from 'jsonwebtoken'
 import HapiJWT from 'hapi-auth-jwt2'
-import { AuthenticationConfig } from '@harmonyjs/typedefs/server'
+import { AuthenticationConfig } from '@harmonyjs/types-server'
 
 export default async function (server: any, { secret, validate }: AuthenticationConfig) {
   await server.register(HapiJWT)

@@ -1,10 +1,14 @@
-import { Controller } from '@harmonyjs/server'
+import { Controller } from '@harmonyjs/types-server'
 
 /*
  * The Persistence Events Controller transfers Persistence Events to SocketIO layer
  */
 export default class ControllerPersistenceEvents extends Controller {
   name = 'ControllerPersistenceEvents'
+
+  constructor(config) { // eslint-disable-line
+    super(config)
+  }
 
   async initialize({ server, logger }) {
     const { events } = this.config

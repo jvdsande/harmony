@@ -4,36 +4,42 @@ import GraphQLDate from 'graphql-date'
 import ControllerApollo from '@harmonyjs/controller-apollo'
 import ControllerPersistenceEvents from '@harmonyjs/controller-persistence-events'
 
+import { Accessor, Events, Model } from '@harmonyjs/types-persistence'
+
 import Logger from '@harmonyjs/logger'
 
 // Import helpers and types
-import SchemaModel, { NestedProperty } from './entities/schema-model'
-import Accessor from './entities/accessor'
+import SchemaModel from './entities/schema-model'
 import { sanitizeModel } from './utils/model'
-import Events from './entities/events'
 import {
   computeFieldResolvers,
   computeMainResolvers,
   computeReferenceResolvers,
 } from './utils/resolvers'
+import { ifWorker } from './utils/cluster'
 
 // Export utility types and classes
-export { default as Types, SchemaType } from './entities/schema-types'
-export { default as Accessor } from './entities/accessor'
-export { FieldMode, SchemaEntry } from './entities/model'
-
-const logger = new Logger('Persistence')
+export { default as Types } from './entities/schema-types'
+export { FieldMode } from '@harmonyjs/types-persistence'
 
 export default class Persistence {
-  models = []
-
-  accessors : {[key: string]: Accessor}= {}
-
-  defaultAccessor = null
+  config : {
+    models: Model[],
+    accessors?: {[key: string]: Accessor},
+    defaultAccessor?: string,
+    log: any,
+  } = {
+    models: [],
+    accessors: {},
+    defaultAccessor: null,
+    log: null,
+  }
 
   schemaModels : SchemaModel[] = []
 
   events = new Events()
+
+  logger : Logger = null
 
   constructor(config) {
     this.initializeProperties(config)
@@ -44,36 +50,46 @@ export default class Persistence {
       return
     }
 
-    this.models = config.models || this.models
-    this.accessors = config.accessors || this.accessors
-    this.defaultAccessor = config.defaultAccessor || this.defaultAccessor
+    this.config.models = config.models || this.config.models
+    this.config.accessors = config.accessors || this.config.accessors
+    this.config.defaultAccessor = config.defaultAccessor || this.config.defaultAccessor
   }
 
   async init(config) {
     this.initializeProperties(config)
 
-    if (!this.defaultAccessor) {
+    this.createLogger()
+
+    const { accessors, models } = this.config
+    const { logger } = this
+
+    if (!this.config.defaultAccessor) {
       logger.warn(`No default accessor was specified. Will fallback to accessor '${
-        Object.keys(this.accessors || { default: 'mock' })[0]
-      }"`)
-      this.defaultAccessor = Object.keys(this.accessors || { default: null })[0]
+        Object.keys(accessors || { default: 'mock' })[0] || 'mock'
+      }'`)
+      this.config.defaultAccessor = Object.keys(accessors || { default: null })[0] || null
     }
 
-    logger.info(`Initializing Persistence instance with ${this.models.length} models`)
-    logger.info(`Accessors: [${Object.keys(this.accessors)}] - default: ${this.defaultAccessor}`)
+    const { defaultAccessor } = this.config
 
-    this.schemaModels = this.models
+    logger.info(`Initializing Persistence instance with ${models.length} models`)
+    logger.info(`Accessors: [${Object.keys(accessors)}] - default: ${defaultAccessor || 'mock'}`)
+
+    this.schemaModels = models
       .map(sanitizeModel)
-      .map((model) => new SchemaModel(model))
+      .map((model) => {
+        logger.info(`Model '${model.name}' imported.`)
+        return new SchemaModel(model)
+      })
 
     await Promise.all(
-      Object.values(this.accessors || {})
+      Object.values(accessors || {})
         .map((accessor) => {
           const accessorLogger = new Logger(accessor.name)
           accessorLogger.level = logger.level
 
           return accessor.initialize({
-            models: this.models,
+            models,
             events: this.events,
             logger: accessorLogger,
           })
@@ -92,34 +108,36 @@ ${this.schemaModels
   }
 
   get resolvers() {
+    const { accessors, defaultAccessor: defaultAccessorName, models } = this.config
+
     const resolvers: { [key: string]: any } = {}
 
     const localResolvers: { [key: string]: any } = {}
 
-    const defaultAccessor = this.accessors[this.defaultAccessor]
+    const defaultAccessor = accessors[defaultAccessorName]
 
     resolvers.Query = {}
     resolvers.Mutation = {}
 
     if (defaultAccessor) {
       computeMainResolvers({
-        models: this.models,
-        accessors: this.accessors,
+        models,
+        accessors,
         defaultAccessor,
         resolvers,
         localResolvers,
       })
 
       computeReferenceResolvers({
-        models: this.models,
-        accessors: this.accessors,
+        models,
+        accessors,
         schemaModels: this.schemaModels,
         defaultAccessor,
         resolvers,
       })
 
       computeFieldResolvers({
-        models: this.models,
+        models,
         resolvers,
         localResolvers,
       })
@@ -136,11 +154,16 @@ ${this.schemaModels
       schema,
       resolvers,
       events,
-      defaultAccessor,
     } = this
+
+    const {
+      defaultAccessor,
+    } = this.config
 
     return ({
       ControllerGraphQL: class ControllerGraphQL extends ControllerApollo {
+        name = 'ControllerGraphQL'
+
         constructor(config) {
           super({
             ...config,
@@ -151,6 +174,8 @@ ${this.schemaModels
         }
       },
       ControllerEvents: class ControllerEvents extends ControllerPersistenceEvents {
+        name = 'ControllerEvents'
+
         constructor() {
           super({
             events,
@@ -158,5 +183,22 @@ ${this.schemaModels
         }
       },
     })
+  }
+
+  createLogger() {
+    const { log } = this.config
+    const logConfig = log || {}
+
+    // Append worker id to forks' filename
+    ifWorker((worker) => {
+      logConfig.filename = logConfig.filename && `[${worker.id}]_${(logConfig.filename)}`
+
+      if (worker.id > 1) {
+        logConfig.level = 'error'
+      }
+    })
+
+    // Prepare the logger
+    this.logger = new Logger('Persistence', logConfig)
   }
 }

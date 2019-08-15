@@ -185,7 +185,7 @@ server.init({
 
               <pre>
                 <code>
-                  {`19/01/16 16:22:16.650 Server            [INFO   ] Powered by
+                  {`19/08/15 12:09:41.593 Server            [INFO   ] Powered by
   _    _
  | |  | |
  | |__| | __ _ _ __ _ __ ___   ___  _ __  _   _
@@ -194,10 +194,11 @@ server.init({
  |_|  |_|\\__,_|_|  |_| |_| |_|\\___/|_| |_|\\__, |
                                            __/ |
                                           |___/
-19/01/16 16:22:16.678 Server            [INFO   ] Initializing Authentications service...
-19/01/16 16:22:16.681 Server            [INFO   ] Authentication service initialized successfully
-19/01/16 16:22:16.686 Server            [INFO   ] All initialization successful
-19/01/16 16:22:16.687 Server            [INFO   ] App running at: http://localhost:8888`}
+19/08/15 12:09:41.597 Server            [INFO   ] Initializing Hapi Server
+19/08/15 12:09:41.627 Server            [INFO   ] Initializing Authentication service...
+19/08/15 12:09:41.630 Server            [INFO   ] Authentication service initialized successfully
+19/08/15 12:09:42.386 Server            [INFO   ] Master has created main server on port localhost:8888
+`}
                 </code>
               </pre>
 
@@ -246,35 +247,25 @@ persistence.init({
   log: {
     console: true,
   },
-
-  // Setup the MongoDB endpoint
-  endpoint: 'mongodb://127.0.0.1/chatroom',
 })
 
 ...
-
-server.init({
-  ...
-
-  // Give our persistence instance as a config parameter of our server to expose it
-  persistence,
-})
 `
                 }
               </Highlight>
 
               <p>
-                Relaunching our server, we see that Persistence is initialized and connected to our app, but it
-                complains about missing models:
+                Relaunching our server, we see that Persistence is initialized. However, it does not do anything on its
+                own: we need to feed it our data models, and configure accessors.
               </p>
 
               <pre>
                 <code>
                   {
-                  `19/01/16 16:48:27.055 Persistence       [INFO   ] Initializing Persistence
-19/01/16 16:48:27.137 Persistence       [ERROR  ] Cannot initialize Persistence without any model!
-19/01/16 16:48:27.141 Persistence       [INFO   ] Connecting to Mongo at mongodb://127.0.0.1/chatroom.
-19/01/16 16:48:27.174 Server            [INFO   ] Powered by
+`19/08/15 14:01:02.945 Persistence       [WARNING] No default accessor was specified. Will fallback to accessor 'mock'
+19/08/15 14:01:02.949 Persistence       [INFO   ] Initializing Persistence instance with 0 models
+19/08/15 14:01:02.950 Persistence       [INFO   ] Accessors: [] - default: mock
+19/08/15 14:01:02.952 Server            [INFO   ] Powered by
   _    _
  | |  | |
  | |__| | __ _ _ __ _ __ ___   ___  _ __  _   _
@@ -283,20 +274,16 @@ server.init({
  |_|  |_|\\__,_|_|  |_| |_| |_|\\___/|_| |_|\\__, |
                                            __/ |
                                           |___/
-19/01/16 16:48:27.223 Server            [INFO   ] Initializing Authentications service...
-19/01/16 16:48:27.228 Server            [INFO   ] Authentication service initialized successfully
-19/01/16 16:48:27.229 Server            [INFO   ] Persistence found! Adding Socket.IO layer...
-19/01/16 16:48:27.230 Persistence       [INFO   ] New Socket.IO service available. Connecting...
-19/01/16 16:48:27.230 Persistence       [INFO   ] Socket.IO connected.
-19/01/16 16:48:27.231 Server            [INFO   ] Socket.IO layer added successfully.
-19/01/16 16:48:27.252 Server            [INFO   ] All initialization successful
-19/01/16 16:48:27.253 Server            [INFO   ] App running at: http://localhost:8888
-19/01/16 16:48:27.262 Persistence       [INFO   ] Mongo connected.
-`}
+19/08/15 14:01:02.952 Server            [INFO   ] Initializing Hapi Server
+19/08/15 14:01:02.974 Server            [INFO   ] Initializing Authentication service...
+19/08/15 14:01:02.977 Server            [INFO   ] Authentication service initialized successfully
+19/08/15 14:01:03.733 Server            [INFO   ] Master has created main server on port localhost:8888
+`
+}
                 </code>
               </pre>
               <p>
-                Let's fix that by creating our models! Since we will be making a chatroom, we need at least the
+                Let's start by creating our models! Since we will be making a chatroom, we need at least the
                 following models:
                 <ul>
                   <li>
@@ -320,11 +307,11 @@ server.init({
                 <code>
                   $ mkdir models
                   <br />
-                  $ mkdir models/users
+                  $ mkdir models/user
                   <br />
-                  $ mkdir models/rooms
+                  $ mkdir models/room
                   <br />
-                  $ mkdir models/messages
+                  $ mkdir models/message
                   <br />
                   $ touch models/index.js
                 </code>
@@ -335,21 +322,21 @@ server.init({
               </p>
 
               <Highlight className="javascript">
-                {`import users from './users'
-import rooms from './rooms'
-import messages from './messages'
+                {`import user from './user'
+import room from './room'
+import message from './message'
 
 export default [
-  users,
-  rooms,
-  messages,
+  user,
+  room,
+  message,
 ]`}
               </Highlight>
 
               <p>
                 Now, for each model, we will create an <b>index.js</b> file which will hold the configuration of our
                 model.
-                For instance, the <b>users/index.js</b> file should look like this:
+                For instance, the <b>user/index.js</b> file should look like this:
               </p>
 
               <Highlight className="javascript">
@@ -357,7 +344,7 @@ export default [
                   `import schema from './schema'
 
 export default {
-  name: 'users',
+  name: 'user',
   schema,
 }
 `
@@ -365,7 +352,8 @@ export default {
               </Highlight>
 
               <p>
-                Create the same file for all models, simply changing the name property accordingly.
+                Create the same file for all models, simply changing the name property accordingly. For better results,
+                the name property should be lowercase and singular.
               </p>
               <p>
                 Notice how we imported a <b>schema.js</b> file, which does not exist yet. This file will be where we
@@ -375,8 +363,7 @@ export default {
                 in chat sessions, and a color that will be used for their speech bubbles. The username should be unique.
               </p>
               <p>
-                This is what such a schema would look like. If you already know <b>Mongoose</b>, you should be familiar
-                with its looks.
+                This is what such a schema would look like.
               </p>
 
               <Highlight className="javascript">
@@ -384,10 +371,7 @@ export default {
                   `import { Types } from '@harmonyjs/persistence'
 
 export default {
-  username: {
-    type: Types.String,
-    unique: true,
-  },
+  username: Types.String.unique,
   displayName: Types.String,
   color: Types.String,
 }`
@@ -411,7 +395,7 @@ export default {
               </Highlight>
 
               <p>
-                Here again, this is a standard <b>Mongoose</b> format.
+                Here again, this is a straightforward representation.
                 We declare an array of objects which are of type <b>String</b>.
               </p>
 
@@ -423,14 +407,11 @@ export default {
               <Highlight className="javascript">
                 {
                   `import { Types } from '@harmonyjs/persistence'
-import Users from '../users'
+import user from '../user'
 
 export default {
-  author: {
-    type: Types.ObjectId,
-    ref: Users.name,
-  },
-  room: Types.ObjectId,
+  author: Types.Reference.of(user.name),
+  room: Types.ID,
   content: Types.String,
   timestamp: Types.Date,
 }`
@@ -438,10 +419,10 @@ export default {
               </Highlight>
 
               <p>
-                <b>Note:</b> notice how both <b>author</b> and <b>room</b> are of type <b>ObjectId</b>, but room has no
-                ref.
+                <b>Note:</b> notice how both <b>author</b> and <b>room</b> are linked to another model,
+                but <b>room</b> is only an ID while <b>author</b> is a Reference.
                 That is because we might need to display information about a message's author, but we only care
-                about the ID of the room, not its information, to retrieve a message. Using a ref field allows
+                about the ID of the room, not its information, to retrieve a message. Using a Reference field allows
                 Harmony to retrieve the complete document upon request.
               </p>
 
@@ -470,38 +451,93 @@ persistence.init({
 
               <p>
                 We can now reboot our server, and this time the persistence module should tell us that our models
-                have been initialized correctly, and the server module should take them into account, and create a
-                Socket.IO service that persistence will be able to hook into:
+                have been initialized correctly:
               </p>
 
               <pre>
                 <code>
-                  {`19/01/18 20:55:13.993 Persistence       [INFO   ] Initializing Persistence
-19/01/18 20:55:13.996 Persistence       [INFO   ] Found 3 models. Importing...
-19/01/18 20:55:13.999 Persistence       [INFO   ] Model 'Users' imported.
-19/01/18 20:55:14.000 Persistence       [INFO   ] Model 'Rooms' imported.
-19/01/18 20:55:14.001 Persistence       [INFO   ] Model 'Messages' imported.
-19/01/18 20:55:14.032 Persistence       [INFO   ] Adding custom fields to models...
-19/01/18 20:55:14.032 Persistence       [INFO   ] Done.
-19/01/18 20:55:14.032 Persistence       [INFO   ] Building GraphQL schema...
-19/01/18 20:55:14.044 Persistence       [INFO   ] GraphQL schema available.
-
-...
-
-19/01/18 20:57:20.851 Server            [INFO   ] Persistence found! Adding Socket.IO layer...
-19/01/18 20:57:20.851 Persistence       [INFO   ] New Socket.IO service available. Connecting...
-19/01/18 20:57:20.852 Persistence       [INFO   ] Socket.IO connected.
-19/01/18 20:57:20.852 Server            [INFO   ] Socket.IO layer added successfully.`}
+                  {
+`19/08/15 15:03:00.134 Persistence       [WARNING] No default accessor was specified. Will fallback to accessor 'mock'
+19/08/15 15:03:00.139 Persistence       [INFO   ] Initializing Persistence instance with 3 models
+19/08/15 15:03:00.139 Persistence       [INFO   ] Accessors: [] - default: mock
+19/08/15 15:03:00.141 Persistence       [INFO   ] Model 'user' imported.
+19/08/15 15:03:00.141 Persistence       [INFO   ] Model 'room' imported.
+19/08/15 15:03:00.142 Persistence       [INFO   ] Model 'message' imported.
+19/08/15 15:03:00.147 Server            [INFO   ] Powered by
+  _    _
+ | |  | |
+ | |__| | __ _ _ __ _ __ ___   ___  _ __  _   _
+ |  __  |/ _\` | '__| '_ \` _ \\ / _ \\| '_ \\| | | |
+ | |  | | (_| | |  | | | | | | (_) | | | | |_| |
+ |_|  |_|\\__,_|_|  |_| |_| |_|\\___/|_| |_|\\__, |
+                                           __/ |
+                                          |___/
+19/08/15 15:03:00.147 Server            [INFO   ] Initializing Hapi Server
+19/08/15 15:03:00.172 Server            [INFO   ] Initializing Authentication service...
+19/08/15 15:03:00.176 Server            [INFO   ] Authentication service initialized successfully
+19/08/15 15:03:01.069 Server            [INFO   ] Master has created main server on port localhost:8888`
+}
                 </code>
               </pre>
+
+              <p>
+                All that we are missing now is an accessor. Accessors are Harmony plugins allowing to instruct
+                Persistence on how to store and retrieve data.
+              </p>
+              <p>
+                By default, Persistence converts our models into a GraphQL schema with no resolvers. Accessors are
+                simply resolver definition to plug on top of our GraphQL schema.
+              </p>
+              <p>
+                For this example, we are going to use a MongoDB database. In order to connect Harmony to our MongoDB
+                endpoint, we simply need to inject the <b>@harmonyjs/accessor-mongoose</b> Accessor.
+              </p>
+
+              <Highlight className="javascript">
+                {
+                  `import AccessorMongoose from '@harmonyjs/accessor-mongoose'
+                  
+...
+
+persistence.init({
+  ...
+
+  accessors: {
+    mongo: new AccessorMongoose({
+      host: 'mongodb://localhost:27017/',
+      database: 'chatroom',
+    }),
+  },
+
+  ...
+})`
+                }
+              </Highlight>
 
               <p>
                 At this point we are almost done creating our server. All we need to add now is a way to access our
                 data.
               </p>
+
               <p>
-                Harmony provides a way to expose a <b>GraphQL</b> endpoint,
-                simply by adding the <b>graphql</b> configuration field to our server initialization:
+                As stated earlier, Persistence creates a GraphQL schema, on which we just plugged Mongo resolvers.
+              </p>
+
+              <p>
+                However, Persistence itself cannot expose this schema to the world. This is the responsibility of our
+                Server instance. Harmony Servers expose data to the world through Controllers. Controllers, just like
+                Accessors, are Harmony plugins. Those plugins use the underlying HapiJS server to expose custom routes.
+              </p>
+
+              <p>
+                In our case, we will not import ourselves any Controllers, but instead use two controllers provided and
+                configured by our Persistence instance : a <b>ControllerGraphQL</b> exposing the GraphQL schema, and
+                a <b>ControllerEvents</b> forwarding events generated by Persistence to a Socket.IO connection.
+              </p>
+
+              <p>
+                To register Controllers on our Server instance, we simply need to add a <b>controllers</b> array to the
+                configuration object.
               </p>
 
               <Highlight className="javascript">
@@ -511,40 +547,37 @@ persistence.init({
 server.init({
   ...
 
-  graphql: {
-    // Expose GraphQL on /graphql
-    graphql: '/graphql',
-
-    // Expose GraphiQL and enable it
-    graphiql: '/graphiql',
-    enableGraphiQL: true,
-  },
+  controllers: [
+    new persistence.controllers.ControllerGraphQL({
+      path: '/graphql',
+      enablePlayground: true,
+    }),
+    new persistence.controllers.ControllerEvents(),
+  ],
+  
+  ...
 })`
                 }
               </Highlight>
 
               <p>
-                Reboot your server once again, to see the GraphQL and GraphiQL endpoints being mounted:
+                Reboot your server once again, to see the GraphQL and GraphQL playground endpoints being mounted:
               </p>
 
               <pre>
                 <code>
                   {`...
-
-19/01/18 21:15:07.850 Server            [INFO   ] GraphQL config found! Adding GraphQL engine...
-19/01/18 21:15:07.850 Server            [INFO   ] GraphQL is using the Persistence instance as schema
-19/01/18 21:15:07.857 Server            [INFO   ] GraphQL engine added successfully
-
-...
-
-19/01/18 21:15:07.865 Server            [INFO   ] App running at: http://localhost:8888
-19/01/18 21:15:07.865 Server            [INFO   ] GraphQL endpoint at: http://localhost:8888/graphql
-19/01/18 21:15:07.866 Server            [INFO   ] Graph(i)QL dashboard at: http://localhost:8888/graphiql`}
+19/08/15 15:18:50.702 ControllerGraphQ  [INFO   ] Registering GraphQL endpoint...
+19/08/15 15:18:50.791 ControllerEvents  [INFO   ] Persistence events are forwarded to Socket.IO
+19/08/15 15:18:50.822 ControllerGraphQ  [INFO   ] GraphQL endpoint at /graphql
+19/08/15 15:18:50.822 ControllerGraphQ  [INFO   ] GraphQL playground at /graphql
+19/08/15 15:16:09.010 AccessorMongoose  [INFO   ] Mongoose Accessor successfully initialized
+19/08/15 15:16:09.740 Server            [INFO   ] Master has created main server on port localhost:8888`}
                 </code>
               </pre>
 
               <p>
-                If you now navigate to <a href="http://localhost:8888/graphiql">http://localhost:8888/graphiql</a>,
+                If you now navigate to <a href="http://localhost:8888/graphql">http://localhost:8888/graphql</a>,
                 you should be able to see that our models have been imported into a full-blown GraphQL API:
               </p>
 
@@ -610,7 +643,7 @@ server.init({
               </p>
 
               <p>
-                The <b>fields</b> parameter is a function returning a configuration object. The returned object has the
+                The <b>fields</b> parameter has the
                 following shape:
               </p>
 
@@ -658,24 +691,26 @@ export default {
               </Highlight>
 
               <p>
-                As said earlier, the field file should export a function, which in turn must return an object containing
+                As said earlier, the field file should export an object containing
                 (optional) <b>fields</b>, <b>queries</b> and <b>mutations</b> keys. For now, we'll create the
                 following <b>query</b>:
               </p>
 
               <Highlight className="javascript">
-                {`export default () => ({
+                {`import { Types } from '@harmonyjs/persistence'
+
+export default {
   queries: {
     login: {
-      type: 'String',
+      type: Types.String,
       args: {
-        username: 'String',
+        username: Types.String,
       },
-      resolve: async ({ args, composers: { User }, context: { authentication } }) => {
-        let user = await User.get({ username: args.username })
+      resolve: async ({ args, resolvers: { User }, context: { authentication } }) => {
+        let user = await User.get({ filter: { username: args.username } })
 
         if (!user) {
-          const created = await User.create({ username: args.username })
+          const created = await User.create({ record: { username: args.username } })
 
           user = created.record
         }
@@ -686,7 +721,8 @@ export default {
       },
     },
   },
-})`}
+}
+`}
               </Highlight>
 
               <p>
@@ -695,8 +731,8 @@ export default {
               </p>
 
               <p>
-                The query here is straightforward: we use the <b>User composer</b> to get access to
-                our <b>users</b> model. We first try to get our user, then we create it if it does not exist yet.
+                The query here is straightforward: we use the <b>User resolver</b> to get access to
+                our <b>user</b> model. We first try to get our user, then we create it if it does not exist yet.
                 We then use the <b>authentication</b> object provided in the resolver context by Harmony to create
                 a new authentication token, which we send back to the client as a response.
               </p>
@@ -710,11 +746,10 @@ export default {
               </p>
 
               <Highlight className="javascript">
-                {`export default () => ({
+                {`export default {
   fields: {
     displayName: {
-      type: 'String',
-      needs: { username: true, displayName: true },
+      type: Types.String,
       resolve: async ({ source }) => source.displayName || source.username,
     },
   },
@@ -722,13 +757,13 @@ export default {
   queries: {
     ...
   }
-})`}
+}`}
               </Highlight>
 
               <p>
                 The format here is similar to the one we used to create a query. We define a <b>displayName</b> field,
-                which needs the <b>username</b> and <b>displayName</b> of the original database object. The resolver
-                function then returns the display name, and if it does not exist, it returns the username.
+                which returns a String. The <b>resolve</b> function then returns the display name, and if it does
+                not exist, it returns the username.
               </p>
 
               <p>
@@ -753,25 +788,27 @@ export default {
               </p>
 
               <Highlight className="javascript">
-                {`export default ({ typeComposers: { UserTC } }) => ({
+                {`export default {
   ...
 
   mutations: {
     userUpdate: {
-      extends: UserTC.update,
-      resolve: async ({ args, composers: { User }, context: { authentication } }) => {
+      extends: 'update',
+      resolve: async ({ args, resolvers: { User }, context: { authentication } }) => {
         // Retrieve the ID from the authentication object
         const userId = authentication.get()._id
 
         // Call the User update method with updated arguments
         return User.update({
-          ...args.record,
-          _id: userId,
+          record: {
+            ...args.record,
+            _id: userId,
+          },
         })
       },
     },
   },
-})
+}
 `}
               </Highlight>
 
@@ -781,10 +818,12 @@ export default {
               </p>
 
               <p>
-                We also slightly modified the exported function by adding a <b>typeComposers</b> argument, which allows
-                us to get type information about our composers. Using this type information, we are able to simply
-                extends the update method to create our new one, this way we keep the arguments and return type
-                definition generated by Harmony.
+                We also used the <b>extends</b> property instead of the <b>type</b> one: this way we instruct Harmony
+                to reuse exactly the same type and argument lists as for an <b>update</b> internal resolver.
+                <br />
+                Available extends types are <b>get</b>, <b>list</b>, <b>count</b>, <b>create</b>, <b>createMany</b>
+                {', '}
+                <b>update</b>, <b>updateMany</b>, <b>delete</b> and <b>deleteMany</b>
               </p>
 
               <h3>Automatically adding timestamps</h3>
@@ -802,11 +841,11 @@ export default {
               </p>
 
               <Highlight className="javascript">
-                {`export default ({ typeComposers: { MessageTC } }) => ({
+                {`export default {
   mutations: {
     messageCreate: {
-      extends: MessageTC.create,
-      resolve: async ({ args, composers: { Message }, context: { authentication } }) => {
+      extends: 'create',
+      resolve: async ({ args, resolvers: { Message }, context: { authentication } }) => {
         // Get the current user
         const userId = authentication.get()._id
 
@@ -815,13 +854,16 @@ export default {
 
         // Call the Message create method with updated arguments
         return Message.create({
-          ...args.record,
-          timestamp,
+          record: {
+            ...args.record,
+            timestamp,
+            author: userId,
+          },
         })
       },
     },
   },
-})`}
+}`}
               </Highlight>
 
               <h3>Finalizing: patching the room fields</h3>
@@ -833,27 +875,31 @@ export default {
               </p>
 
               <Highlight className="javascript">
-                {`export default ({ typeComposers: { RoomTC } }) => ({
+                {`export default {
   queries: {
     room: {
-      extends: RoomTC.get,
-      resolve: async ({ args, composers: { Room, User }, context: { authentication } }) => {
+      extends: 'get',
+      resolve: async ({ args, resolvers: { Room, User }, context: { authentication } }) => {
         // Get the current user object
-        const user = await User.get({ _id: authentication.get()._id })
+        const user = await User.get({ filter: { _id: authentication.get()._id } })
 
-        // Update the list of users accordingly, make it into a set so no user appear twice,
-        // and sort it so that it's always the same no matter the connected user
-        const usernames = [new Set([...args.filter.usernames, user.username])].sort()
+        // Update the list of users accordingly, and sort it so that it's always the same
+        // no matter the connected user
+        const usernames = [...new Set([...args.filter.usernames, user.username])].sort()
 
         // Get the required room object
         const room = await Room.get({
-          usernames,
+          filter: {
+            usernames,
+          },
         })
 
         // Create the room if it does not exist
         if (!room) {
           const created = await Room.create({
-            usernames,
+            record: {
+              usernames,
+            },
           })
 
           return created.record
@@ -863,15 +909,14 @@ export default {
       },
     },
   },
-})
-`}
+}`}
               </Highlight>
 
 
               <p>
                 And that's it! We've prepared all the groundwork for our chatroom application. From there, we will be
                 able to focus on the client side, and we can leave the backend alone. You can already fiddle with the
-                GraphiQL editor at <a href="http://localhost:8888/graphiql">http://localhost:8888/graphiql</a> to see
+                GraphQL Playground at <a href="http://localhost:8888/graphql">http://localhost:8888/graphql</a> to see
                 how our modified fields and queries act.
               </p>
             </div>
@@ -915,22 +960,20 @@ export default {
 
               <p>
                 To do this, we need to slightly modify our server initialization to tell it to serve an SPA. This is
-                done by passing it a configured <b>controller</b>. Controllers are small piece of server code that
-                handle route accesses. For instance, when we gave our initialization process the GraphQL configuration
-                key, it instantiated an internal controller for handling GraphQL-related routes.
+                done by passing it a configured <b>controller</b>. As a reminder, Controllers are small piece of server
+                code that handle route accesses. We already used a Controller earlier to expose our GraphQL endpoint.
               </p>
 
               <p>
-                We will now be adding the SPA controller. As SPA are really common web applications, the SPA controller
-                is directly shipped with the server package. We can simply import it through:
+                We will now be adding the SPA controller.
               </p>
 
               <Highlight className="javascript">
-                import Server, {'{ ControllerSPA }'} from '@harmonyjs/server'
+                import  ControllerSPA  from '@harmonyjs/controller-spa'
               </Highlight>
 
               <p>
-                We then add a <b>controllers</b> key to our server configuration object, and we instantiate our
+                We then add it to our <b>controllers</b> key in our server configuration object, and we instantiate our
                 SPA Controller with the following parameters:
               </p>
 
@@ -1389,13 +1432,18 @@ export default class Chatbox extends React.Component {
               <Highlight className="javascript">
                 {`  sendMessage = async (e) => {
     e.preventDefault()
+    
+    const content = {
+      content: this.state.message,
+    }
+
+    if(this.state.room && this.state.room._id) {
+      content.room = this.state.room._id
+    }
 
     await MessageController.mutate
       .create()
-      .withContent({
-        content: this.state.message,
-        room: this.state.room ? this.state.room._id : undefined,
-      })
+      .withContent(content)
 
     this.setState({
       message: ''

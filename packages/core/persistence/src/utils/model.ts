@@ -1,7 +1,7 @@
-import Types, { SchemaType } from '../entities/schema-types'
 import {
-  Field, FieldMode, FieldModeEnum, Fields, Model, Schema, SchemaEntry,
-} from '../entities/model'
+  SchemaType, Field, FieldMode, FieldModeEnum, Fields, Model, Schema, SchemaEntry,
+} from '@harmonyjs/types-persistence'
+import Types from '../entities/schema-types'
 import { extractModelType } from './types'
 import { mutationResolvers, queryResolvers } from './resolvers'
 

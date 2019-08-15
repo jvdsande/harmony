@@ -6,7 +6,7 @@ import IO from 'socket.io'
 import IORedis from 'socket.io-redis'
 
 // Require logger
-import { LogConfig } from '@harmonyjs/typedefs/logger'
+import { LogConfig } from '@harmonyjs/types-logger'
 import Logger from '@harmonyjs/logger'
 
 // Require utils
@@ -15,9 +15,6 @@ import { executeOnCluster, ifMaster, ifWorker } from './utils/cluster'
 
 // Require Auth Controller
 import ControllerAuth from './auth'
-
-// Export utility types and classes
-export { default as Controller } from './entities/controller'
 
 type ServerConfig = {
   endpoint?: any,

@@ -1,23 +1,24 @@
-export default ({ typeComposers: { UserTC } }) => ({
+import { Types } from '@harmonyjs/persistence'
+
+export default {
   fields: {
     displayName: {
-      type: 'String',
-      needs: { username: true, displayName: true },
+      type: Types.String,
       resolve: async ({ source }) => source.displayName || source.username,
     },
   },
 
   queries: {
     login: {
-      type: 'String',
+      type: Types.String,
       args: {
-        username: 'String',
+        username: Types.String,
       },
-      resolve: async ({ args, composers: { User }, context: { authentication } }) => {
-        let user = await User.get({ username: args.username })
+      resolve: async ({ args, resolvers: { User }, context: { authentication } }) => {
+        let user = await User.get({ filter: { username: args.username } })
 
         if (!user) {
-          const created = await User.create({ username: args.username })
+          const created = await User.create({ record: { username: args.username } })
 
           user = created.record
         }
@@ -31,17 +32,19 @@ export default ({ typeComposers: { UserTC } }) => ({
 
   mutations: {
     userUpdate: {
-      extends: UserTC.update,
-      resolve: async ({ args, composers: { User }, context: { authentication } }) => {
+      extends: 'update',
+      resolve: async ({ args, resolvers: { User }, context: { authentication } }) => {
         // Retrieve the ID from the authentication object
         const userId = authentication.get()._id
 
         // Call the User update method with updated arguments
         return User.update({
-          ...args.record,
-          _id: userId,
+          record: {
+            ...args.record,
+            _id: userId,
+          },
         })
       },
     },
   },
-})
+}

@@ -1,8 +1,8 @@
-export default ({ typeComposers: { MessageTC } }) => ({
+export default {
   mutations: {
     messageCreate: {
-      extends: MessageTC.create,
-      resolve: async ({ args, composers: { Message }, context: { authentication } }) => {
+      extends: 'create',
+      resolve: async ({ args, resolvers: { Message }, context: { authentication } }) => {
         // Get the current user
         const userId = authentication.get()._id
 
@@ -11,11 +11,13 @@ export default ({ typeComposers: { MessageTC } }) => ({
 
         // Call the Message create method with updated arguments
         return Message.create({
-          ...args.record,
-          timestamp,
-          author: userId,
+          record: {
+            ...args.record,
+            timestamp,
+            author: userId,
+          },
         })
       },
     },
   },
-})
+}

@@ -3,7 +3,7 @@ import { ApolloServer } from 'apollo-server-hapi'
 import { ApolloGateway, RemoteGraphQLDataSource } from '@apollo/gateway'
 import { ServiceDefinition } from '@apollo/federation'
 
-import { Controller } from '@harmonyjs/server'
+import { Controller } from '@harmonyjs/types-server'
 
 /*
  * The Apollo Gateway Controller exposes a GraphQL endpoint through an Apollo Federation Gateway
@@ -15,6 +15,10 @@ export default class ControllerApolloGateway extends Controller {
     path: string,
     enablePlayground?: boolean,
     services: ServiceDefinition[]
+  }
+
+  constructor(config) { // eslint-disable-line
+    super(config)
   }
 
   async initialize({ server, logger }) {

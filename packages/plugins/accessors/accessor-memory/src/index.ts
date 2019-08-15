@@ -1,4 +1,4 @@
-import { Accessor } from '@harmonyjs/persistence'
+import { Accessor } from '@harmonyjs/types-persistence'
 
 export default class AccessorMemory extends Accessor {
   public name = 'AccessorMemory'

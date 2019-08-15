@@ -4,7 +4,7 @@ import * as Winston from 'winston'
 import moment from 'moment'
 import colors from 'colors/safe'
 
-import { LoggerClass, LogConfig, LogLevel } from '@harmonyjs/typedefs/logger'
+import { LoggerClass, LogConfig, LogLevel } from '@harmonyjs/types-logger'
 
 export default class Logger implements LoggerClass {
   logger: any
@@ -51,7 +51,7 @@ export default class Logger implements LoggerClass {
     const suffix = Cluster.isMaster ? '' : `[Instance ${Cluster.worker.id}] `
 
     const logFormat = Winston.format.printf(
-      i => (
+      (i) => (
         `${suffix}${
           colors.grey(`${moment(i.timestamp).format(timeFormat)}`)
           + colors.bold(colors.grey(` ${cut} ${padded} [`))
@@ -62,7 +62,7 @@ export default class Logger implements LoggerClass {
     )
 
     const fileFormat = Winston.format.printf(
-      i => (
+      (i) => (
         `${moment(i.timestamp)
           .format(timeFormat)} ${cut} ${padded} [${fileType[i.level]}] ${i.message}`
       ),

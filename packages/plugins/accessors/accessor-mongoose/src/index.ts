@@ -1,4 +1,4 @@
-import { Accessor, SchemaType, SchemaEntry } from '@harmonyjs/persistence'
+import { Accessor, SchemaType, SchemaEntry } from '@harmonyjs/types-persistence'
 
 import Mongoose from 'mongoose'
 
@@ -25,6 +25,7 @@ function toMongooseType(type) {
     return ({
       type: Types.ObjectId,
       ref: type.of,
+      unique: type.isUnique,
     })
   }
 
@@ -38,7 +39,10 @@ function toMongooseType(type) {
     string: Types.String,
   }
 
-  return MongooseTypeMap[type.type as string] || Types.Mixed
+  return {
+    type: MongooseTypeMap[type.type as string] || Types.Mixed,
+    unique: type.isUnique,
+  }
 }
 
 function toMongooseSchema(schema) {
@@ -100,7 +104,7 @@ export default class AccessorMongoose extends Accessor {
     // Convert Persistence Models to Mongoose Schemas
     const schemas = {}
 
-    const { plugins } = this.config
+    const plugins = this.config.plugins || []
     this.logger = logger
 
     logger.info('Initializing Mongoose Accessor')
