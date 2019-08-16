@@ -31,6 +31,19 @@ export function extractNestedType(nested: SchemaEntry): Schema {
 
   return null
 }
+export function extractNestedSchemaType(nested: SchemaEntry): SchemaType {
+  // If it's not a type, treat it as nested
+  if ((!(nested instanceof SchemaType))) {
+    return null
+  }
+
+  // If it's an array or a map, check the element type
+  if (nested.type === 'array' || nested.type === 'map') {
+    return extractNestedSchemaType(nested.of)
+  }
+
+  return nested
+}
 
 function sanitizeSchema(schema: Schema, name ?: string) {
   // Sanitize arrays

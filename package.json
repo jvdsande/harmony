@@ -59,6 +59,7 @@
     "graphql-date": "^1.0.3",
     "graphql-tag": "^2.10.1",
     "graphql-type-json": "^0.3.0",
+    "graphql-type-long": "^0.1.1",
     "hapi-auth-jwt2": "^8.6.1",
     "json-to-graphql-query": "^1.9.0",
     "jsonwebtoken": "^8.5.1",

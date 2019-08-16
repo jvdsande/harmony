@@ -1,3 +1,4 @@
+import GraphQLLong from 'graphql-type-long'
 import GraphQLJson from 'graphql-type-json'
 import GraphQLDate from 'graphql-date'
 
@@ -9,6 +10,7 @@ import { Accessor, Events, Model } from '@harmonyjs/types-persistence'
 import Logger from '@harmonyjs/logger'
 
 // Import helpers and types
+import { GraphQLType } from 'graphql'
 import SchemaModel from './entities/schema-model'
 import { sanitizeModel } from './utils/model'
 import {
@@ -101,6 +103,7 @@ export default class Persistence {
     return `
 scalar Date
 scalar JSON
+scalar Number
     
 ${this.schemaModels
     .map((schemaModel) => schemaModel.types)
@@ -143,6 +146,7 @@ ${this.schemaModels
       })
     }
 
+    resolvers.Number = GraphQLLong
     resolvers.JSON = GraphQLJson
     resolvers.Date = GraphQLDate
 

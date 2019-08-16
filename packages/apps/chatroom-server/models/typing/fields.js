@@ -1,23 +1,23 @@
-export default ({ typeComposers: { TypingTC } }) => ({
+export default {
   queries: {
     typingList: {
-      extends: TypingTC.list,
-      resolve: async ({ args, composers: { Typing }, context: { authentication } }) => {
-        const typings = await Typing.list(args.filter)
+      extends: 'list',
+      resolve: async ({ args, resolvers: { Typing }, context: { authentication } }) => {
+        const typings = await Typing.list({ filter: args.filter })
 
-        return typings ? typings.filter(t => String(t.user) !== String(authentication.get()._id)) : typings
+        return typings ? typings.filter((t) => !authentication.get() || String(t.user) !== String(authentication.get()._id)) : typings
       },
     },
   },
   mutations: {
     typingCreate: {
-      extends: TypingTC.create,
-      resolve: async ({ args, composers: { Typing }, context: { authentication } }) => {
+      extends: 'create',
+      resolve: async ({ args, resolvers: { Typing }, context: { authentication } }) => {
         // Get the current user
         const user = authentication.get()._id
 
         // Get the required typing object
-        const typing = await Typing.get(args.record)
+        const typing = await Typing.get({ filter: { ...args.record, user } })
 
         // Get the current timestamp as a number
         const timestamp = new Date().valueOf()
@@ -25,18 +25,22 @@ export default ({ typeComposers: { TypingTC } }) => ({
         // Call the Typing create or update method with updated arguments
         if (typing) {
           return Typing.update({
-            _id: typing._id,
-            timestamp,
-            user,
+            record: {
+              _id: typing._id,
+              timestamp,
+              user,
+            },
           })
         }
 
         return Typing.create({
-          ...args.record,
-          timestamp,
-          user,
+          record: {
+            ...args.record,
+            timestamp,
+            user,
+          },
         })
       },
     },
   },
-})
+}

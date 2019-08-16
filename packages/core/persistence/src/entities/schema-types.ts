@@ -44,7 +44,7 @@ class TypesClass {
   }
 
   get Reference() {
-    return new SchemaType('reference', (type) => new SchemaType('reference', type))
+    return new SchemaType('reference', (type) => new SchemaType('reference', type.name ? type.name : `${type}`))
   }
 }
 

@@ -3,7 +3,7 @@ import { Controller } from '@harmonyjs/query'
 
 const RoomController = new Controller('room')
 const MessageController = new Controller('message')
-// const TypingController = new Controller('typing')
+const TypingController = new Controller('typing')
 
 export default class Chatbox extends React.Component {
   state = {
@@ -52,7 +52,7 @@ export default class Chatbox extends React.Component {
         this.messages.scrollTo(0, this.messages.scrollHeight)
       })
 
-    /*
+
     const prepareTypingQuery = () => ({
       room: room ? room._id : null,
       _operators: {
@@ -91,19 +91,19 @@ export default class Chatbox extends React.Component {
         }, 500)
       }
     })
-
-     */
   }
 
   handleMessageUpdate = (e) => {
-    /*
+    const typingContent = {}
+
+    if(this.state.room && this.state.room._id) {
+      typingContent.room = this.state.room._id
+    }
+
     TypingController.mutate
       .create()
-      .withContent({
-        room: this.state.room ? this.state.room._id : undefined,
-      })
+      .withContent(typingContent)
       .then(() => {})
-     */
 
     this.setState({
       message: e.target.value

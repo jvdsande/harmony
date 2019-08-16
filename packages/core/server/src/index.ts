@@ -182,12 +182,12 @@ export default class Server {
           // Add short delay to allow workers to get started
           setTimeout(() => {
             this.logger.info(
-              `Master has created main server on port ${endpoint.host}:${port || endpoint.port}`,
+              `Main server created on port ${endpoint.host}:${port || endpoint.port}`,
             )
           }, 750)
         })
         ifWorker((worker) => this.logger.info(
-          `Worker ${worker.id} initialized`,
+          `Worker ${worker.id} (${worker.process.pid}) initialized`,
         ))
       },
     })

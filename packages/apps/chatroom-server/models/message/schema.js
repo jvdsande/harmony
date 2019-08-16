@@ -1,10 +1,14 @@
 import { Types } from '@harmonyjs/persistence'
 
-import User from '../user'
+import user from '../user'
 
 export default {
-  author: Types.Reference.of(User.name),
+  author: Types.Reference.of(user),
   room: Types.ID,
   content: Types.String,
   timestamp: Types.Date,
+  dates: {
+    posted: Types.Date,
+    edited: Types.Date,
+  },
 }

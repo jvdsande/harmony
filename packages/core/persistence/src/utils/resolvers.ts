@@ -190,7 +190,6 @@ export function computeFieldResolvers({
       Object.entries(fields)
         .forEach(([name, field]) => {
           if (field.resolve) {
-            console.log(`Found field ${name} on root ${rootName}`)
             resolvers[rootName] = resolvers[rootName] || {}
             resolvers[rootName][name] = async (source, args, context, info) => {
               const wrappedResolvers = {}

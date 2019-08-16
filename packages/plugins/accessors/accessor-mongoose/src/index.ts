@@ -1,9 +1,26 @@
 import { Accessor, SchemaType, SchemaEntry } from '@harmonyjs/types-persistence'
 
 import Mongoose from 'mongoose'
+import { toMongoDottedObject, toMongoFilterDottedObject } from './utils/query'
 
 const { SchemaTypes: Types } = Mongoose
 Mongoose.Promise = global.Promise
+
+const operatorMap = {
+  not: '$not',
+  eq: '$eq',
+  neq: '$neq',
+  exists: '$exists',
+  in: '$in',
+  nin: '$nin',
+  gte: '$gte',
+  lte: '$lte',
+  gt: '$gt',
+  lt: '$lt',
+  regex: '$regex',
+  all: '$all',
+  match: '$elemMatch',
+}
 
 function toMongooseType(type) {
   if (!(type instanceof SchemaType)) {
@@ -18,6 +35,7 @@ function toMongooseType(type) {
     return ({
       type: Types.Map,
       of: toMongooseType(type.of),
+      indexed: type.isIndexed,
     })
   }
 
@@ -26,6 +44,7 @@ function toMongooseType(type) {
       type: Types.ObjectId,
       ref: type.of,
       unique: type.isUnique,
+      indexed: type.isIndexed,
     })
   }
 
@@ -42,6 +61,7 @@ function toMongooseType(type) {
   return {
     type: MongooseTypeMap[type.type as string] || Types.Mixed,
     unique: type.isUnique,
+    indexed: type.isIndexed,
   }
 }
 
@@ -79,14 +99,41 @@ function sanitizeFilter(filter) {
 
   const newFilter = { ...filter }
 
+  delete newFilter._operators
+  delete newFilter._or
+  delete newFilter._and
+  delete newFilter._nor
+
   if (newFilter._ids) {
     newFilter._id = { $in: newFilter._ids }
     delete newFilter._ids
   }
 
-  // TODO: Implement AND/OR and OPERATORS
+  if (filter._operators) {
+    Object.entries(filter._operators)
+      .forEach(([field, operators]) => {
+        newFilter[field] = {}
 
-  return newFilter
+        Object.entries(operators)
+          .forEach(([operator, params]) => {
+            newFilter[field][operatorMap[operator]] = params
+          })
+      })
+  }
+
+  if (filter._or) {
+    newFilter.$or = filter._or.map(sanitizeFilter)
+  }
+
+  if (filter._and) {
+    newFilter.$and = filter._and.map(sanitizeFilter)
+  }
+
+  if (filter._nor) {
+    newFilter.$nor = filter._nor.map(filter._nor)
+  }
+
+  return toMongoFilterDottedObject(newFilter)
 }
 
 export default class AccessorMongoose extends Accessor {
@@ -239,7 +286,7 @@ export default class AccessorMongoose extends Accessor {
   }) {
     const mongooseModel = this.models[model.name]
 
-    const document = await mongooseModel.create(args.record)
+    const document = await mongooseModel.create(toMongoDottedObject(args.record))
 
     return {
       recordId: document._id,
@@ -252,7 +299,7 @@ export default class AccessorMongoose extends Accessor {
   }) {
     const mongooseModel = this.models[model.name]
 
-    const documents = await mongooseModel.insertMany(args.records)
+    const documents = await mongooseModel.insertMany(toMongoDottedObject(args.records))
 
     return {
       recordIds: documents.map((d) => d._id),
@@ -267,7 +314,7 @@ export default class AccessorMongoose extends Accessor {
 
     const document = await mongooseModel.findOneAndUpdate(
       { _id: args.record._id },
-      args.record,
+      toMongoDottedObject(args.record),
       { new: true, upsert: true },
     )
 

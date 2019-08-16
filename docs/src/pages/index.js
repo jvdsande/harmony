@@ -197,7 +197,7 @@ server.init({
 19/08/15 12:09:41.597 Server            [INFO   ] Initializing Hapi Server
 19/08/15 12:09:41.627 Server            [INFO   ] Initializing Authentication service...
 19/08/15 12:09:41.630 Server            [INFO   ] Authentication service initialized successfully
-19/08/15 12:09:42.386 Server            [INFO   ] Master has created main server on port localhost:8888
+19/08/15 12:09:42.386 Server            [INFO   ] Main server created on port localhost:8888
 `}
                 </code>
               </pre>
@@ -217,8 +217,9 @@ server.init({
                 provides a simple way of adding a persistence layer: the <b>persistence</b> module!
               </p>
               <p>
-                This module allows us to connect a MongoDB database to our application, and expose its data through a
-                configurable GraphQL endpoint.
+                This module allows us to feed Harmony with data models, and expose them through a
+                configurable GraphQL endpoint. We can then configure it further to connect to our preferred database.
+                <br />
                 Let's add it to our new app:
               </p>
               <pre>
@@ -227,7 +228,7 @@ server.init({
                 </code>
               </pre>
               <p>
-                Now that we have the package available, all we have to do is configure our persistence instance.
+                Now that we have the package available, all we have to do is configure our Persistence instance.
                 Let's add it to our <b>index.js</b> file:
               </p>
 
@@ -249,7 +250,7 @@ persistence.init({
   },
 })
 
-...
+// ...
 `
                 }
               </Highlight>
@@ -277,7 +278,7 @@ persistence.init({
 19/08/15 14:01:02.952 Server            [INFO   ] Initializing Hapi Server
 19/08/15 14:01:02.974 Server            [INFO   ] Initializing Authentication service...
 19/08/15 14:01:02.977 Server            [INFO   ] Authentication service initialized successfully
-19/08/15 14:01:03.733 Server            [INFO   ] Master has created main server on port localhost:8888
+19/08/15 14:01:03.733 Server            [INFO   ] Main server created on port localhost:8888
 `
 }
                 </code>
@@ -410,7 +411,7 @@ export default {
 import user from '../user'
 
 export default {
-  author: Types.Reference.of(user.name),
+  author: Types.Reference.of(user),
   room: Types.ID,
   content: Types.String,
   timestamp: Types.Date,
@@ -436,16 +437,16 @@ export default {
 import Persistence from '@harmonyjs/persistence'
 import models from './models'
 
-...
+// ...
 
 persistence.init({
   // Setup our data by injecting the imported models
   models,
 
-  ...
+  // ...
 })
 
-...`
+// ...`
                 }
               </Highlight>
 
@@ -475,7 +476,7 @@ persistence.init({
 19/08/15 15:03:00.147 Server            [INFO   ] Initializing Hapi Server
 19/08/15 15:03:00.172 Server            [INFO   ] Initializing Authentication service...
 19/08/15 15:03:00.176 Server            [INFO   ] Authentication service initialized successfully
-19/08/15 15:03:01.069 Server            [INFO   ] Master has created main server on port localhost:8888`
+19/08/15 15:03:01.069 Server            [INFO   ] Main server created on port localhost:8888`
 }
                 </code>
               </pre>
@@ -495,12 +496,14 @@ persistence.init({
 
               <Highlight className="javascript">
                 {
-                  `import AccessorMongoose from '@harmonyjs/accessor-mongoose'
+                  `// ...
                   
-...
+import AccessorMongoose from '@harmonyjs/accessor-mongoose'
+                  
+// ...
 
 persistence.init({
-  ...
+  // ...
 
   accessors: {
     mongo: new AccessorMongoose({
@@ -509,7 +512,7 @@ persistence.init({
     }),
   },
 
-  ...
+  // ...
 })`
                 }
               </Highlight>
@@ -542,10 +545,10 @@ persistence.init({
 
               <Highlight className="javascript">
                 {
-                  `...
+                  `// ...
 
 server.init({
-  ...
+  // ...
 
   controllers: [
     new persistence.controllers.ControllerGraphQL({
@@ -555,7 +558,7 @@ server.init({
     new persistence.controllers.ControllerEvents(),
   ],
   
-  ...
+  // ...
 })`
                 }
               </Highlight>
@@ -572,7 +575,7 @@ server.init({
 19/08/15 15:18:50.822 ControllerGraphQ  [INFO   ] GraphQL endpoint at /graphql
 19/08/15 15:18:50.822 ControllerGraphQ  [INFO   ] GraphQL playground at /graphql
 19/08/15 15:16:09.010 AccessorMongoose  [INFO   ] Mongoose Accessor successfully initialized
-19/08/15 15:16:09.740 Server            [INFO   ] Master has created main server on port localhost:8888`}
+19/08/15 15:16:09.740 Server            [INFO   ] Main server created on port localhost:8888`}
                 </code>
               </pre>
 
@@ -586,6 +589,13 @@ server.init({
                   <Image.GraphQL />
                 </p>
               </center>
+
+              <p>
+                <b>Note: </b>
+                If we instanciated our GraphQL controller without adding any accessor, the schema would still be fully
+                computed. In this case, Harmony would automatically <i>mock</i> all of the resolvers, allowing you
+                to test your schema before configuring your actual database.
+              </p>
 
               <h2>1.4 - Adding custom functionality</h2>
 
@@ -755,7 +765,7 @@ export default {
   },
 
   queries: {
-    ...
+    // ...
   }
 }`}
               </Highlight>
@@ -789,7 +799,7 @@ export default {
 
               <Highlight className="javascript">
                 {`export default {
-  ...
+  // ...
 
   mutations: {
     userUpdate: {
@@ -830,8 +840,8 @@ export default {
 
               <p>
                 Our <b>messages</b> model has a timestamp field. In order to automate the creation of
-                those timestamps, we need to create a <b>fields.js</b> file the <b>messages</b> model,
-                and inject them just like we did for the <b>users</b> model.
+                those timestamps, we need to create a <b>fields.js</b> file for the <b>messages</b> model,
+                and inject it just like we did for the <b>users</b> model.
                 Once this is done, we will be modifying mutations to include our timestamps.
               </p>
 
@@ -969,7 +979,7 @@ export default {
               </p>
 
               <Highlight className="javascript">
-                import  ControllerSPA  from '@harmonyjs/controller-spa'
+                import ControllerSPA from '@harmonyjs/controller-spa'
               </Highlight>
 
               <p>
@@ -979,9 +989,11 @@ export default {
 
               <Highlight className="javascript">
                 {`server.init({
-  ...
+  // ...
 
   controllers: [
+    // ...
+    
     new ControllerSPA({
       // Serve our SPA on '/'
       path: '/',
@@ -1173,8 +1185,8 @@ export default class Login extends React.Component {
               <p>
                 The login page contains a simple login form asking for a username. Upon submit, we use the Harmony
                 Query module to launch our <b>login</b> query. This query is the one we created earlier, which takes
-                a username and returns a token. We then simply store the token into our local storage, and navigate to
-                <b>/chat</b>
+                a username and returns a token. We then simply store the token into our local storage, and navigate
+                to <b>/chat</b>
               </p>
 
               <p>
@@ -1192,7 +1204,7 @@ export default class Login extends React.Component {
                 {`import React from 'react';
 import { Router, navigate } from '@reach/router'
 
-...
+// ...
 
 class App extends React.Component {
   constructor() {
@@ -1214,7 +1226,7 @@ class App extends React.Component {
     }
   }
 
-  ...
+  // ...
 }
 
 export default App
@@ -1358,7 +1370,7 @@ const RoomController = new Controller('room')
 const MessageController = new Controller('message')
 
 export default class Chatbox extends React.Component {
-  ...
+  // ...
 }`}
               </Highlight>
 

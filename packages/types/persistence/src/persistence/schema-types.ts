@@ -100,7 +100,7 @@ export class SchemaType {
       case 'string':
         return 'String'
       case 'number':
-        return 'Int'
+        return 'Number'
       case 'float':
         return 'Float'
       case 'boolean':
@@ -134,7 +134,7 @@ export class SchemaType {
       case 'string':
         return 'String'
       case 'number':
-        return 'Int'
+        return 'Number'
       case 'float':
         return 'Float'
       case 'boolean':
@@ -166,84 +166,5 @@ export class SchemaType {
     }
 
     return ''
-  }
-
-  _graphqlType(typeNames, fallback) {
-    const value = this.of instanceof SchemaType ? this.of._graphqlType(typeNames, fallback) : fallback
-
-    switch (this.type) {
-      case 'string':
-        return 'String'
-      case 'number':
-        return 'Int'
-      case 'float':
-        return 'Float'
-      case 'boolean':
-        return 'Boolean'
-      case 'json':
-        return 'JSON'
-      case 'date':
-        return 'Date'
-      case 'id':
-        return 'ID'
-      case 'reference':
-        return `${typeNames[this.of].output}`
-      case 'map':
-        return `[${value}]` // TODO Add EntryType
-      case 'array':
-        return `[${value}]`
-      default:
-        return ''
-    }
-  }
-
-  get graphqlPrimitiveType() {
-    switch (this.type) {
-      case 'string':
-        return 'String'
-      case 'number':
-        return 'Int'
-      case 'float':
-        return 'Float'
-      case 'boolean':
-        return 'Boolean'
-      case 'json':
-        return 'JSON'
-      case 'date':
-        return 'Date'
-      case 'id':
-        return 'ID'
-      default:
-        return ''
-    }
-  }
-
-  _graphqlInputType(typeNames, fallback) {
-    const value = this.of instanceof SchemaType ? this.of._graphqlInputType(typeNames, fallback) : fallback
-
-    switch (this.type) {
-      case 'string':
-        return 'String'
-      case 'number':
-        return 'Int'
-      case 'float':
-        return 'Float'
-      case 'boolean':
-        return 'Boolean'
-      case 'json':
-        return 'JSON'
-      case 'date':
-        return 'Date'
-      case 'id':
-        return 'ID'
-      case 'reference':
-        return 'ID'
-      case 'map':
-        return `[${value}]` // TODO Add EntryType
-      case 'array':
-        return `[${value}]`
-      default:
-        return ''
-    }
   }
 }

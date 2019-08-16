@@ -5,9 +5,35 @@ import {
 import {
   extractModelType, printGraphqlInputType, printGraphqlProp, printGraphqlType,
 } from '../utils/types'
-import { extractNestedType, isNestedType } from '../utils/model'
+import { extractNestedSchemaType, extractNestedType, isNestedType } from '../utils/model'
 
 import Types from './schema-types'
+
+
+const genericOperators = [
+  { name: 'not', type: 'inherit' },
+  { name: 'eq', type: 'inherit' },
+  { name: 'neq', type: 'inherit' },
+  { name: 'exists', type: Types.Boolean },
+  { name: 'in', type: Types.Array.of('inherit') },
+  { name: 'nin', type: Types.Array.of('inherit') },
+]
+
+const numberOperators = [
+  { name: 'gte', type: 'inherit' },
+  { name: 'lte', type: 'inherit' },
+  { name: 'gt', type: 'inherit' },
+  { name: 'lt', type: 'inherit' },
+]
+
+const stringOperators = [
+  { name: 'regex', type: Types.String },
+]
+
+const arrayOperators = [
+  { name: 'all', type: Types.Array.of('inherit') },
+  { name: 'match', type: 'inherit' },
+]
 
 class PropertiesInfo {
   primitiveProperties: {[key: string]: SchemaType} = {}
@@ -133,6 +159,10 @@ export class NestedProperty {
     return `${this.typeName}Input`
   }
 
+  get operatorTypeName() {
+    return `${this.typeName}Operator`
+  }
+
   get outputType() {
     return printGraphqlType({
       name: this.outputTypeName,
@@ -151,6 +181,77 @@ export class NestedProperty {
         ...this.fields.getNestedPropertiesInput(),
       ],
     })
+  }
+
+  get operatorType() {
+    // Find indexed fields
+    const primitive = this.fields.getPrimitivePropertiesInput()
+    primitive.unshift({
+      property: '_id',
+      type: Types.ID,
+      input: true,
+      args: null,
+    })
+
+    const fieldOperators = primitive.map((prop) => {
+      const { type } = prop.type
+      const nested = extractNestedSchemaType(prop.type) || prop.type
+
+      const operators = [...genericOperators]
+
+      if (['array'].includes(type as string)) {
+        operators.push(...arrayOperators)
+      }
+
+      if (
+        ['number', 'float', 'id', 'date'].includes(type as string)
+        || ['number', 'float', 'id', 'date'].includes(nested.type as string)
+      ) {
+        operators.push(...numberOperators)
+      }
+
+      if (['string'].includes(type as string) || ['string'].includes(nested.type as string)) {
+        operators.push(...stringOperators)
+      }
+
+      return {
+        name: `${this.operatorTypeName}${extractModelType(prop.property)}`,
+        properties: operators.map((operator) => {
+          const operatorType = operator.type === 'inherit' ? nested : new SchemaType(operator.type.type)
+
+          if (operator.type.of === 'inherit') {
+            operatorType.of = nested
+          }
+
+          return ({
+            property: operator.name,
+            type: operatorType,
+            input: true,
+          })
+        }),
+      }
+    })
+
+    return [
+      ...Object.values(this.fields.nestedProperties).map((nested) => nested.operatorType),
+      ...fieldOperators.map(printGraphqlInputType),
+      printGraphqlInputType({
+        name: this.operatorTypeName,
+        properties:
+          [
+            ...primitive.map((prop) => ({
+              property: prop.property,
+              type: new SchemaType('nested'),
+              nested: `${this.operatorTypeName}${extractModelType(prop.property)}`,
+            })),
+            ...Object.entries(this.fields.nestedProperties).map(([prop, nested]) => ({
+              property: prop,
+              type: new SchemaType('nested'),
+              nested: nested.operatorTypeName,
+            })),
+          ],
+      }),
+    ].join('')
   }
 
   get argumentType() {
@@ -184,11 +285,15 @@ function computeTransient({
 } : {
   fields: Fields,
   fieldsInfo: PropertiesInfo,
-  typeName?: string
+  typeName?: string,
 }) {
   if (fields) {
     Object.entries(fields)
       .forEach(([property, field]) => {
+        if (fieldsInfo.primitiveProperties[property] || fieldsInfo.nestedProperties[property]) {
+          field.mode = [FieldMode.OUTPUT, FieldMode.INPUT]
+        }
+
         delete fieldsInfo.primitiveProperties[property]
         delete fieldsInfo.nestedProperties[property]
 
@@ -277,6 +382,10 @@ export default class SchemaModel {
 
   get inputTypeNameFilter() {
     return `${this.typeName}InputFilter`
+  }
+
+  get operatorTypeName() {
+    return `${this.typeName}Operator`
   }
 
   get queries() {
@@ -394,11 +503,83 @@ ${mutationExtension}
         { property: '_ids', type: Types.Array.of(Types.ID) },
         ...this.fields.getPrimitivePropertiesInput(),
         ...this.fields.getNestedPropertiesInput(),
-        { property: '_operators', type: Types.Array.of(new SchemaType('nested')), nested: this.inputTypeName },
-        { property: '_or', type: Types.Array.of(new SchemaType('nested')), nested: this.inputTypeName },
-        { property: '_and', type: Types.Array.of(new SchemaType('nested')), nested: this.inputTypeName },
+        { property: '_operators', type: new SchemaType('nested'), nested: this.operatorTypeName },
+        { property: '_nor', type: Types.Array.of(new SchemaType('nested')), nested: this.inputTypeNameFilter },
+        { property: '_or', type: Types.Array.of(new SchemaType('nested')), nested: this.inputTypeNameFilter },
+        { property: '_and', type: Types.Array.of(new SchemaType('nested')), nested: this.inputTypeNameFilter },
       ],
     })
+  }
+
+  get operatorType() {
+    // Find indexed fields
+    const primitive = this.fields.getPrimitivePropertiesInput()
+    primitive.unshift({
+      property: '_id',
+      type: Types.ID,
+      input: true,
+      args: null,
+    })
+
+    const fieldOperators = primitive.map((prop) => {
+      const { type } = prop.type
+      const nested = extractNestedSchemaType(prop.type) || prop.type
+
+      const operators = [...genericOperators]
+
+      if (['array'].includes(type as string)) {
+        operators.push(...arrayOperators)
+      }
+
+      if (
+        ['number', 'float', 'id', 'date'].includes(type as string)
+        || ['number', 'float', 'id', 'date'].includes(nested.type as string)
+      ) {
+        operators.push(...numberOperators)
+      }
+
+      if (['string'].includes(type as string) || ['string'].includes(nested.type as string)) {
+        operators.push(...stringOperators)
+      }
+
+      return {
+        name: `${this.operatorTypeName}${extractModelType(prop.property)}`,
+        properties: operators.map((operator) => {
+          const operatorType = operator.type === 'inherit' ? nested : new SchemaType(operator.type.type)
+
+          if (operator.type.of === 'inherit') {
+            operatorType.of = nested
+          }
+
+          return ({
+            property: operator.name,
+            type: operatorType,
+            input: true,
+          })
+        }),
+      }
+    })
+
+    return [
+      ...fieldOperators.map(printGraphqlInputType),
+      ...Object.values(this.fields.nestedProperties).map((nested) => nested.operatorType),
+      printGraphqlInputType({
+        name: this.operatorTypeName,
+        properties:
+          [
+            ...primitive.map((prop) => ({
+              property: prop.property,
+              type: new SchemaType('nested'),
+              nested: `${this.operatorTypeName}${extractModelType(prop.property)}`,
+            })),
+            ...Object.entries(this.fields.nestedProperties).map(([prop, nested]) => ({
+              property: prop,
+              type: new SchemaType('nested'),
+              nested: nested.operatorTypeName,
+            })),
+          ],
+      }),
+    ].join('')
   }
 
   get types() {
@@ -433,6 +614,7 @@ ${this.payloadManyType}
 ${this.inputType}
 ${this.inputWithIDType}
 ${this.inputFilterType}
+${this.operatorType}
 `
   }
 }
