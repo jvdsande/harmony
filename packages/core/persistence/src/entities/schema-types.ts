@@ -1,50 +1,50 @@
-import { SchemaType } from '@harmonyjs/types-persistence'
+import { Property } from '@harmonyjs/types-persistence'
 
 class TypesClass {
   get String() {
-    return new SchemaType('string')
+    return new Property({ type: 'string' })
   }
 
   get Number() {
-    return new SchemaType('number')
+    return new Property({ type: 'number' })
   }
 
   get Float() {
-    return new SchemaType('float')
+    return new Property({ type: 'float' })
   }
 
   get Boolean() {
-    return new SchemaType('boolean')
+    return new Property({ type: 'boolean' })
   }
 
   get JSON() {
-    return new SchemaType('json')
+    return new Property({ type: 'json' })
   }
 
   get Date() {
-    return new SchemaType('date')
+    return new Property({ type: 'date' })
   }
 
   get Map() {
-    return new SchemaType(
-      'map',
-      (type) => new SchemaType('map', type),
-    )
+    return ({
+      of: (type) => new Property({ type: 'map', of: type }),
+    })
   }
 
   get Array() {
-    return new SchemaType(
-      'array',
-      (type) => new SchemaType('array', type),
-    )
+    return ({
+      of: (type) => new Property({ type: 'array', of: type }),
+    })
   }
 
   get ID() {
-    return new SchemaType('id')
+    return new Property({ type: 'id' })
   }
 
   get Reference() {
-    return new SchemaType('reference', (type) => new SchemaType('reference', type.name ? type.name : `${type}`))
+    return ({
+      of: (type) => new Property(({ type: 'reference', of: type.name ? type.name : type })),
+    })
   }
 }
 

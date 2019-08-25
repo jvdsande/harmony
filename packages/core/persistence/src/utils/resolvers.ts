@@ -1,7 +1,6 @@
-import { Field } from '@harmonyjs/types-persistence'
+import { Field, PropertySchema, Property } from '@harmonyjs/types-persistence'
 
 import { extractModelType } from './types'
-import SchemaModel, { NestedProperty } from '../entities/schema-model'
 
 // Query
 export const queryResolvers = [
@@ -124,22 +123,40 @@ export function computeMainResolvers({
   })
 }
 
+function flattenNestedType(nested) {
+  return [
+    nested,
+    ...Object.values(nested.of)
+      .filter((prop : Property) => {
+        const propIsNested = prop.type === 'nested'
+        const deepIsNested = !!prop.deepOf && prop.deepOf.type === 'nested'
+
+        return propIsNested || deepIsNested
+      })
+      .map((prop : Property) => (prop.type === 'nested' ? prop : prop.deepOf))
+      .flatMap(flattenNestedType),
+  ]
+}
+
 export function computeReferenceResolvers({
   models,
-  schemaModels,
   accessors,
   defaultAccessor,
   resolvers,
 }) {
-  const nestedTypes = schemaModels.flatMap((model) => model.fields.flattenNestedTypes())
-  const types : (SchemaModel | NestedProperty)[] = [...schemaModels, ...nestedTypes]
+  const types = models.flatMap((model) => flattenNestedType(model.schema))
 
-  const makeReferenceResolver = (typeName, fieldName, comparator) => {
+  const makeReferenceResolver = (type, fieldName, comparator, isArray) => {
+    const typeName = type.name
+
+    const model = models.find((m) => m.name === comparator)
+    const rootName = extractModelType(model.name)
+
+    const modelAccessor = model.accessor ? accessors[model.accessor] : defaultAccessor
+    const accessor = modelAccessor || defaultAccessor
+
     resolvers[typeName] = resolvers[typeName] || {}
     resolvers[typeName][fieldName] = async (source, args, context, info) => {
-      const model = models.find((m) => m.name === comparator)
-      const rootName = extractModelType(model.name)
-
       if (model.external) {
         // In case of an external Federation model, return a Representation
         return {
@@ -148,34 +165,37 @@ export function computeReferenceResolvers({
         }
       }
 
-      // Else, use the accessor reference resolver
-      const modelAccessor = model.accessor ? accessors[model.accessor] : defaultAccessor
-      const accessor = modelAccessor || defaultAccessor
+      const resolver = isArray ? accessor.resolveRefs : accessor.resolveRef
 
-      return accessor
-        .resolveRef({
-          source,
-          args,
-          context,
-          info,
-          fieldName,
-          model,
-        })
+      // Else, use the accessor reference resolver
+      return resolver({
+        source,
+        args,
+        context,
+        info,
+        fieldName,
+        model,
+      })
     }
   }
 
   types.forEach((type) => {
-    const references = type.fields.getPrimitiveProperties()
-      .filter((prop) => prop.type.type === 'reference')
+    const references = Object.values(type.of)
+      .filter((prop : Property) => prop.type === 'reference')
 
-    const composedReferences = type.fields.getPrimitiveProperties()
-      .filter((prop) => (prop.type.of && prop.type.of.type === 'reference'))
+    const composedReferences = Object.values(type.of)
+      .filter((prop : Property) => (prop.of && prop.of instanceof Property && prop.of.type === 'reference'))
 
     // Make direct reference fields
-    references.forEach((prop) => makeReferenceResolver(type.typeName, prop.property, prop.type.of))
+    references.forEach((prop : Property) => makeReferenceResolver(type, prop._configuration.name, prop.of, false))
 
     // Make composed reference fields
-    composedReferences.forEach((prop) => makeReferenceResolver(type.typeName, prop.property, prop.type.of.of))
+    composedReferences.forEach(
+      (prop : Property) => makeReferenceResolver(
+        type, prop._configuration.name, prop.of instanceof Property && prop.of.of,
+        prop.type === 'array',
+      ),
+    )
   })
 }
 

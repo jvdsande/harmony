@@ -1,13 +1,23 @@
 import { SchemaType } from './schema-types'
+import { Property, PropertySchema } from './type'
 
 export type Model = {
   name: string,
   external?: boolean,
-  schema: Schema,
+  schema: PropertySchema | Property | Schema,
   fields?: RootFields,
   scopes?: Scopes,
 
   accessor?: string,
+}
+
+export type SanitizedModel = {
+  name: string,
+  external: boolean,
+  schema: Property,
+  fields: RootFields,
+  scopes: Scopes,
+  accessor: string,
 }
 
 export type Schema = {
@@ -27,12 +37,9 @@ export type Fields = {
 }
 
 export type Field = {
-  type?: SchemaEntry
-  args?: Schema,
+  type?: PropertySchema | Property
+  args?: PropertySchema,
   extends?: string,
-  needs?: {
-    [key: string]: boolean
-  }
   resolve: (any: any) => any
   mode?: FieldModeEnum | FieldModeEnum[]
 }

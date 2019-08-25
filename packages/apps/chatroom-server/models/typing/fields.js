@@ -1,11 +1,31 @@
+import { Types } from '@harmonyjs/persistence'
+
 export default {
   queries: {
+    withNestedType: {
+      type: {
+        someString: Types.String,
+        someNumber: Types.Number,
+      },
+      resolve: () => null,
+    },
+    withNestedArg: {
+      type: Types.String,
+      args: {
+        nestedArg: {
+          someString: Types.String,
+          someNumber: Types.Number,
+        },
+      },
+    },
     typingList: {
       extends: 'list',
       resolve: async ({ args, resolvers: { Typing }, context: { authentication } }) => {
         const typings = await Typing.list({ filter: args.filter })
 
-        return typings ? typings.filter((t) => !authentication.get() || String(t.user) !== String(authentication.get()._id)) : typings
+        return typings
+          ? typings.filter((t) => !authentication.get() || String(t.user) !== String(authentication.get()._id))
+          : typings
       },
     },
   },

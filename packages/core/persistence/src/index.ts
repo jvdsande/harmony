@@ -5,13 +5,13 @@ import GraphQLDate from 'graphql-date'
 import ControllerApollo from '@harmonyjs/controller-apollo'
 import ControllerPersistenceEvents from '@harmonyjs/controller-persistence-events'
 
-import { Accessor, Events, Model } from '@harmonyjs/types-persistence'
+import {
+  Accessor, Events, Model, SanitizedModel,
+} from '@harmonyjs/types-persistence'
 
 import Logger from '@harmonyjs/logger'
 
 // Import helpers and types
-import { GraphQLType } from 'graphql'
-import SchemaModel from './entities/schema-model'
 import { sanitizeModel } from './utils/model'
 import {
   computeFieldResolvers,
@@ -19,6 +19,7 @@ import {
   computeReferenceResolvers,
 } from './utils/resolvers'
 import { ifWorker } from './utils/cluster'
+import { printGraphqlRoot, printGraphqlQueries, printGraphqlMutations } from './utils/types'
 
 // Export utility types and classes
 export { default as Types } from './entities/schema-types'
@@ -37,7 +38,7 @@ export default class Persistence {
     log: null,
   }
 
-  schemaModels : SchemaModel[] = []
+  sanitizedModels : SanitizedModel[] = []
 
   events = new Events()
 
@@ -74,14 +75,14 @@ export default class Persistence {
 
     const { defaultAccessor } = this.config
 
-    logger.info(`Initializing Persistence instance with ${models.length} models`)
     logger.info(`Accessors: [${Object.keys(accessors)}] - default: ${defaultAccessor || 'mock'}`)
+    logger.info(`Initializing Persistence instance with ${models.length} models`)
 
-    this.schemaModels = models
+    this.sanitizedModels = models
       .map(sanitizeModel)
       .map((model) => {
         logger.info(`Model '${model.name}' imported.`)
-        return new SchemaModel(model)
+        return model
       })
 
     await Promise.all(
@@ -91,7 +92,7 @@ export default class Persistence {
           accessorLogger.level = logger.level
 
           return accessor.initialize({
-            models,
+            models: this.sanitizedModels,
             events: this.events,
             logger: accessorLogger,
           })
@@ -105,13 +106,23 @@ scalar Date
 scalar JSON
 scalar Number
     
-${this.schemaModels
-    .map((schemaModel) => schemaModel.types)
-    .join('\n')}`
+${this.sanitizedModels
+    .map(printGraphqlRoot)
+    .join('\n')}
+    
+${this.sanitizedModels
+    .map(printGraphqlQueries)
+    .join('\n')}
+      
+${this.sanitizedModels
+    .map(printGraphqlMutations)
+    .join('\n')}
+    `
   }
 
   get resolvers() {
-    const { accessors, defaultAccessor: defaultAccessorName, models } = this.config
+    const { accessors, defaultAccessor: defaultAccessorName } = this.config
+    const models = this.sanitizedModels
 
     const resolvers: { [key: string]: any } = {}
 
@@ -134,7 +145,6 @@ ${this.schemaModels
       computeReferenceResolvers({
         models,
         accessors,
-        schemaModels: this.schemaModels,
         defaultAccessor,
         resolvers,
       })

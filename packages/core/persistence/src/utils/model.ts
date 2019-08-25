@@ -1,89 +1,18 @@
 import {
-  SchemaType, Field, FieldMode, FieldModeEnum, Fields, Model, Schema, SchemaEntry,
+  Property, PropertySchema, FieldMode, FieldModeEnum, Fields, Field, SanitizedModel,
 } from '@harmonyjs/types-persistence'
+
 import Types from '../entities/schema-types'
-import { extractModelType } from './types'
 import { mutationResolvers, queryResolvers } from './resolvers'
-
-export function isNestedType(nested: SchemaEntry): boolean {
-  // If it's not a type, treat it as nested
-  if ((!(nested instanceof SchemaType))) {
-    return true
-  }
-
-  // If it's an array or a map, check the element type
-  if (nested.type === 'array' || nested.type === 'map') {
-    return isNestedType(nested.of)
-  }
-
-  return false
-}
-export function extractNestedType(nested: SchemaEntry): Schema {
-  // If it's not a type, treat it as nested
-  if ((!(nested instanceof SchemaType))) {
-    return nested
-  }
-
-  // If it's an array or a map, check the element type
-  if (nested.type === 'array' || nested.type === 'map') {
-    return extractNestedType(nested.of)
-  }
-
-  return null
-}
-export function extractNestedSchemaType(nested: SchemaEntry): SchemaType {
-  // If it's not a type, treat it as nested
-  if ((!(nested instanceof SchemaType))) {
-    return null
-  }
-
-  // If it's an array or a map, check the element type
-  if (nested.type === 'array' || nested.type === 'map') {
-    return extractNestedSchemaType(nested.of)
-  }
-
-  return nested
-}
-
-function sanitizeSchema(schema: Schema, name ?: string) {
-  // Sanitize arrays
-  Object.entries(schema)
-    .forEach(([key, type]: [string, SchemaEntry]) => {
-      if (Array.isArray(type)) {
-        schema[key] = Types.Array.of(type[0])   // eslint-disable-line
-      }
-
-      if (type.type === 'map' && Array.isArray(type.of)) {
-        type.of = Types.Array.of(type.of[0])    // eslint-disable-line
-      }
-    })
-
-  // Delete wrong values
-  Object.entries(schema)
-    .forEach(([key, type]: [string, SchemaEntry]) => {
-      if (!(type instanceof Object) || (type.type === 'array' && !(type.of instanceof Object))) {
-        console.warn(`Schema definitions should be objects: check property ${key} of ${name}`)
-        delete schema[key]  // eslint-disable-line
-      }
-    })
-
-  // Check deeply
-  Object.entries(schema)
-    .forEach(([key, type]: [string, SchemaEntry]) => {
-      if (isNestedType(type)) {
-        sanitizeSchema(type.of || type, `${name}.${key}`)
-      }
-    })
-}
 
 /* eslint-disable no-param-reassign */
 function extendField(field: Field, modelName: string) {
   switch (field.extends) {
     case 'get':
     case 'read': {
-      field.type = new SchemaType('raw', `${extractModelType(modelName)}`)
+      field.type = new Property({ type: 'raw', of: modelName })
       field.args = {
-        filter: new SchemaType('raw', `${extractModelType(modelName)}InputFilter`),
+        filter: new Property({ type: 'raw', of: `${modelName}InputFilter` }),
         skip: Types.Number,
         sort: Types.Number,
       }
@@ -91,9 +20,9 @@ function extendField(field: Field, modelName: string) {
     }
     case 'list':
     case 'readMany': {
-      field.type = Types.Array.of(new SchemaType('raw', `${extractModelType(modelName)}`))
+      field.type = Types.Array.of(new Property({ type: 'raw', of: modelName }))
       field.args = {
-        filter: new SchemaType('raw', `${extractModelType(modelName)}InputFilter`),
+        filter: new Property({ type: 'raw', of: `${modelName}InputFilter` }),
         skip: Types.Number,
         limit: Types.Number,
         sort: Types.Number,
@@ -103,47 +32,47 @@ function extendField(field: Field, modelName: string) {
     case 'count': {
       field.type = Types.Number
       field.args = {
-        filter: new SchemaType('raw', `${extractModelType(modelName)}InputFilter`),
+        filter: new Property({ type: 'raw', of: `${modelName}InputFilter` }),
       }
       break
     }
     case 'create': {
-      field.type = new SchemaType('raw', `${extractModelType(modelName)}Payload`)
+      field.type = new Property({ type: 'raw', of: `${modelName}Payload` })
       field.args = {
-        record: new SchemaType('raw', `${extractModelType(modelName)}Input!`),
+        record: new Property({ type: 'raw', of: `${modelName}Input!` }),
       }
       break
     }
     case 'createMany': {
-      field.type = new SchemaType('raw', `${extractModelType(modelName)}PayloadMany`)
+      field.type = new Property({ type: 'raw', of: `${modelName}PayloadMany` })
       field.args = {
-        records: Types.Array.of(new SchemaType('raw', `${extractModelType(modelName)}Input!`)),
+        records: Types.Array.of(new Property({ type: 'raw', of: `${modelName}Input!` })),
       }
       break
     }
     case 'update': {
-      field.type = new SchemaType('raw', `${extractModelType(modelName)}Payload`)
+      field.type = new Property({ type: 'raw', of: `${modelName}Payload` })
       field.args = {
-        record: new SchemaType('raw', `${extractModelType(modelName)}InputWithID!`),
+        record: new Property({ type: 'raw', of: `${modelName}InputWithID!` }),
       }
       break
     }
     case 'updateMany': {
-      field.type = new SchemaType('raw', `${extractModelType(modelName)}PayloadMany`)
+      field.type = new Property({ type: 'raw', of: `${modelName}PayloadMany` })
       field.args = {
-        records: Types.Array.of(new SchemaType('raw', `${extractModelType(modelName)}InputWithID!`)),
+        records: Types.Array.of(new Property({ type: 'raw', of: `${modelName}InputWithID!` })),
       }
       break
     }
     case 'delete': {
-      field.type = new SchemaType('raw', `${extractModelType(modelName)}Payload`)
+      field.type = new Property({ type: 'raw', of: `${modelName}Payload` })
       field.args = {
         _id: Types.ID.required,
       }
       break
     }
     case 'deleteMany': {
-      field.type = new SchemaType('raw', `${extractModelType(modelName)}PayloadMany`)
+      field.type = new Property({ type: 'raw', of: `${modelName}PayloadMany` })
       field.args = {
         records: Types.Array.of(Types.ID.required),
       }
@@ -155,71 +84,183 @@ function extendField(field: Field, modelName: string) {
 }
 /* eslint-enable no-param-reassign */
 
-function sanitizeField(field: Field, name: string, modelName: string) {
-  if (field.extends) {
-    extendField(field, modelName)
+
+function sanitizeField({
+  field, name,
+} : {
+  field: Property | PropertySchema | Property[] | PropertySchema[],
+  name: string,
+}) {
+  const sanitized = new Property({ type: 'raw', name })
+
+  if (field instanceof Property) {
+    // If the field was a correct property, copy its configuration
+
+    sanitized._federation = field._federation
+    sanitized._configuration = field._configuration
+    sanitized.name = name
+
+    sanitized.type = field.type
+    sanitized.of = field.of
+
+    if (field.of instanceof Property || field.of instanceof Object) {
+      sanitized.of = sanitizeField({
+        field: field.of,
+        name: '',
+      })
+      sanitized.of.parent = sanitized
+    }
+  } else if (field instanceof Array) {
+    // If the field is an array, make it an array property
+
+    sanitized.type = 'array'
+    sanitized.of = sanitizeField({
+      field: field[0], name: '',
+    })
+    sanitized.of.parent = sanitized
+  } else if (field instanceof Object) {
+    // If the field was an object, make it a nested property
+
+    sanitized.type = 'nested'
+    sanitized.of = sanitizeNested({ field: field, parent: sanitized, mode: null }) // eslint-disable-line
   }
 
-  if (!(field.type instanceof SchemaType) && field.type) {
-    sanitizeSchema(field.type, name)
-  }
-
-  if (!field.mode) {
-    field.mode = [FieldMode.OUTPUT] // eslint-disable-line
-  }
-
-  if (!Array.isArray(field.mode)) {
-    field.mode = [field.mode] // eslint-disable-line
-  }
+  return sanitized
 }
 
+function sanitizeNested({ field, parent, mode }) {
+  const sanitized = {}
 
-function sanitizeFields(fields: Fields, name: string, force?: FieldModeEnum) {
-  Object.entries(fields || {})
-    .forEach(([key, field]: [string, Field]) => {
-      if (force !== undefined) {
-        field.mode = force // eslint-disable-line
+  Object.keys(field).forEach((key) => {
+    sanitized[key] = sanitizeField({
+      field: field[key],
+      name: key,
+    })
+    sanitized[key].parent = parent
+    sanitized[key].mode = mode
+  })
+
+  return sanitized
+}
+
+function sanitizeSchema({ schema, name }) {
+  const sanitized = new Property({ type: 'nested', of: {} })
+
+  const mode = [FieldMode.INPUT, FieldMode.OUTPUT]
+
+  sanitized.name = name
+  sanitized.mode = mode
+
+  sanitized.of = sanitizeNested({
+    field: schema,
+    parent: sanitized,
+    mode: null,
+  })
+
+  return sanitized
+}
+
+function sanitizeFields(
+  { fields, parent, force } : { fields: Fields, parent: Property, force?: FieldModeEnum },
+) : Fields {
+  const sanitized = {}
+
+
+  Object.keys(fields || {})
+    .forEach((key) => {
+      const mode = force || fields[key].mode || [FieldMode.INPUT, FieldMode.OUTPUT]
+
+      const argsParent = new Property({ type: 'raw', name: 'Args' })
+
+      sanitized[key] = {
+        mode,
+        args: fields[key].args
+          ? sanitizeNested({ field: fields[key].args, parent: argsParent, mode: FieldMode.INPUT })
+          : null,
+        type: sanitizeField({
+          field: fields[key].type,
+          name: key,
+        }),
       }
 
-      sanitizeField(field, `${name}.${key}`, name)
+      argsParent.parent = sanitized[key].type
+      sanitized[key].type.mode = mode
+      sanitized[key].type.parent = parent
+      sanitized[key].type.args = sanitized[key].args
     })
+
+  return sanitized
 }
 
-export function sanitizeModel(model: Model) {
-  sanitizeSchema(model.schema, model.name)
-
-
-  /* eslint-disable no-param-reassign */
-  if (!model.fields) {
-    model.fields = {
-      fields: {},
-      queries: {},
-      mutations: {},
-    }
+function sanitizeModelFields({ fields, parent, external }) {
+  const sanitized = fields || {
+    fields: {},
+    queries: {},
+    mutations: {},
   }
 
-  if (!model.external) {
-    model.fields.queries = model.fields.queries || {}
-    model.fields.mutations = model.fields.mutations || {}
+  if (!external) {
+    sanitized.queries = sanitized.queries || {}
+    sanitized.mutations = sanitized.mutations || {}
+
+    const { name } = parent._configuration
 
     queryResolvers.forEach((query) => {
-      model.fields.queries[model.name + query.suffix] = model.fields.queries[model.name + query.suffix] || {
+      sanitized.queries[name + query.suffix] = sanitized.queries[name + query.suffix] || {
         extends: query.type,
         resolve: null,
       }
     })
     mutationResolvers.forEach((query) => {
-      model.fields.mutations[model.name + query.suffix] = model.fields.mutations[model.name + query.suffix] || {
+      sanitized.mutations[name + query.suffix] = sanitized.mutations[name + query.suffix] || {
         extends: query.type,
         resolve: null,
       }
     })
-    /* eslint-enable no-param-reassign */
   }
 
-  sanitizeFields(model.fields.fields, model.name)
-  sanitizeFields(model.fields.queries, model.name, FieldMode.OUTPUT)
-  sanitizeFields(model.fields.mutations, model.name, FieldMode.OUTPUT)
+  if (sanitized.queries) {
+    Object.values(fields.queries)
+      .forEach((query : Field) => {
+        extendField(query, parent.graphqlType)
+      })
+  }
 
-  return model
+  if (sanitized.mutations) {
+    Object.values(fields.mutations)
+      .forEach((query : Field) => {
+        extendField(query, parent.graphqlType)
+      })
+  }
+
+  return {
+    fields: sanitizeFields({ fields: sanitized.fields, parent }),
+    queries: sanitizeFields({ fields: sanitized.queries, parent: null, force: FieldMode.OUTPUT }),
+    mutations: sanitizeFields({ fields: sanitized.mutations, parent: null, force: FieldMode.OUTPUT }),
+  }
+}
+
+// eslint-disable-next-line
+export function sanitizeModel(model) {
+  const schema = sanitizeSchema({ schema: model.schema, name: model.name })
+  const fields = sanitizeModelFields({ fields: model.fields, parent: schema, external: model.external })
+
+  const sanitized : SanitizedModel = {
+    name: model.name,
+    schema,
+    fields,
+
+    accessor: model.accessor,
+    scopes: { ...model.scopes },
+
+    external: !!model.external,
+  }
+
+  // Inject transient fields in schema
+  Object.keys(sanitized.fields.fields)
+    .forEach((key) => {
+      sanitized.schema.of[key] = sanitized.fields.fields[key].type
+    })
+
+  return sanitized
 }

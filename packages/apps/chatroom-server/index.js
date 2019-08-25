@@ -31,6 +31,8 @@ persistence.init({
 
 const server = new Server()
 
+const { ControllerGraphQL, ControllerEvents } = persistence.controllers
+
 server.init({
   // This is the configuration object of Harmony Server
 
@@ -41,11 +43,11 @@ server.init({
   },
 
   controllers: [
-    new persistence.controllers.ControllerGraphQL({
+    new ControllerGraphQL({
       path: '/graphql',
       enablePlayground: true,
     }),
-    new persistence.controllers.ControllerEvents(),
+    new ControllerEvents(),
     new ControllerSPA({
       // Serve our SPA on '/'
       path: '/',

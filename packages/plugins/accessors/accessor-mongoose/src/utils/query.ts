@@ -24,7 +24,7 @@ function _toMongoDottedObject(obj, target = {}, path = [], filter = false) {
           [key]: val,
         };
       }
-    } else if (Object(obj[key]) === obj[key] && !(obj[key] instanceof ObjectId)) {
+    } else if (Object(obj[key]) === obj[key] && !(obj[key] instanceof ObjectId) && (!Array.isArray(obj[key]) || filter)) {
       _toMongoDottedObject(
         obj[key],
         target,

@@ -1,4 +1,6 @@
-import { Accessor, SchemaType, SchemaEntry } from '@harmonyjs/types-persistence'
+import {
+  Accessor, Property, PropertySchema, SanitizedModel,
+} from '@harmonyjs/types-persistence'
 
 import Mongoose from 'mongoose'
 import { toMongoDottedObject, toMongoFilterDottedObject } from './utils/query'
@@ -9,7 +11,7 @@ Mongoose.Promise = global.Promise
 const operatorMap = {
   not: '$not',
   eq: '$eq',
-  neq: '$neq',
+  neq: '$ne',
   exists: '$exists',
   in: '$in',
   nin: '$nin',
@@ -18,78 +20,90 @@ const operatorMap = {
   gt: '$gt',
   lt: '$lt',
   regex: '$regex',
-  all: '$all',
-  match: '$elemMatch',
+  element: '$elemMatch',
 }
 
-function toMongooseType(type) {
-  if (!(type instanceof SchemaType)) {
-    return toMongooseSchema(type) // eslint-disable-line
+const MongooseTypeMap = {
+  boolean: Types.Boolean,
+  date: Types.Date,
+  float: Types.Float,
+  id: Types.ObjectId,
+  json: Types.Mixed,
+  number: Types.Number,
+  string: Types.String,
+}
+
+function toMongooseType(prop : Property) {
+  if (['nested', 'array', 'map'].includes(prop.type)) {
+    return toMongooseSchema(prop) // eslint-disable-line
   }
 
-  if (type.type === 'array') {
-    return [toMongooseType(type.of)]
-  }
-
-  if (type.type === 'map') {
-    return ({
-      type: Types.Map,
-      of: toMongooseType(type.of),
-      indexed: type.isIndexed,
-    })
-  }
-
-  if (type.type === 'reference') {
-    return ({
+  if (prop.type === 'reference') {
+    return {
       type: Types.ObjectId,
-      ref: type.of,
-      unique: type.isUnique,
-      indexed: type.isIndexed,
-    })
-  }
-
-  const MongooseTypeMap = {
-    boolean: Types.Boolean,
-    date: Types.Date,
-    float: Types.Float,
-    id: Types.ObjectId,
-    json: Types.Mixed,
-    number: Types.Number,
-    string: Types.String,
+      ref: prop.of as string,
+      indexed: prop.isIndexed(),
+      unique: prop.isUnique(),
+    }
   }
 
   return {
-    type: MongooseTypeMap[type.type as string] || Types.Mixed,
-    unique: type.isUnique,
-    indexed: type.isIndexed,
+    type: MongooseTypeMap[prop.type as string] || Types.Mixed,
+    unique: prop.isUnique(),
+    indexed: prop.isIndexed(),
   }
 }
 
-function toMongooseSchema(schema) {
+function toMongooseSchema(schema : Property) {
   const mongooseSchema = {}
 
-  Object.entries(schema)
-    .forEach(([key, type] : [string, SchemaEntry]) => {
-      if (!(type instanceof SchemaType)) {
-        mongooseSchema[key] = toMongooseSchema(type)
-      } else if (type.type === 'array') {
-        mongooseSchema[key] = [toMongooseType(type.of)]
-      } else if (type.type === 'map') {
-        mongooseSchema[key] = {
-          type: Types.Map,
-          of: toMongooseType(type.of),
+  if (['nested', 'array', 'map'].includes(schema.type)) {
+    Object.entries(schema.of)
+      .forEach(([key, prop] : [string, Property]) => {
+        if (prop.type === 'nested') {
+          mongooseSchema[key] = toMongooseSchema(prop)
+        } else if (prop.type === 'array') {
+          mongooseSchema[key] = [toMongooseSchema(prop.of as Property)]
+        } else if (prop.type === 'map') {
+          mongooseSchema[key] = {
+            type: Types.Map,
+            of: toMongooseSchema(prop.of as Property),
+            indexed: prop.isIndexed(),
+            unique: prop.isUnique(),
+          }
+        } else {
+          mongooseSchema[key] = toMongooseType(prop)
         }
-      } else if (type.type === 'reference') {
-        mongooseSchema[key] = {
-          type: Types.ObjectId,
-          ref: type.of,
-        }
-      } else {
-        mongooseSchema[key] = toMongooseType(type)
+      })
+  } else {
+    return toMongooseType(schema)
+  }
+
+  return mongooseSchema
+}
+
+function sanitizeOperators(operators) {
+  const sanitized = {}
+
+  Object.entries(operators)
+    .forEach(([operator, params] : [string, PropertySchema]) => {
+      sanitized[operatorMap[operator]] = params
+
+      if (operator === 'element') {
+        sanitized[operatorMap[operator]] = sanitizeOperators(params)
+      }
+
+      if (operator === 'match') {
+        delete sanitized[operatorMap[operator]]
+
+        Object.entries(params)
+          .forEach(([k, p]) => {
+            sanitized[k] = sanitizeOperators(p)
+          })
       }
     })
 
-  return mongooseSchema
+  return sanitized
 }
 
 function sanitizeFilter(filter) {
@@ -110,15 +124,15 @@ function sanitizeFilter(filter) {
   }
 
   if (filter._operators) {
+    filter._and = filter._and || [] // eslint-disable-line
+    const ops = {}
+
     Object.entries(filter._operators)
       .forEach(([field, operators]) => {
-        newFilter[field] = {}
-
-        Object.entries(operators)
-          .forEach(([operator, params]) => {
-            newFilter[field][operatorMap[operator]] = params
-          })
+        ops[field] = sanitizeOperators(operators)
       })
+
+    filter._and.push(ops)
   }
 
   if (filter._or) {
@@ -133,7 +147,7 @@ function sanitizeFilter(filter) {
     newFilter.$nor = filter._nor.map(filter._nor)
   }
 
-  return toMongoFilterDottedObject(newFilter)
+  return toMongoFilterDottedObject({ ...newFilter })
 }
 
 export default class AccessorMongoose extends Accessor {
@@ -145,6 +159,9 @@ export default class AccessorMongoose extends Accessor {
 
   constructor(private config : any) {
     super()
+
+    this.resolveRefs = this.resolveRefs.bind(this)
+    this.resolveRef = this.resolveRef.bind(this)
   }
 
   async initialize({ models, events, logger }) {
@@ -157,7 +174,7 @@ export default class AccessorMongoose extends Accessor {
     logger.info('Initializing Mongoose Accessor')
     logger.info('Converting Schemas')
 
-    models.forEach((model) => {
+    models.forEach((model : SanitizedModel) => {
       const schema = new Mongoose.Schema(toMongooseSchema(model.schema))
 
       const updateHook = (document, next) => {
@@ -231,8 +248,8 @@ export default class AccessorMongoose extends Accessor {
   async resolveRef({
     source, args, context, info, model, fieldName,
   }) {
-    if (source.populate) {
-      await source.populate(fieldName).execPopulate()
+    // Check if the ref as already been resolved beforehand
+    if (!Mongoose.Types.ObjectId.isValid(source[fieldName])) {
       return source[fieldName]
     }
 
@@ -243,10 +260,12 @@ export default class AccessorMongoose extends Accessor {
   async resolveRefs({
     source, args, context, info, model, fieldName,
   }) {
-    if (source.populate) {
-      return this.resolveRef({
-        source, args, context, info, model, fieldName,
-      })
+    // Check if the ref as already been resolved beforehand
+    if (
+      !source[fieldName].length
+      || (!Mongoose.Types.ObjectId.isValid(source[fieldName][0]))
+    ) {
+      return source[fieldName]
     }
 
     const mongooseModel = this.models[model.name]
@@ -260,6 +279,7 @@ export default class AccessorMongoose extends Accessor {
   }) {
     const mongooseModel = this.models[model.name]
 
+    // TODO parse Info to Populate
     return mongooseModel.findOne(sanitizeFilter(args.filter))
   }
 
@@ -268,6 +288,7 @@ export default class AccessorMongoose extends Accessor {
   }) {
     const mongooseModel = this.models[model.name]
 
+    // TODO parse Info to Populate
     return mongooseModel.find(sanitizeFilter(args.filter))
   }
 
@@ -288,6 +309,7 @@ export default class AccessorMongoose extends Accessor {
 
     const document = await mongooseModel.create(toMongoDottedObject(args.record))
 
+    // TODO parse Info to Populate
     return {
       recordId: document._id,
       record: document,
@@ -301,6 +323,7 @@ export default class AccessorMongoose extends Accessor {
 
     const documents = await mongooseModel.insertMany(toMongoDottedObject(args.records))
 
+    // TODO parse Info to Populate
     return {
       recordIds: documents.map((d) => d._id),
       records: documents,
@@ -318,6 +341,7 @@ export default class AccessorMongoose extends Accessor {
       { new: true, upsert: true },
     )
 
+    // TODO parse Info to Populate
     return {
       recordId: document._id,
       record: document,
@@ -337,6 +361,7 @@ export default class AccessorMongoose extends Accessor {
       },
     })))
 
+    // TODO parse Info to Populate
     return ({
       records: updated.map((c) => c.record),
       recordIds: updated.map((c) => c.recordId),
@@ -352,6 +377,7 @@ export default class AccessorMongoose extends Accessor {
       { _id: args._id },
     )
 
+    // TODO parse Info to Populate
     return {
       recordId: document._id,
       record: document,
@@ -371,6 +397,7 @@ export default class AccessorMongoose extends Accessor {
       },
     })))
 
+    // TODO parse Info to Populate
     return ({
       records: deleted.map((c) => c.record),
       recordIds: deleted.map((c) => c.recordId),

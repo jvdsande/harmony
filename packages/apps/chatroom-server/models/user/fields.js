@@ -6,6 +6,31 @@ export default {
       type: Types.String,
       resolve: async ({ source }) => source.displayName || source.username,
     },
+    someOtherField: {
+      type: Types.Boolean,
+      resolve: () => false,
+    },
+    someNumber: {
+      mode: ['INPUT'],
+      type: Types.Number,
+      resolve: () => 42,
+    },
+    someNested: {
+      args: {
+        test: Types.String,
+        nested: {
+          test1: Types.String,
+          test2: Types.String,
+        },
+        array: [[[[{
+          nestedInArray: Types.Boolean,
+        }]]]],
+      },
+      type: {
+        float: Types.Float,
+      },
+      resolve: () => ({ float: 42.43 }),
+    },
   },
 
   queries: {
