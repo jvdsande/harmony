@@ -1,6 +1,6 @@
 import Server from '@harmonyjs/server'
 
-import ControllerApolloFederation from '@harmonyjs/controller-apollo-federation'
+import ControllerApolloGateway from '@harmonyjs/controller-apollo-gateway'
 
 const server = new Server()
 
@@ -10,7 +10,7 @@ server.init({
     port: '4000',
   },
   controllers: [
-    ControllerApolloFederation({
+    new ControllerApolloGateway({
       path: '/',
       enablePlayground: true,
       services: [

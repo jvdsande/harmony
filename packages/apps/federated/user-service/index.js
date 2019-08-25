@@ -31,7 +31,7 @@ server.init({
     port: '4001',
   },
   controllers: [
-    persistence.controllers.ControllerGraphQL({
+    new persistence.controllers.ControllerGraphQL({
       path: '/',
       enablePlayground: true,
     }),

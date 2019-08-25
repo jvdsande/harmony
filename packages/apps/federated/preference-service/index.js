@@ -20,6 +20,7 @@ const UserModel = {
         type: Types.Reference.of('preference'),
         needs: ['_id'],
         async resolve({ source, resolvers }) {
+          console.log('Fetching preference')
           return resolvers.Preference.read({ user: source._id })
         },
       },
@@ -48,7 +49,7 @@ server.init({
     port: '4002',
   },
   controllers: [
-    persistence.controllers.ControllerGraphQL({
+    new persistence.controllers.ControllerGraphQL({
       path: '/',
     }),
   ],

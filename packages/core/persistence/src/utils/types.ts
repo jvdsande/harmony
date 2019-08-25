@@ -246,72 +246,97 @@ export function printGraphqlRoot(model : SanitizedModel) {
 
   const { graphqlType, graphqlInputType } = model.schema
 
-  return [
-    ...extractNestedProperty(model.schema)
-      .map(printGraphqlNested),
-    ...extractNestedArguments(model.schema)
-      .map(printGraphqlNested),
-    printGraphqlType({
-      name: graphqlType,
-      properties: Object.values(model.schema.of).filter((prop) => prop.mode.includes(FieldMode.OUTPUT)),
-      root: true,
-      external: model.external,
-    }),
-    printGraphqlType({
-      name: `${graphqlType}Payload`,
-      properties: [
-        new Property({ type: 'raw', name: 'record', of: model.schema.graphqlType }),
-        new Property({ type: 'id', name: 'recordId' }),
-      ],
-    }),
-    printGraphqlType({
-      name: `${graphqlType}PayloadMany`,
-      properties: [
-        new Property({
-          type: 'array',
-          name: 'records',
-          of: new Property({ type: 'raw', of: graphqlType }),
-        }),
-        new Property({
-          type: 'array',
-          name: 'recordIds',
-          of: new Property({ type: 'id' }),
-        }),
-      ],
-    }),
-    printGraphqlInputType({
-      name: graphqlInputType,
-      properties: Object.values(model.schema.of).filter((prop) => prop.mode.includes(FieldMode.INPUT)),
-    }),
-    printGraphqlInputType({
-      name: `${graphqlInputType}WithID`,
-      properties: [
-        new Property({ type: 'id', name: '_id' }).required,
-        ...Object.values(model.schema.of).filter((prop) => prop.mode.includes(FieldMode.INPUT)),
-      ],
-    }),
-    printGraphqlInputType({
-      name: `${graphqlInputType}Filter`,
-      properties: [
+  const nestedTypes = extractNestedProperty(model.schema)
+    .map(printGraphqlNested)
 
-        new Property({ type: 'id', name: '_id' }),
-        ...Object.values(model.schema.of).filter((prop) => prop.mode.includes(FieldMode.INPUT)),
-        new Property({
-          type: 'array', name: '_or', of: new Property({ type: 'raw', of: `${graphqlInputType}Filter` }),
-        }),
-        new Property({
-          type: 'array', name: '_and', of: new Property({ type: 'raw', of: `${graphqlInputType}Filter` }),
-        }),
-        new Property({
-          type: 'array', name: '_nor', of: new Property({ type: 'raw', of: `${graphqlInputType}Filter` }),
-        }),
-        new Property({
-          type: 'raw', name: '_operators', of: operatorType,
-        }),
-      ],
-    }),
-    printGraphqlNested(operatorType),
-  ].join('\n')
+  const nestedArgs = extractNestedArguments(model.schema)
+    .map(printGraphqlNested)
+
+  const outputType = printGraphqlType({
+    name: graphqlType,
+    properties: Object.values(model.schema.of).filter((prop) => prop.mode.includes(FieldMode.OUTPUT)),
+    root: true,
+    external: model.external,
+  })
+
+  const payloadType = printGraphqlType({
+    name: `${graphqlType}Payload`,
+    properties: [
+      new Property({ type: 'raw', name: 'record', of: model.schema.graphqlType }),
+      new Property({ type: 'id', name: 'recordId' }),
+    ],
+  })
+
+  const payloadManyType = printGraphqlType({
+    name: `${graphqlType}PayloadMany`,
+    properties: [
+      new Property({
+        type: 'array',
+        name: 'records',
+        of: new Property({ type: 'raw', of: graphqlType }),
+      }),
+      new Property({
+        type: 'array',
+        name: 'recordIds',
+        of: new Property({ type: 'id' }),
+      }),
+    ],
+  })
+
+  const inputType = printGraphqlInputType({
+    name: graphqlInputType,
+    properties: Object.values(model.schema.of).filter((prop) => prop.mode.includes(FieldMode.INPUT)),
+  })
+
+  const inputWithIdType = printGraphqlInputType({
+    name: `${graphqlInputType}WithID`,
+    properties: [
+      new Property({ type: 'id', name: '_id' }).required,
+      ...Object.values(model.schema.of).filter((prop) => prop.mode.includes(FieldMode.INPUT)),
+    ],
+  })
+
+  const filterType = printGraphqlInputType({
+    name: `${graphqlInputType}Filter`,
+    properties: [
+
+      new Property({ type: 'id', name: '_id' }),
+      ...Object.values(model.schema.of).filter((prop) => prop.mode.includes(FieldMode.INPUT)),
+      new Property({
+        type: 'array', name: '_or', of: new Property({ type: 'raw', of: `${graphqlInputType}Filter` }),
+      }),
+      new Property({
+        type: 'array', name: '_and', of: new Property({ type: 'raw', of: `${graphqlInputType}Filter` }),
+      }),
+      new Property({
+        type: 'array', name: '_nor', of: new Property({ type: 'raw', of: `${graphqlInputType}Filter` }),
+      }),
+      new Property({
+        type: 'raw', name: '_operators', of: operatorType,
+      }),
+    ],
+  })
+
+  const operatorNestedType = printGraphqlNested(operatorType)
+
+  const root = [
+    nestedTypes,
+    nestedArgs,
+    outputType,
+  ]
+
+  if (!model.external) {
+    root.push(...[
+      payloadType,
+      payloadManyType,
+      inputType,
+      inputWithIdType,
+      filterType,
+      operatorNestedType,
+    ])
+  }
+
+  return root.join('\n')
 }
 
 function printGraphqlQuery(query : Field) {
@@ -344,9 +369,9 @@ export function printGraphqlQueries(model : SanitizedModel) {
         .join('\n')
     })
 
-  const query = 'extend type Query {\n  {queries}\n}'
+  const query = Object.values(model.fields.queries).length ? 'extend type Query {\n  {queries}\n}'
     .replace('{queries}', Object.values(model.fields.queries)
-      .map(printGraphqlQuery).join('\n  '))
+      .map(printGraphqlQuery).join('\n  ')) : ''
 
   return [
     ...types,
@@ -386,9 +411,9 @@ export function printGraphqlMutations(model : SanitizedModel) {
         .join('\n')
     })
 
-  const mutation = 'extend type Mutation {\n  {mutations}\n}'
+  const mutation = Object.values(model.fields.mutations).length ? 'extend type Mutation {\n  {mutations}\n}'
     .replace('{mutations}', Object.values(model.fields.mutations)
-      .map(printGraphqlMutation).join('\n  '))
+      .map(printGraphqlMutation).join('\n  ')) : ''
 
   return [
     ...types,

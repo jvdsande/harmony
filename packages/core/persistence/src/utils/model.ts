@@ -169,11 +169,13 @@ function sanitizeFields(
   Object.keys(fields || {})
     .forEach((key) => {
       const mode = force || fields[key].mode || [FieldMode.INPUT, FieldMode.OUTPUT]
+      const resolve = fields[key].resolve || null
 
       const argsParent = new Property({ type: 'raw', name: 'Args' })
 
       sanitized[key] = {
         mode,
+        resolve,
         args: fields[key].args
           ? sanitizeNested({ field: fields[key].args, parent: argsParent, mode: FieldMode.INPUT })
           : null,
@@ -220,14 +222,14 @@ function sanitizeModelFields({ fields, parent, external }) {
   }
 
   if (sanitized.queries) {
-    Object.values(fields.queries)
+    Object.values(sanitized.queries)
       .forEach((query : Field) => {
         extendField(query, parent.graphqlType)
       })
   }
 
   if (sanitized.mutations) {
-    Object.values(fields.mutations)
+    Object.values(sanitized.mutations)
       .forEach((query : Field) => {
         extendField(query, parent.graphqlType)
       })
