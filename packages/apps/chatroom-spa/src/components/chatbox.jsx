@@ -46,11 +46,12 @@ export default class Chatbox extends React.Component {
         },
         content: true,
         timestamp: true,
+        worker: true,
       })
       .subscribe((messages) => {
         this.setState({ messages })
         this.messages.scrollTo(0, this.messages.scrollHeight)
-      })
+      }, ['user'])
 
 
     const prepareTypingQuery = () => ({
@@ -149,6 +150,7 @@ export default class Chatbox extends React.Component {
                   <h2 className="author">{author.displayName}</h2>
                   <p className="content">{content}</p>
                   <p className="date">{new Date(timestamp).toLocaleDateString()} - {new Date(timestamp).toLocaleTimeString()}</p>
+                  <p className="date"><small>{message.worker}</small></p>
                 </div>
               )
             })

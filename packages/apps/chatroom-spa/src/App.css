@@ -113,6 +113,20 @@
   text-align: justify;
 }
 
+
+#chatbox .message.red {
+  background-color: #C12C1822;
+}
+
+#chatbox .message.green {
+  background-color: #18C12C22;
+}
+
+#chatbox .message.blue {
+  background-color: #2C18C122;
+}
+
+
 #chatbox .message .author,
 #chatbox .message p {
   margin: 0;
@@ -160,4 +174,36 @@
   color: #424242;
   font-size: 14px;
   line-height: 32px;
+}
+
+#profile .preview {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #CCCCCC;
+  margin: 0 16px 16px;
+
+  outline: 0;
+  padding: 0;
+
+  box-sizing: border-box;
+}
+
+#profile .preview.selected {
+  box-shadow: 0 0 0 2px darkblue;
+}
+
+#profile .preview.grey {
+  background-color: #EEEEEE;
+}
+
+#profile .preview.red {
+  background-color: #C12C1844;
+}
+
+#profile .preview.green {
+  background-color: #18C12C44;
+}
+
+#profile .preview.blue {
+  background-color: #2C18C144;
 }

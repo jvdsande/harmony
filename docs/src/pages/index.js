@@ -631,8 +631,8 @@ server.init({
                   <br />
 
                   <li>
-                    <b>Identify the connected user:</b> calling a query updating the user should not require an ID
-                    filter, since we know which user is connected. The same applies when posting a new message.
+                    <b>Identify the connected user:</b> calling a query updating or getting the user should not require
+                    an ID filter, since we know which user is connected. The same applies when posting a new message.
                   </li>
 
                   <br />
@@ -811,8 +811,8 @@ export default {
         // Call the User update method with updated arguments
         return User.update({
           record: {
-            ...args.record,
             _id: userId,
+            ...args.record,
           },
         })
       },
@@ -835,6 +835,39 @@ export default {
                 {', '}
                 <b>update</b>, <b>updateMany</b>, <b>delete</b> and <b>deleteMany</b>
               </p>
+
+              <p>
+                We need to do the same thing with the <b>user</b> query, in order to retrieve the connected user when
+                no id is passed.
+              </p>
+
+
+
+              <Highlight className="javascript">
+                {`export default {
+  // ...
+
+  queries: {
+    // ...
+    user: {
+      extends: 'get',
+      resolve: async ({ args, resolvers: { User }, context: { authentication } }) => {
+        // Retrieve the ID from the authentication object
+        const userId = authentication.get()._id
+
+        // Call the User get method with updated arguments
+        return User.get({
+          record: {
+            _id: userId,
+            ...args.record,
+          },
+        })
+      },
+    },
+  },
+}
+`}
+              </Highlight>
 
               <h3>Automatically adding timestamps</h3>
 

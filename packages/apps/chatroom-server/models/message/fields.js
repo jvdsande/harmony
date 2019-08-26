@@ -1,4 +1,20 @@
+import { Types } from '@harmonyjs/persistence'
+import Cluster from 'cluster'
+
 export default {
+  fields: {
+    worker: {
+      type: Types.String,
+      resolve: async ({ source }) => {
+        if (Cluster.isMaster) {
+          return '(master)'
+        }
+
+        return `(slave: ${Cluster.worker.id})`
+      },
+    },
+  },
+
   mutations: {
     messageCreate: {
       extends: 'create',
