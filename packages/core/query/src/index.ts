@@ -72,8 +72,9 @@ class Query {
     const portPath = (port ? `:${port}` : '')
 
     config.uri = host + portPath + graphqlPath
+    const socketUri = host + portPath
 
-    this.io = IO({
+    this.io = IO(socketUri, {
       path: socketPath,
     })
     this.client = new ApolloClient(config)
