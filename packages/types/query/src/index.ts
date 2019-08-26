@@ -27,7 +27,14 @@ export type QueryDefinition = {
 
 export type QueryConfiguration = {
   token?: string | null,
-  uri?: string | null,
+  endpoint?: {
+    port?: string,
+    host: string
+  },
+  path?: {
+    graphql?: string,
+    socket?: string,
+  }
   fetchPolicy?: 'network-only' | 'cache-first',
 }
 

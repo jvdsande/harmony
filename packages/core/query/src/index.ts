@@ -34,16 +34,16 @@ const transformJSQ = (q: QueryDefinition) => {
 
 
 class Query {
-  static io = IO({
-    path: '/harmonyjs-socket',
-  })
+  io = null
 
   client: ApolloClient<any>
 
   fetchPolicy = 'network-only'
 
   configure = (params: QueryConfiguration = {}) => {
-    const { token, fetchPolicy = 'network-only', uri } = params
+    const {
+      token, fetchPolicy = 'network-only', endpoint, path,
+    } = params
 
     this.fetchPolicy = fetchPolicy
 
@@ -60,10 +60,22 @@ class Query {
       }
     }
 
-    if (uri) {
-      config.uri = uri
-    }
+    const host = (endpoint && endpoint.host) || 'localhost'
+    const port = (endpoint && endpoint.port)
 
+    const graphql = (path && path.graphql) || '/graphql'
+    const socket = (path && path.socket) || '/harmonyjs-socket'
+
+    const graphqlPath = (graphql.startsWith('/') ? '' : '/') + graphql
+    const socketPath = (socket.startsWith('/') ? '' : '/') + socket
+
+    const portPath = (port ? `:${port}` : '')
+
+    config.uri = host + portPath + graphqlPath
+
+    this.io = IO({
+      path: socketPath,
+    })
     this.client = new ApolloClient(config)
   }
 
@@ -78,9 +90,9 @@ class Query {
   })
     .then(({ data }) => data)
 
-  subscribe = (event, callback) => Query.io.on(event, callback)
+  subscribe = (event, callback) => this.io.on(event, callback)
 
-  unsubscribe = (event, callback) => Query.io.off(event, callback)
+  unsubscribe = (event, callback) => this.io.off(event, callback)
 }
 
 const client = new Query()
