@@ -1,6 +1,6 @@
 {
   "name": "@harmonyjs/controller-gatsby",
-  "version": "2.0.0-alpha.2",
+  "version": "2.0.0-rc.1",
   "publishConfig": {
     "access": "public"
   },
