@@ -86,10 +86,12 @@ class Query {
   })
     .then(({ data }) => data)
 
-  mutation = (q: QueryDefinition) => this.client.mutate({
+  mutate = (q: QueryDefinition) => this.client.mutate({
     mutation: Graphql(`mutation { ${transformJSQ(q)} }`),
   })
     .then(({ data }) => data)
+
+  mutation = this.mutate
 
   subscribe = (event, callback) => this.io.on(event, callback)
 
@@ -97,15 +99,8 @@ class Query {
 }
 
 const client = new Query()
-const { query }: any = client
 
-query.query = client.query
-query.mutate = client.mutation
-query.subscribe = client.subscribe
-query.unsubscribe = client.unsubscribe
-query.configure = client.configure
-
-export default query
+export default client
 
 /**
  * Get the correct format for event names
@@ -272,7 +267,7 @@ class QueryBuilderInternal extends Promise<any> {
   /* Chain query */
   then = (callback?: QueryCallback) => {
     const request = this.build()
-    return query(request)
+    return client.query(request)
       .then((response) => response[Object.keys(request)[0]])
       .then(callback)
   }
@@ -288,7 +283,7 @@ class QueryBuilderInternal extends Promise<any> {
 
   subscription = async (force?: boolean) => {
     const request = this.build()
-    const response = await query(request)
+    const response = await client.query(request)
       .then((res) => res[Object.keys(request)[0]])
 
     const stringifiedResponse = JSON.stringify(response)
@@ -313,12 +308,12 @@ class QueryBuilderInternal extends Promise<any> {
       this
         .subscriptionModels
         .forEach((model) => {
-          query.subscribe(`${eventName(model)}-updated`, this.subscription)
+          client.subscribe(`${eventName(model)}-updated`, this.subscription)
         })
     }
 
-    query.unsubscribe(`${eventName(this.model)}-updated`, this.subscription)
-    query.subscribe(`${eventName(this.model)}-updated`, this.subscription)
+    client.unsubscribe(`${eventName(this.model)}-updated`, this.subscription)
+    client.subscribe(`${eventName(this.model)}-updated`, this.subscription)
 
     this.subscription(true)
 
@@ -331,7 +326,7 @@ class QueryBuilderInternal extends Promise<any> {
     // Unsubscribe from all additional models
     if (this.subscriptionModels) {
       this.subscriptionModels.forEach((model) => {
-        query.unsubscribe(`${eventName(model)}-updated`, this.subscription)
+        client.unsubscribe(`${eventName(model)}-updated`, this.subscription)
       })
     }
 
@@ -341,7 +336,7 @@ class QueryBuilderInternal extends Promise<any> {
       // Subscribe to updated list of additional models
       if (this.subscriptionModels) {
         this.subscriptionModels.forEach((model) => {
-          query.subscribe(`${eventName(model)}-updated`, this.subscription)
+          client.subscribe(`${eventName(model)}-updated`, this.subscription)
         })
       }
     }
@@ -350,7 +345,7 @@ class QueryBuilderInternal extends Promise<any> {
   }
 
   unsubscribe = () => {
-    query.unsubscribe(`${eventName(this.model)}-updated`, this.subscription)
+    client.unsubscribe(`${eventName(this.model)}-updated`, this.subscription)
 
     this.subscribed = false
 
@@ -505,7 +500,7 @@ export class MutationBuilderInternal extends Promise<any> {
   /* Chain mutation */
   then = (callback?: QueryCallback) => {
     const request = this.build()
-    return query.mutate(request)
+    return client.mutate(request)
       .then((response) => response[Object.keys(request)[0]])
       .then(callback)
   }
