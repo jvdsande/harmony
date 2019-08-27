@@ -4,6 +4,7 @@ import {
 
 import Types from '../entities/schema-types'
 import { mutationResolvers, queryResolvers } from './resolvers'
+import { extractModelType } from './types'
 
 /* eslint-disable no-param-reassign */
 function extendField(field: Field, modelName: string) {
@@ -208,13 +209,13 @@ function sanitizeModelFields({ fields, parent, external }) {
     const { name } = parent._configuration
 
     queryResolvers.forEach((query) => {
-      sanitized.queries[name + query.suffix] = sanitized.queries[name + query.suffix] || {
+      sanitized.queries[extractModelType(name, false) + query.suffix] = sanitized.queries[name + query.suffix] || {
         extends: query.type,
         resolve: null,
       }
     })
     mutationResolvers.forEach((query) => {
-      sanitized.mutations[name + query.suffix] = sanitized.mutations[name + query.suffix] || {
+      sanitized.mutations[extractModelType(name, false) + query.suffix] = sanitized.mutations[name + query.suffix] || {
         extends: query.type,
         resolve: null,
       }

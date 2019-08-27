@@ -280,6 +280,7 @@ export default class AccessorMongoose extends Accessor {
     const mongooseModel = this.models[model.name]
 
     // TODO parse Info to Populate
+    // TODO add skip/sort support
     return mongooseModel.findOne(sanitizeFilter(args.filter))
   }
 
@@ -289,6 +290,7 @@ export default class AccessorMongoose extends Accessor {
     const mongooseModel = this.models[model.name]
 
     // TODO parse Info to Populate
+    // TODO add skip/limit/sort support
     return mongooseModel.find(sanitizeFilter(args.filter))
   }
 

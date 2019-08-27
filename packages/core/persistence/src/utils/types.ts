@@ -5,8 +5,9 @@ import {
 } from '@harmonyjs/types-persistence'
 import Types from '../entities/schema-types'
 
-export function extractModelType(name: string): string {
-  return Voca.capitalize(Voca.camelCase(name))
+export function extractModelType(name: string, capitalize: boolean = true): string {
+  const camelCased = Voca.camelCase(name)
+  return capitalize ? Voca.capitalize(camelCased) : camelCased
 }
 
 type Operator = {
@@ -320,8 +321,8 @@ export function printGraphqlRoot(model : SanitizedModel) {
   const operatorNestedType = printGraphqlNested(operatorType)
 
   const root = [
-    nestedTypes,
-    nestedArgs,
+    ...nestedTypes,
+    ...nestedArgs,
     outputType,
   ]
 
