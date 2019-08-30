@@ -10,15 +10,9 @@ export type QueryArgsMap = {
 
 export type QueryArgs = QueryArgsMap | string
 
-export type PureQuerySelect = {
-  [key: string]: QuerySelect
-}
-
 export type QueryField = {
   args?: QueryArgs,
-  select?: PureQuerySelect,
-  // Deprecated
-  get?: PureQuerySelect,
+  select?: QuerySelect,
 }
 
 export type QueryDefinition = {

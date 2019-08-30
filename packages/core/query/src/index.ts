@@ -267,8 +267,12 @@ class QueryBuilderInternal extends Promise<any> {
   /* Chain query */
   then = (callback?: QueryCallback) => {
     const request = this.build()
-    return client.query(request)
-      .then((response) => response[Object.keys(request)[0]])
+
+    return new Promise((resolve, reject) => client.query(request)
+      .then((response) => resolve(response[Object.keys(request)[0]]))
+      .catch((err) => {
+        reject(err)
+      }))
       .then(callback)
   }
 
@@ -500,8 +504,12 @@ export class MutationBuilderInternal extends Promise<any> {
   /* Chain mutation */
   then = (callback?: QueryCallback) => {
     const request = this.build()
-    return client.mutate(request)
-      .then((response) => response[Object.keys(request)[0]])
+
+    return new Promise((resolve, reject) => client.query(request)
+      .then((response) => resolve(response[Object.keys(request)[0]]))
+      .catch((err) => {
+        reject(err)
+      }))
       .then(callback)
   }
 }
