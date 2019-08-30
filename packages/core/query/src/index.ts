@@ -7,7 +7,7 @@ import IO from 'socket.io-client'
 import {
   MutationType,
   QueryArgs, QueryConfiguration, QueryDefinition, QueryType,
-  PureQuerySelect, QueryArgsMap, QueryCallback, QueryField,
+  QuerySelect, QueryArgsMap, QueryCallback, QueryField,
 } from '@harmonyjs/types-query'
 
 const transformJSQ = (q: QueryDefinition) => {
@@ -20,7 +20,7 @@ const transformJSQ = (q: QueryDefinition) => {
         query[name] = true
       } else {
         query[name] = {
-          ...((content.select) || (content.get) || {}),
+          ...((content.select) || {}),
         }
 
         if (content.args) {
@@ -122,7 +122,7 @@ function eventName(name: string) {
 class QueryBuilderInternal extends Promise<any> {
   config: {
     filter?: QueryArgs,
-    select?: PureQuerySelect,
+    select?: QuerySelect,
     skip?: number,
     limit?: number,
     sort?: EnumType,
@@ -202,7 +202,7 @@ class QueryBuilderInternal extends Promise<any> {
     return this
   }
 
-  select = (body: PureQuerySelect) => {
+  select = (body: QuerySelect) => {
     this.config.select = body
 
     if (this.subscribed) this.subscription()
@@ -389,7 +389,7 @@ export class QueryBuilder {
 export class MutationBuilderInternal extends Promise<any> {
   config: {
     record?: QueryArgs,
-    select?: PureQuerySelect,
+    select?: QuerySelect,
     _id?: string,
   } = {
     record: null,
@@ -451,7 +451,7 @@ export class MutationBuilderInternal extends Promise<any> {
   }
 
 
-  select = (body: PureQuerySelect) => {
+  select = (body: QuerySelect) => {
     this.config.select = body
 
     return this
