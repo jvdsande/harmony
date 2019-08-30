@@ -505,7 +505,7 @@ export class MutationBuilderInternal extends Promise<any> {
   then = (callback?: QueryCallback) => {
     const request = this.build()
 
-    return new Promise((resolve, reject) => client.query(request)
+    return new Promise((resolve, reject) => client.mutation(request)
       .then((response) => resolve(response[Object.keys(request)[0]]))
       .catch((err) => {
         reject(err)
