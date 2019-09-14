@@ -5,7 +5,7 @@ export type Model = {
   name: string,
   external?: boolean,
   schema: PropertySchema | Property | Schema,
-  fields?: RootFields,
+  computed?: Computed,
   scopes?: Scopes,
 
   accessor?: string,
@@ -15,7 +15,8 @@ export type SanitizedModel = {
   name: string,
   external: boolean,
   schema: Property,
-  fields: RootFields,
+  originalSchema: Property,
+  computed: Computed,
   scopes: Scopes,
   accessor: string,
 }
@@ -26,7 +27,7 @@ export type Schema = {
 
 export type SchemaEntry = SchemaType | Schema
 
-export type RootFields = {
+export type Computed = {
   fields: Fields,
   queries: Fields,
   mutations: Fields,

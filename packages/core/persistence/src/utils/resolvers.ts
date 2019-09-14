@@ -1,4 +1,6 @@
-import { Field, PropertySchema, Property } from '@harmonyjs/types-persistence'
+import {
+  Field, PropertySchema, Property, SanitizedModel,
+} from '@harmonyjs/types-persistence'
 
 import { extractModelType } from './types'
 
@@ -205,7 +207,7 @@ export function computeFieldResolvers({
   localResolvers,
 }) {
   // Compute fields resolvers
-  models.forEach((model) => {
+  models.forEach((model : SanitizedModel) => {
     function computeResolver({ fields, rootName } : { fields: {[key: string]: Field}, rootName: string}) {
       Object.entries(fields)
         .forEach(([name, field]) => {
@@ -236,9 +238,9 @@ export function computeFieldResolvers({
         })
     }
 
-    const fields : {[key: string]: Field} = (model.fields ? model.fields.fields : {}) || {}
-    const queries : {[key: string]: Field} = (model.fields ? model.fields.queries : {}) || {}
-    const mutations : {[key: string]: Field} = (model.fields ? model.fields.mutations : {}) || {}
+    const fields : {[key: string]: Field} = (model.computed ? model.computed.fields : {}) || {}
+    const queries : {[key: string]: Field} = (model.computed ? model.computed.queries : {}) || {}
+    const mutations : {[key: string]: Field} = (model.computed ? model.computed.mutations : {}) || {}
 
     computeResolver({
       fields,

@@ -1,5 +1,5 @@
 import {
-  Property, PropertySchema, FieldMode, FieldModeEnum, Fields, Field, SanitizedModel,
+  Property, PropertySchema, FieldMode, FieldModeEnum, Fields, Field, SanitizedModel, Model,
 } from '@harmonyjs/types-persistence'
 
 import Types from '../entities/schema-types'
@@ -195,8 +195,8 @@ function sanitizeFields(
   return sanitized
 }
 
-function sanitizeModelFields({ fields, parent, external }) {
-  const sanitized = fields || {
+function sanitizeModelComputed({ computed, parent, external }) {
+  const sanitized = computed || {
     fields: {},
     queries: {},
     mutations: {},
@@ -244,14 +244,16 @@ function sanitizeModelFields({ fields, parent, external }) {
 }
 
 // eslint-disable-next-line
-export function sanitizeModel(model) {
+export function sanitizeModel(model : Model) {
   const schema = sanitizeSchema({ schema: model.schema, name: model.name })
-  const fields = sanitizeModelFields({ fields: model.fields, parent: schema, external: model.external })
+  const originalSchema = sanitizeSchema({ schema: model.schema, name: model.name })
+  const computed = sanitizeModelComputed({ computed: model.computed, parent: schema, external: model.external })
 
   const sanitized : SanitizedModel = {
     name: model.name,
     schema,
-    fields,
+    originalSchema,
+    computed,
 
     accessor: model.accessor,
     scopes: { ...model.scopes },
@@ -260,9 +262,9 @@ export function sanitizeModel(model) {
   }
 
   // Inject transient fields in schema
-  Object.keys(sanitized.fields.fields)
+  Object.keys(sanitized.computed.fields)
     .forEach((key) => {
-      sanitized.schema.of[key] = sanitized.fields.fields[key].type
+      sanitized.schema.of[key] = sanitized.computed.fields[key].type
     })
 
   return sanitized

@@ -349,7 +349,7 @@ function printGraphqlQuery(query : Field) {
 }
 
 export function printGraphqlQueries(model : SanitizedModel) {
-  const types = Object.entries(model.fields.queries)
+  const types = Object.entries(model.computed.queries)
     .map(([name, q]) => {
       const type = q.type as Property
 
@@ -360,7 +360,7 @@ export function printGraphqlQueries(model : SanitizedModel) {
       return ''
     })
 
-  const args = Object.entries(model.fields.queries)
+  const args = Object.entries(model.computed.queries)
     .filter(([name, q]) => !!q.args)
     .map(([name, q]) => {
       const argType = new Property({ type: 'nested', of: q.args })
@@ -370,8 +370,8 @@ export function printGraphqlQueries(model : SanitizedModel) {
         .join('\n')
     })
 
-  const query = Object.values(model.fields.queries).length ? 'extend type Query {\n  {queries}\n}'
-    .replace('{queries}', Object.values(model.fields.queries)
+  const query = Object.values(model.computed.queries).length ? 'extend type Query {\n  {queries}\n}'
+    .replace('{queries}', Object.values(model.computed.queries)
       .map(printGraphqlQuery).join('\n  ')) : ''
 
   return [
@@ -391,7 +391,7 @@ function printGraphqlMutation(mutation : Field) {
 }
 
 export function printGraphqlMutations(model : SanitizedModel) {
-  const types = Object.entries(model.fields.mutations)
+  const types = Object.entries(model.computed.mutations)
     .map(([name, q]) => {
       const type = q.type as Property
 
@@ -402,7 +402,7 @@ export function printGraphqlMutations(model : SanitizedModel) {
       return ''
     })
 
-  const args = Object.entries(model.fields.mutations)
+  const args = Object.entries(model.computed.mutations)
     .filter(([name, q]) => !!q.args)
     .map(([name, q]) => {
       const argType = new Property({ type: 'nested', of: q.args })
@@ -412,8 +412,8 @@ export function printGraphqlMutations(model : SanitizedModel) {
         .join('\n')
     })
 
-  const mutation = Object.values(model.fields.mutations).length ? 'extend type Mutation {\n  {mutations}\n}'
-    .replace('{mutations}', Object.values(model.fields.mutations)
+  const mutation = Object.values(model.computed.mutations).length ? 'extend type Mutation {\n  {mutations}\n}'
+    .replace('{mutations}', Object.values(model.computed.mutations)
       .map(printGraphqlMutation).join('\n  ')) : ''
 
   return [
