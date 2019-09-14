@@ -9,7 +9,7 @@ const scripts = ['vendor.js', 'app.js']
 const App = () => (
   <html lang="en">
     <Header
-      title="To-do Lister"
+      title="To-do List"
       scripts={scripts}
     />
     <body>

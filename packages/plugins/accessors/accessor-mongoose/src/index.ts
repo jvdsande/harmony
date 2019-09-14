@@ -175,7 +175,7 @@ export default class AccessorMongoose extends Accessor {
     logger.info('Converting Schemas')
 
     models.forEach((model : SanitizedModel) => {
-      const schema = new Mongoose.Schema(toMongooseSchema(model.schema))
+      const schema = new Mongoose.Schema(toMongooseSchema(model.originalSchema))
 
       const updateHook = (document, next) => {
         events.updated({
