@@ -38,44 +38,44 @@ function extendField(field: Field, modelName: string) {
       break
     }
     case 'create': {
-      field.type = new Property({ type: 'raw', of: `${modelName}Payload` })
+      field.type = new Property({ type: 'raw', of: modelName })
       field.args = {
         record: new Property({ type: 'raw', of: `${modelName}Input!` }),
       }
       break
     }
     case 'createMany': {
-      field.type = new Property({ type: 'raw', of: `${modelName}PayloadMany` })
+      field.type = Types.Array.of(new Property({ type: 'raw', of: modelName }))
       field.args = {
         records: Types.Array.of(new Property({ type: 'raw', of: `${modelName}Input!` })),
       }
       break
     }
     case 'update': {
-      field.type = new Property({ type: 'raw', of: `${modelName}Payload` })
+      field.type = new Property({ type: 'raw', of: modelName })
       field.args = {
         record: new Property({ type: 'raw', of: `${modelName}InputWithID!` }),
       }
       break
     }
     case 'updateMany': {
-      field.type = new Property({ type: 'raw', of: `${modelName}PayloadMany` })
+      field.type = Types.Array.of(new Property({ type: 'raw', of: modelName }))
       field.args = {
         records: Types.Array.of(new Property({ type: 'raw', of: `${modelName}InputWithID!` })),
       }
       break
     }
     case 'delete': {
-      field.type = new Property({ type: 'raw', of: `${modelName}Payload` })
+      field.type = new Property({ type: 'raw', of: modelName })
       field.args = {
         _id: Types.ID.required,
       }
       break
     }
     case 'deleteMany': {
-      field.type = new Property({ type: 'raw', of: `${modelName}PayloadMany` })
+      field.type = Types.Array.of(new Property({ type: 'raw', of: modelName }))
       field.args = {
-        records: Types.Array.of(Types.ID.required),
+        _ids: Types.Array.of(Types.ID.required),
       }
       break
     }

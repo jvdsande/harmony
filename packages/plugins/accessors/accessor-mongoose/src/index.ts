@@ -312,10 +312,7 @@ export default class AccessorMongoose extends Accessor {
     const document = await mongooseModel.create(toMongoDottedObject(args.record))
 
     // TODO parse Info to Populate
-    return {
-      recordId: document._id,
-      record: document,
-    }
+    return document
   }
 
   async createMany({
@@ -326,10 +323,7 @@ export default class AccessorMongoose extends Accessor {
     const documents = await mongooseModel.insertMany(toMongoDottedObject(args.records))
 
     // TODO parse Info to Populate
-    return {
-      recordIds: documents.map((d) => d._id),
-      records: documents,
-    }
+    return documents
   }
 
   async update({
@@ -344,10 +338,7 @@ export default class AccessorMongoose extends Accessor {
     )
 
     // TODO parse Info to Populate
-    return {
-      recordId: document._id,
-      record: document,
-    }
+    return document
   }
 
   async updateMany({
@@ -364,10 +355,7 @@ export default class AccessorMongoose extends Accessor {
     })))
 
     // TODO parse Info to Populate
-    return ({
-      records: updated.map((c) => c.record),
-      recordIds: updated.map((c) => c.recordId),
-    })
+    return updated
   }
 
   async delete({
@@ -380,10 +368,7 @@ export default class AccessorMongoose extends Accessor {
     )
 
     // TODO parse Info to Populate
-    return {
-      recordId: document._id,
-      record: document,
-    }
+    return document
   }
 
   async deleteMany({
@@ -400,9 +385,6 @@ export default class AccessorMongoose extends Accessor {
     })))
 
     // TODO parse Info to Populate
-    return ({
-      records: deleted.map((c) => c.record),
-      recordIds: deleted.map((c) => c.recordId),
-    })
+    return deleted
   }
 }

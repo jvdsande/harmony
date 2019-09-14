@@ -60,10 +60,7 @@ export default class AccessorMemory extends Accessor {
       ...args.record,
     }
 
-    return {
-      recordId: id,
-      record: this.store[model.name][id],
-    }
+    return this.store[model.name][id]
   }
 
   async createMany({
@@ -80,10 +77,7 @@ export default class AccessorMemory extends Accessor {
       },
     })))
 
-    return ({
-      records: created.map((c) => c.record),
-      recordIds: created.map((c) => c.recordId),
-    })
+    return created
   }
 
   async update({
@@ -95,10 +89,7 @@ export default class AccessorMemory extends Accessor {
       ...args.record,
     }
 
-    return {
-      record: args.record,
-      recordId: args.record._id,
-    }
+    return this.store[model.name][args.record._id]
   }
 
   async updateMany({
@@ -115,10 +106,7 @@ export default class AccessorMemory extends Accessor {
       },
     })))
 
-    return ({
-      records: updated.map((c) => c.record),
-      recordIds: updated.map((c) => c.recordId),
-    })
+    return updated
   }
 
   async delete({
@@ -127,10 +115,7 @@ export default class AccessorMemory extends Accessor {
     this.store[model.name] = this.store[model.name] || {}
     const record = this.store[model.name][args._id]
     delete this.store[model.name][args._id]
-    return {
-      recordId: record._id,
-      record,
-    }
+    return record
   }
 
   async deleteMany({
@@ -147,9 +132,6 @@ export default class AccessorMemory extends Accessor {
       },
     })))
 
-    return ({
-      records: deleted.map((c) => c.record),
-      recordIds: deleted.map((c) => c.recordId),
-    })
+    return deleted
   }
 }

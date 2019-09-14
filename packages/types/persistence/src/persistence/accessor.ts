@@ -42,54 +42,36 @@ export default class Accessor {
   async create({
     source, args, context, info, model,
   }) {
-    return {
-      recordId: null,
-      record: null,
-    }
+    return {}
   }
 
   async createMany({
     source, args, context, info, model,
   }) {
-    return {
-      recordIds: [],
-      records: [],
-    }
+    return []
   }
 
   async update({
     source, args, context, info, model,
   }) {
-    return {
-      recordId: null,
-      record: null,
-    }
+    return {}
   }
 
   async updateMany({
     source, args, context, info, model,
   }) {
-    return {
-      recordIds: [],
-      records: [],
-    }
+    return []
   }
 
   async delete({
     source, args, context, info, model,
   }) {
-    return {
-      recordId: null,
-      record: null,
-    }
+    return {}
   }
 
   async deleteMany({
     source, args, context, info, model,
   }) {
-    return {
-      recordIds: [],
-      records: [],
-    }
+    return []
   }
 }

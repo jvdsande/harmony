@@ -260,30 +260,6 @@ export function printGraphqlRoot(model : SanitizedModel) {
     external: model.external,
   })
 
-  const payloadType = printGraphqlType({
-    name: `${graphqlType}Payload`,
-    properties: [
-      new Property({ type: 'raw', name: 'record', of: model.schema.graphqlType }),
-      new Property({ type: 'id', name: 'recordId' }),
-    ],
-  })
-
-  const payloadManyType = printGraphqlType({
-    name: `${graphqlType}PayloadMany`,
-    properties: [
-      new Property({
-        type: 'array',
-        name: 'records',
-        of: new Property({ type: 'raw', of: graphqlType }),
-      }),
-      new Property({
-        type: 'array',
-        name: 'recordIds',
-        of: new Property({ type: 'id' }),
-      }),
-    ],
-  })
-
   const inputType = printGraphqlInputType({
     name: graphqlInputType,
     properties: Object.values(model.schema.of).filter((prop) => prop.mode.includes(FieldMode.INPUT)),
@@ -328,8 +304,6 @@ export function printGraphqlRoot(model : SanitizedModel) {
 
   if (!model.external) {
     root.push(...[
-      payloadType,
-      payloadManyType,
       inputType,
       inputWithIdType,
       filterType,
