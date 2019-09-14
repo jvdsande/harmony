@@ -21,45 +21,6 @@ export default ({
       },
       resolve: async ({ source, resolvers: { Task } }) => Task.count({ filter: { list: source._id, done: true } }),
     },
-
-    nestedTransient: {
-      type: {
-        hello: Types.String,
-      },
-      resolve: () => null,
-    },
-  },
-
-  queries: {
-    createQuery: {
-      extends: 'create',
-      async resolve({ args }) {
-        console.log(args)
-        return null
-      },
-    },
-    stupidQuery: {
-      type: {
-        nestedType: {
-          withString: Types.String,
-          withNumber: Types.Number,
-        },
-      },
-      args: {
-        nestedArg: {
-          withBoolean: Types.Boolean.required,
-          withFloat: Types.Float,
-        },
-      },
-      async resolve({ args }) {
-        return ({
-          nestedType: {
-            withNumber: args.nestedArg.withBoolean ? 1 : 0,
-            withString: `Yeah; a float ! ${args.nestedArg.withFloat}`,
-          },
-        })
-      },
-    },
   },
 
   mutations: {

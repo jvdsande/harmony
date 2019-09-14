@@ -1,8 +1,8 @@
 import schema from './schema'
-import fields from './fields'
+import computed from './computed'
 
 export default {
   name: 'message',
   schema,
-  fields,
+  computed,
 }

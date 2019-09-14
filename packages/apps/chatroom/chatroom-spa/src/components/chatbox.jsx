@@ -104,7 +104,7 @@ export default class Chatbox extends React.Component {
     TypingController.mutate
       .create()
       .withContent(typingContent)
-      .then(() => {})
+      .toPromise()
 
     this.setState({
       message: e.target.value

@@ -14,13 +14,12 @@ const PreferenceModel = {
 const UserModel = {
   name: 'user',
   schema: {},
-  fields: {
+  computed: {
     fields: {
       preference: {
         type: Types.Reference.of('preference'),
         needs: ['_id'],
         async resolve({ source, resolvers }) {
-          console.log('Fetching preference')
           return resolvers.Preference.read({ user: source._id })
         },
       },
@@ -35,7 +34,7 @@ persistence.init({
   models: [PreferenceModel, UserModel],
   accessors: {
     mongo: new AccessorMongoose({
-      host: 'mongodb://localhost:27017/',
+      host: 'mongodb://mongo:27017/',
       database: 'federated',
     }),
   },

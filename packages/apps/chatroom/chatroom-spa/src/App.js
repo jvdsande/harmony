@@ -21,7 +21,13 @@ class App extends React.Component {
 
     Query.configure({
       token,
-      uri: "http://localhost:8888/graphql"
+      endpoint: {
+        host: "http://localhost",
+        port: 8888,
+      },
+      path: {
+        graphql: "/graphql"
+      },
     })
 
     if(token) {

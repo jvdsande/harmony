@@ -84,7 +84,11 @@ class _Task extends React.Component {
             this.updateTask()
           }}
         />
-        <button className="delete" type="button" onClick={async () => { await TaskController.mutate.delete().withId(task._id) }}>
+        <button
+          className="delete"
+          type="button"
+          onClick={async () => { await TaskController.mutate.delete().withId(task._id) }}
+        >
           X
         </button>
       </div>

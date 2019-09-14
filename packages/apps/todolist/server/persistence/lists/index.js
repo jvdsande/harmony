@@ -1,10 +1,10 @@
 import schema from './schema'
-import fields from './fields'
+import computed from './computed'
 
 export default {
   name: 'list',
   schema,
-  fields,
+  computed,
 
   elasticsearch: {
     fields: {

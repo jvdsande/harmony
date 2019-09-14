@@ -17,7 +17,7 @@ persistence.init({
   models: [UserModel],
   accessors: {
     mongo: new AccessorMongoose({
-      host: 'mongodb://localhost:27017/',
+      host: 'mongodb://mongo:27017/',
       database: 'federated',
     }),
   },

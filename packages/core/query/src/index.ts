@@ -60,7 +60,7 @@ class Query {
       }
     }
 
-    const host = (endpoint && endpoint.host) || 'localhost'
+    const host = (endpoint && endpoint.host) || ''
     const port = (endpoint && endpoint.port)
 
     const graphql = (path && path.graphql) || '/graphql'
@@ -220,6 +220,13 @@ class QueryBuilderInternal extends Promise<any> {
       select, filter, skip, sort, limit,
     } = this.config
 
+    const sanitizedSelect = { ...select }
+
+    // Always select _id, except if specifically set to false
+    if (sanitizedSelect && !sanitizedSelect._id === false) {
+      sanitizedSelect._id = true
+    }
+
     // Create the request
     const request: QueryField = {
       COUNT: {
@@ -232,7 +239,7 @@ class QueryBuilderInternal extends Promise<any> {
           sort,
           limit,
         },
-        select,
+        select: sanitizedSelect,
       },
       GET: {
         args: {
@@ -240,11 +247,11 @@ class QueryBuilderInternal extends Promise<any> {
           skip,
           sort,
         },
-        select,
+        select: sanitizedSelect,
       },
       SEARCH: {
         args: { query: filter },
-        select,
+        select: sanitizedSelect,
       },
     }[this.type]
 
@@ -265,16 +272,20 @@ class QueryBuilderInternal extends Promise<any> {
   }
 
   /* Chain query */
-  then = (callback?: QueryCallback) => {
+  toPromise = () => {
     const request = this.build()
 
     return new Promise((resolve, reject) => client.query(request)
       .then((response) => resolve(response[Object.keys(request)[0]]))
-      .catch((err) => {
-        reject(err)
-      }))
-      .then(callback)
+      .catch((err) => reject(err)))
   }
+
+  then = (callback?: QueryCallback) => this.toPromise().then(callback)
+
+  catch = (callback?: QueryCallback) => this.toPromise().catch(callback)
+
+  finally = (callback?: () => void) => this.toPromise().finally(callback)
+
 
   /* Subscribe query */
   subscribed = false
@@ -469,7 +480,7 @@ export class MutationBuilderInternal extends Promise<any> {
     const request: QueryArgs = {
       CREATE: {
         args: { [createName]: record },
-        select: select || { recordId: true },
+        select: select || { _id: true },
       },
       UPDATE: {
         args: {
@@ -478,11 +489,11 @@ export class MutationBuilderInternal extends Promise<any> {
             _id: _id || (record ? (<QueryArgsMap>record)._id : ''),
           },
         },
-        select: select || { recordId: true },
+        select: select || { _id: true },
       },
       DELETE: {
         args: { _id },
-        select: select || { recordId: true },
+        select: select || { _id: true },
       },
     }[this.type]
 
@@ -502,16 +513,19 @@ export class MutationBuilderInternal extends Promise<any> {
   }
 
   /* Chain mutation */
-  then = (callback?: QueryCallback) => {
+  toPromise = () => {
     const request = this.build()
 
     return new Promise((resolve, reject) => client.mutation(request)
       .then((response) => resolve(response[Object.keys(request)[0]]))
-      .catch((err) => {
-        reject(err)
-      }))
-      .then(callback)
+      .catch((err) => reject(err)))
   }
+
+  then = (callback?: QueryCallback) => this.toPromise().then(callback)
+
+  catch = (callback?: QueryCallback) => this.toPromise().catch(callback)
+
+  finally = (callback?: () => void) => this.toPromise().finally(callback)
 }
 
 export class MutationBuilder {
