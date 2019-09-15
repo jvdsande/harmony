@@ -62,6 +62,7 @@ class _Task extends React.Component {
 
   render() {
     const { task } = this.props
+
     return (
       <div className={`task ${task.done ? 'done' : ''}`}>
         <input

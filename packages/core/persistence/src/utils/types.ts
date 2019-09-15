@@ -262,7 +262,10 @@ export function printGraphqlRoot(model : SanitizedModel) {
 
   const inputType = printGraphqlInputType({
     name: graphqlInputType,
-    properties: Object.values(model.schema.of).filter((prop) => prop.mode.includes(FieldMode.INPUT)),
+    properties: [
+      new Property({ type: 'id', name: '_id' }),
+      ...Object.values(model.schema.of).filter((prop) => prop.mode.includes(FieldMode.INPUT)),
+    ],
   })
 
   const inputWithIdType = printGraphqlInputType({

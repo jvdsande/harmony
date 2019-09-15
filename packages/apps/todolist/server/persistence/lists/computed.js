@@ -21,6 +21,11 @@ export default ({
       },
       resolve: async ({ source, resolvers: { Task } }) => Task.count({ filter: { list: source._id, done: true } }),
     },
+
+    tasks: {
+      type: [Types.Reference.of('task')],
+      resolve: async ({ source, resolvers: { Task } }) => Task.list({ filter: { list: source._id } }),
+    },
   },
 
   mutations: {

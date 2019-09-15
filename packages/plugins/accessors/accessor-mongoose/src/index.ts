@@ -150,8 +150,54 @@ function sanitizeFilter(filter) {
   return toMongoFilterDottedObject({ ...newFilter })
 }
 
+function extractPopulatePaths({ model, info }) {
+  // Construct the field selection mapping
+  const fields = {}
+
+  const extractSelections = (selections, path, schema) => {
+    selections.forEach((selection) => {
+      const current = [path, selection.name.value].filter((p) => !!p).join('.')
+
+      if (schema.of[selection.name.value]) {
+        fields[current] = schema.of[selection.name.value]
+
+        if (selection.selectionSet && fields[current] && fields[current].of) {
+          extractSelections(selection.selectionSet.selections, current, fields[current])
+        }
+      }
+    })
+  }
+
+  const extractBaseSelections = (selections) => {
+    selections.forEach((selection) => {
+      extractSelections(selection.selectionSet.selections, '', model)
+    })
+  }
+
+  extractBaseSelections(info.fieldNodes)
+  // @ts-ignore
+  delete fields._id
+
+  return Object.entries(fields)
+    .filter(([path, def]: [string, Property]) => def.type === 'reference')
+    .map(([path]) => path)
+}
+
+function buildPopulatedQuery({
+  harmonyModel,
+  info,
+  query,
+}) {
+  const populatePaths = extractPopulatePaths({ model: harmonyModel, info })
+
+  return populatePaths
+    .reduce((q, field) => q.populate(field), query.lean ? query.lean() : query)
+}
+
 export default class AccessorMongoose extends Accessor {
   public models = {}
+
+  public schemas = {}
 
   public logger = null
 
@@ -176,6 +222,7 @@ export default class AccessorMongoose extends Accessor {
 
     models.forEach((model : SanitizedModel) => {
       const schema = new Mongoose.Schema(toMongooseSchema(model.originalSchema))
+      this.schemas[model.name] = model.originalSchema
 
       const updateHook = (document, next) => {
         events.updated({
@@ -227,20 +274,46 @@ export default class AccessorMongoose extends Accessor {
       this.models[model.name] = Mongoose.model(model.name, schemas[model.name])
     })
 
-    logger.info('Connecting to MongoDB')
+    const connectToMongo = () => {
+      logger.info('Connecting to MongoDB')
 
-    Mongoose.connect(
-      this.config.host,
-      {
-        useNewUrlParser: true,
-        useCreateIndex: true,
-        useFindAndModify: false,
-        dbName: this.config.database,
-      },
-    )
-      .then(() => {
-        logger.info('Mongoose Accessor successfully initialized')
-      })
+      return Mongoose.connect(
+        this.config.host,
+        {
+          useNewUrlParser: true,
+          useCreateIndex: true,
+          useFindAndModify: false,
+          dbName: this.config.database,
+
+          autoReconnect: true,
+          reconnectTries: Number.MAX_VALUE,
+          connectTimeoutMS: 5000,
+
+          useUnifiedTopology: true,
+        },
+      )
+        .then(() => {
+          logger.info('Mongoose Accessor successfully initialized')
+        })
+        .catch((err) => {
+          logger.error(err)
+        })
+    }
+
+    connectToMongo()
+
+    Mongoose.connection.on('error', () => {
+      logger.error('An error occured with MongoDB connection')
+      connectToMongo()
+    })
+
+    Mongoose.connection.on('disconnected', () => {
+      logger.error('Mongo connection lost')
+    })
+
+    Mongoose.connection.on('connected', () => {
+      logger.info('Mongo connected')
+    })
   }
 
 
@@ -278,20 +351,33 @@ export default class AccessorMongoose extends Accessor {
     source, args, context, info, model,
   }) {
     const mongooseModel = this.models[model.name]
+    const harmonyModel = this.schemas[model.name]
 
-    // TODO parse Info to Populate
-    // TODO add skip/sort support
-    return mongooseModel.findOne(sanitizeFilter(args.filter))
+    // TODO add sort support
+    return buildPopulatedQuery({
+      harmonyModel,
+      info,
+      query: mongooseModel
+        .findOne(sanitizeFilter(args.filter))
+        .skip(args.skip || undefined),
+    })
   }
 
   async readMany({
     source, args, context, info, model,
   }) {
     const mongooseModel = this.models[model.name]
+    const harmonyModel = this.schemas[model.name]
 
-    // TODO parse Info to Populate
-    // TODO add skip/limit/sort support
-    return mongooseModel.find(sanitizeFilter(args.filter))
+    // TODO add sort support
+    return buildPopulatedQuery({
+      harmonyModel,
+      info,
+      query: mongooseModel
+        .find(sanitizeFilter(args.filter))
+        .limit(args.limit || undefined)
+        .skip(args.skip || undefined),
+    })
   }
 
   async count({
@@ -308,37 +394,48 @@ export default class AccessorMongoose extends Accessor {
     source, args, context, info, model,
   }) {
     const mongooseModel = this.models[model.name]
+    const harmonyModel = this.schemas[model.name]
 
-    const document = await mongooseModel.create(toMongoDottedObject(args.record))
-
-    // TODO parse Info to Populate
-    return document
+    return buildPopulatedQuery({
+      harmonyModel,
+      info,
+      query: mongooseModel
+        .create(args.record),
+    })
   }
 
   async createMany({
     source, args, context, info, model,
   }) {
-    const mongooseModel = this.models[model.name]
+    const created : Array<any> = await Promise.all(args.records.map((record) => this.create({
+      source,
+      context,
+      info,
+      model,
+      args: {
+        record,
+      },
+    })))
 
-    const documents = await mongooseModel.insertMany(toMongoDottedObject(args.records))
-
-    // TODO parse Info to Populate
-    return documents
+    return created
   }
 
   async update({
     source, args, context, info, model,
   }) {
     const mongooseModel = this.models[model.name]
+    const harmonyModel = this.schemas[model.name]
 
-    const document = await mongooseModel.findOneAndUpdate(
-      { _id: args.record._id },
-      toMongoDottedObject(args.record),
-      { new: true, upsert: true },
-    )
-
-    // TODO parse Info to Populate
-    return document
+    return buildPopulatedQuery({
+      harmonyModel,
+      info,
+      query: mongooseModel
+        .findOneAndUpdate(
+          { _id: args.record._id },
+          toMongoDottedObject(args.record),
+          { new: true, upsert: false },
+        ),
+    })
   }
 
   async updateMany({
@@ -354,7 +451,6 @@ export default class AccessorMongoose extends Accessor {
       },
     })))
 
-    // TODO parse Info to Populate
     return updated
   }
 
@@ -362,13 +458,16 @@ export default class AccessorMongoose extends Accessor {
     source, args, context, info, model,
   }) {
     const mongooseModel = this.models[model.name]
+    const harmonyModel = this.schemas[model.name]
 
-    const document = await mongooseModel.findOneAndDelete(
-      { _id: args._id },
-    )
-
-    // TODO parse Info to Populate
-    return document
+    return buildPopulatedQuery({
+      harmonyModel,
+      info,
+      query: mongooseModel
+        .findOneAndDelete(
+          { _id: args._id },
+        ),
+    })
   }
 
   async deleteMany({
@@ -384,7 +483,6 @@ export default class AccessorMongoose extends Accessor {
       },
     })))
 
-    // TODO parse Info to Populate
     return deleted
   }
 }
