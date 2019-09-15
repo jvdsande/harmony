@@ -169,9 +169,11 @@ function extractPopulatePaths({ model, info }) {
   }
 
   const extractBaseSelections = (selections) => {
-    selections.forEach((selection) => {
-      extractSelections(selection.selectionSet.selections, '', model)
-    })
+    selections
+      .filter((selection) => !!selection.selectionSet)
+      .forEach((selection) => {
+        extractSelections(selection.selectionSet.selections, '', model)
+      })
   }
 
   extractBaseSelections(info.fieldNodes)
@@ -191,7 +193,10 @@ function buildPopulatedQuery({
   const populatePaths = extractPopulatePaths({ model: harmonyModel, info })
 
   return populatePaths
-    .reduce((q, field) => q.populate(field), query.lean ? query.lean() : query)
+    .reduce((q, field) => q.populate({
+      path: field,
+      options: { lean: true },
+    }), query.lean ? query.lean() : query)
 }
 
 export default class AccessorMongoose extends Accessor {
@@ -327,7 +332,7 @@ export default class AccessorMongoose extends Accessor {
     }
 
     const mongooseModel = this.models[model.name]
-    return mongooseModel.findOne({ _id: source[fieldName] })
+    return mongooseModel.findOne({ _id: source[fieldName] }).lean()
   }
 
   async resolveRefs({
@@ -342,7 +347,7 @@ export default class AccessorMongoose extends Accessor {
     }
 
     const mongooseModel = this.models[model.name]
-    return mongooseModel.find({ _id: { $in: source[fieldName] } })
+    return mongooseModel.find({ _id: { $in: source[fieldName] } }).lean()
   }
 
 
