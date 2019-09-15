@@ -43,11 +43,13 @@ export function getPluginsFromControllers({ controllers }) {
 }
 
 export async function registerPlugins({ plugins, server }) {
-  await Promise.all(plugins.map(async (p) => server.register(p)))
+  await Promise.all(plugins.map(async (p) => {
+    await server.register(p)
+  }))
 }
 
 export async function registerControllers({ controllers, server, log }) {
-  await Promise.all(controllers.map((c, i) => {
+  await Promise.all(controllers.map(async (c, i) => {
     const plugin = {
       name: `harmonyjs-${i}`,
       register: () => {
@@ -57,6 +59,6 @@ export async function registerControllers({ controllers, server, log }) {
       },
     }
 
-    return server.register(plugin)
+    await server.register(plugin)
   }))
 }
