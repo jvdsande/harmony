@@ -240,6 +240,13 @@ export function computeFieldResolvers({
                         context,
                         info,
                       )
+
+                      wrappedResolvers[mod][resolver].unscoped = (localArgs) => localResolvers[mod][resolver].unscoped(
+                        source,
+                        localArgs,
+                        context,
+                        info,
+                      )
                     })
                 })
 
