@@ -31,6 +31,7 @@ export const mutationResolvers = [
   }, {
     type: 'update',
     suffix: 'Update',
+    alias: ['edit'],
   }, {
     type: 'updateMany',
     suffix: 'UpdateMany',
@@ -66,9 +67,9 @@ export function computeMainResolvers({
     }
 
     queryResolvers.forEach((res) => {
-      resolvers.Query[model.name + res.suffix] = async (source, args, context, info) => {
+      const makeResolver = (scoped) => async (source, args, context, info) => {
         // Check for a scope function
-        const scope = (model.scopes && model.scopes[res.type]) || unscoped
+        const scope = (scoped && model.scopes && model.scopes[res.type]) || unscoped
 
         return accessor[res.type]
           .apply(
@@ -82,19 +83,22 @@ export function computeMainResolvers({
           )
       }
 
+      resolvers.Query[model.name + res.suffix] = makeResolver(true)
       localResolvers[extractModelType(model.name)][res.type] = resolvers.Query[model.name + res.suffix]
+      localResolvers[extractModelType(model.name)][res.type].unscoped = makeResolver(false)
 
       if (res.alias) {
         res.alias.forEach((alias) => {
           localResolvers[extractModelType(model.name)][alias] = resolvers.Query[model.name + res.suffix]
+          localResolvers[extractModelType(model.name)][alias].unscoped = makeResolver(false)
         })
       }
     })
 
     mutationResolvers.forEach((res) => {
-      resolvers.Mutation[model.name + res.suffix] = async (source, args, context, info) => {
+      const makeResolver = (scoped) => async (source, args, context, info) => {
         // Check for a scope function
-        const scope = (model.scopes && model.scopes[res.type]) || unscoped
+        const scope = (scoped && model.scopes && model.scopes[res.type]) || unscoped
 
         return accessor[res.type]
           .apply(
@@ -108,7 +112,16 @@ export function computeMainResolvers({
           )
       }
 
+      resolvers.Mutation[model.name + res.suffix] = makeResolver(true)
       localResolvers[extractModelType(model.name)][res.type] = resolvers.Mutation[model.name + res.suffix]
+      localResolvers[extractModelType(model.name)][res.type].unscoped = makeResolver(false)
+
+      if (res.alias) {
+        res.alias.forEach((alias) => {
+          localResolvers[extractModelType(model.name)][alias] = resolvers.Mutation[model.name + res.suffix]
+          localResolvers[extractModelType(model.name)][alias].unscoped = makeResolver(false)
+        })
+      }
     })
 
     // Reference Resolver for Federation

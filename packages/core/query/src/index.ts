@@ -77,6 +77,9 @@ class Query {
     this.io = IO(socketUri, {
       path: socketPath,
     })
+    if (this.client) {
+      this.client.stop()
+    }
     this.client = new ApolloClient(config)
   }
 
@@ -297,16 +300,18 @@ class QueryBuilderInternal extends Promise<any> {
   subscriptionModels?: Array<string> = null
 
   subscription = async (force?: boolean) => {
-    const request = this.build()
-    const response = await client.query(request)
-      .then((res) => res[Object.keys(request)[0]])
+    if (this.subscribed) {
+      const request = this.build()
+      const response = await client.query(request)
+        .then((res) => res[Object.keys(request)[0]])
 
-    const stringifiedResponse = JSON.stringify(response)
-    if ((force || stringifiedResponse !== this.lastResponse) && !!this.subscriptionCallback) {
-      this.subscriptionCallback(response)
+      const stringifiedResponse = JSON.stringify(response)
+      if ((force || stringifiedResponse !== this.lastResponse) && !!this.subscriptionCallback) {
+        this.subscriptionCallback(response)
+      }
+
+      this.lastResponse = stringifiedResponse
     }
-
-    this.lastResponse = stringifiedResponse
   }
 
   subscribe = (callback?: QueryCallback, models?: Array<string>) => {
@@ -323,6 +328,7 @@ class QueryBuilderInternal extends Promise<any> {
       this
         .subscriptionModels
         .forEach((model) => {
+          client.unsubscribe(`${eventName(model)}-updated`, this.subscription)
           client.subscribe(`${eventName(model)}-updated`, this.subscription)
         })
     }
@@ -360,6 +366,15 @@ class QueryBuilderInternal extends Promise<any> {
   }
 
   unsubscribe = () => {
+    // Subscribe to updated list of additional models
+    if (this.subscriptionModels) {
+      this
+        .subscriptionModels
+        .forEach((model) => {
+          client.unsubscribe(`${eventName(model)}-updated`, this.subscription)
+        })
+    }
+
     client.unsubscribe(`${eventName(this.model)}-updated`, this.subscription)
 
     this.subscribed = false
