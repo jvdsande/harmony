@@ -40,6 +40,12 @@ class Query {
 
   fetchPolicy = 'network-only'
 
+  currentClient = 0
+
+  scheduledForStop : {[key: string]: any} = {}
+
+  onGoingQueries : {[key: string]: number} = {}
+
   configure = (params: QueryConfiguration = {}) => {
     const {
       token, fetchPolicy = 'network-only', endpoint, path,
@@ -77,22 +83,58 @@ class Query {
     this.io = IO(socketUri, {
       path: socketPath,
     })
+
     if (this.client) {
-      this.client.stop()
+      if (this.onGoingQueries[this.currentClient]) {
+        this.scheduledForStop[this.currentClient] = this.client
+      } else {
+        this.client.stop()
+      }
     }
+
     this.client = new ApolloClient(config)
+    this.currentClient += 1
+    this.onGoingQueries[this.currentClient] = 0
+    this.scheduledForStop[this.currentClient] = false
   }
 
-  query = (q: QueryDefinition) => this.client.query({
-    query: Graphql(`{ ${transformJSQ(q)} }`),
-    fetchPolicy: <FetchPolicy> this.fetchPolicy,
-  })
-    .then(({ data }) => data)
+  query = (q: QueryDefinition) => {
+    const runningClient = this.currentClient
+    this.onGoingQueries[runningClient] += 1
 
-  mutate = (q: QueryDefinition) => this.client.mutate({
-    mutation: Graphql(`mutation { ${transformJSQ(q)} }`),
-  })
-    .then(({ data }) => data)
+    return this.client.query({
+      query: Graphql(`{ ${transformJSQ(q)} }`),
+      fetchPolicy: <FetchPolicy> this.fetchPolicy,
+    })
+      .then(({ data }) => {
+        this.onGoingQueries[runningClient] -= 1
+        this.purge(runningClient)
+
+        return data
+      })
+  }
+
+  mutate = (q: QueryDefinition) => {
+    const runningClient = this.currentClient
+    this.onGoingQueries[runningClient] += 1
+
+    return this.client.mutate({
+      mutation: Graphql(`mutation { ${transformJSQ(q)} }`),
+    })
+      .then(({ data }) => {
+        this.onGoingQueries[runningClient] -= 1
+        this.purge(runningClient)
+
+        return data
+      })
+  }
+
+  purge = (client) => {
+    if (this.scheduledForStop[client] && !this.onGoingQueries[client]) {
+      this.scheduledForStop[client].stop()
+      this.scheduledForStop[client] = false
+    }
+  }
 
   mutation = this.mutate
 
@@ -336,9 +378,9 @@ class QueryBuilderInternal extends Promise<any> {
     client.unsubscribe(`${eventName(this.model)}-updated`, this.subscription)
     client.subscribe(`${eventName(this.model)}-updated`, this.subscription)
 
-    this.subscription(true)
-
     this.subscribed = true
+
+    this.subscription(true)
 
     return this
   }
