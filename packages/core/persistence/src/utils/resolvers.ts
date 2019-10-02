@@ -78,7 +78,7 @@ export function computeMainResolvers({
               info,
               model,
               context,
-              args: scope({ args, context }),
+              args: scope({ args: JSON.parse(JSON.stringify(args)), context }),
             }],
           )
       }
@@ -107,7 +107,7 @@ export function computeMainResolvers({
               info,
               model,
               context,
-              args: scope({ args, context }),
+              args: scope({ args: JSON.parse(JSON.stringify(args)), context }),
             }],
           )
       }
