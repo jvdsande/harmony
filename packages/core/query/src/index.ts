@@ -1,6 +1,8 @@
 /* global localStorage */
 
-import ApolloClient, { FetchPolicy, HttpLink, InMemoryCache } from 'apollo-boost'
+import ApolloBoost, {
+  ApolloClient, FetchPolicy, HttpLink, InMemoryCache, ApolloClientOptions,
+} from 'apollo-boost'
 import Graphql from 'graphql-tag'
 import { jsonToGraphQLQuery as JSQ, EnumType } from 'json-to-graphql-query'
 import IO from 'socket.io-client'
@@ -105,7 +107,11 @@ class Query {
       }
     }
 
-    this.client = new ApolloClient(config)
+    if (reactNative) {
+      this.client = new ApolloClient(config as ApolloClientOptions<null>)
+    } else {
+      this.client = new ApolloBoost(config)
+    }
     this.currentClient += 1
     this.onGoingQueries[this.currentClient] = 0
     this.scheduledForStop[this.currentClient] = false
