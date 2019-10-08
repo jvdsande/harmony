@@ -1,6 +1,6 @@
 /* global localStorage */
 
-import ApolloClient, { FetchPolicy } from 'apollo-boost'
+import ApolloClient, { FetchPolicy, HttpLink, InMemoryCache } from 'apollo-boost'
 import Graphql from 'graphql-tag'
 import { jsonToGraphQLQuery as JSQ, EnumType } from 'json-to-graphql-query'
 import IO from 'socket.io-client'
@@ -46,7 +46,7 @@ class Query {
 
   onGoingQueries : {[key: string]: number} = {}
 
-  configure = (params: QueryConfiguration = {}) => {
+  configure = (params: QueryConfiguration = {}, reactNative = false) => {
     const {
       token, fetchPolicy = 'network-only', endpoint, path,
     } = params
@@ -57,7 +57,9 @@ class Query {
       headers?: {
         [key: string]: string
       },
-      uri?: string
+      uri?: string,
+      link?: HttpLink,
+      cache?: InMemoryCache
     } = {}
 
     if (token) {
@@ -80,9 +82,20 @@ class Query {
     config.uri = host + portPath + graphqlPath
     const socketUri = host + portPath
 
-    this.io = IO(socketUri, {
-      path: socketPath,
-    })
+
+    if (reactNative) {
+      config.link = new HttpLink({
+        uri: config.uri,
+        headers: config.headers,
+      })
+      config.cache = new InMemoryCache()
+      delete config.uri
+      delete config.headers
+    } else {
+      this.io = IO(socketUri, {
+        path: socketPath,
+      })
+    }
 
     if (this.client) {
       if (this.onGoingQueries[this.currentClient]) {
@@ -138,9 +151,17 @@ class Query {
 
   mutation = this.mutate
 
-  subscribe = (event, callback) => this.io.on(event, callback)
+  subscribe = (event, callback) => {
+    if (this.io) {
+      this.io.on(event, callback)
+    }
+  }
 
-  unsubscribe = (event, callback) => this.io.off(event, callback)
+  unsubscribe = (event, callback) => {
+    if (this.io) {
+      this.io.off(event, callback)
+    }
+  }
 }
 
 const client = new Query()
