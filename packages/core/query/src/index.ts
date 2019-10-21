@@ -93,6 +93,12 @@ class Query {
       config.cache = new InMemoryCache()
       delete config.uri
       delete config.headers
+
+      this.io = IO(socketUri, {
+        path: socketPath,
+        transports: ['websocket'],
+        jsonp: false,
+      })
     } else {
       this.io = IO(socketUri, {
         path: socketPath,
