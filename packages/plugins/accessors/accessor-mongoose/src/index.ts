@@ -340,7 +340,8 @@ export default class AccessorMongoose extends Accessor {
   }) {
     // Check if the ref as already been resolved beforehand
     if (
-      !source[fieldName].length
+      !source[fieldName]
+      || !source[fieldName].length
       || (!Mongoose.Types.ObjectId.isValid(source[fieldName][0]))
     ) {
       return source[fieldName]
