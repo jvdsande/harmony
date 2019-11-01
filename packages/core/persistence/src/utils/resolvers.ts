@@ -57,6 +57,7 @@ export function computeMainResolvers({
 }) {
   models.forEach((model) => {
     const modelType = extractModelType(model.name)
+    const modelQuery = extractModelType(model.name, false)
 
     localResolvers[modelType] = {}
 
@@ -88,7 +89,7 @@ export function computeMainResolvers({
       const scopedResolver = makeResolver(true)
       const unscopedResolver = makeResolver(false)
 
-      mainType[modelType + res.suffix] = scopedResolver
+      mainType[modelQuery + res.suffix] = scopedResolver
       localResolvers[modelType][res.type] = scopedResolver
       localResolvers[modelType][res.type].unscoped = unscopedResolver
 
