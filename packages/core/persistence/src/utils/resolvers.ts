@@ -83,7 +83,7 @@ export function computeMainResolvers({
           )
       }
 
-      resolvers.Query[model.name + res.suffix] = makeResolver(true)
+      resolvers.Query[extractModelType(model.name) + res.suffix] = makeResolver(true)
       localResolvers[extractModelType(model.name)][res.type] = resolvers.Query[model.name + res.suffix]
       localResolvers[extractModelType(model.name)][res.type].unscoped = makeResolver(false)
 
@@ -112,7 +112,7 @@ export function computeMainResolvers({
           )
       }
 
-      resolvers.Mutation[model.name + res.suffix] = makeResolver(true)
+      resolvers.Mutation[extractModelType(model.name) + res.suffix] = makeResolver(true)
       localResolvers[extractModelType(model.name)][res.type] = resolvers.Mutation[model.name + res.suffix]
       localResolvers[extractModelType(model.name)][res.type].unscoped = makeResolver(false)
 
