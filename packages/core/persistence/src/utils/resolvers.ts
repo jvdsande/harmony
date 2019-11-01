@@ -1,5 +1,5 @@
 import {
-  Field, PropertySchema, Property, SanitizedModel,
+  Field, Property, SanitizedModel,
 } from '@harmonyjs/types-persistence'
 
 import { extractModelType } from './types'
@@ -56,7 +56,9 @@ export function computeMainResolvers({
   localResolvers,
 }) {
   models.forEach((model) => {
-    localResolvers[extractModelType(model.name)] = {}
+    const modelType = extractModelType(model.name)
+
+    localResolvers[modelType] = {}
 
     const modelAccessor = model.accessor ? accessors[model.accessor] : defaultAccessor
     const accessor = modelAccessor || defaultAccessor
@@ -66,7 +68,7 @@ export function computeMainResolvers({
       return
     }
 
-    queryResolvers.forEach((res) => {
+    const makeResolvers = (mainType) => (res) => {
       const makeResolver = (scoped) => async (source, args, context, info) => {
         // Check for a scope function
         const scope = (scoped && model.scopes && model.scopes[res.type]) || unscoped
@@ -83,50 +85,30 @@ export function computeMainResolvers({
           )
       }
 
-      resolvers.Query[extractModelType(model.name) + res.suffix] = makeResolver(true)
-      localResolvers[extractModelType(model.name)][res.type] = resolvers.Query[model.name + res.suffix]
-      localResolvers[extractModelType(model.name)][res.type].unscoped = makeResolver(false)
+      const scopedResolver = makeResolver(true)
+      const unscopedResolver = makeResolver(false)
+
+      mainType[modelType + res.suffix] = scopedResolver
+      localResolvers[modelType][res.type] = scopedResolver
+      localResolvers[modelType][res.type].unscoped = unscopedResolver
 
       if (res.alias) {
         res.alias.forEach((alias) => {
-          localResolvers[extractModelType(model.name)][alias] = resolvers.Query[model.name + res.suffix]
-          localResolvers[extractModelType(model.name)][alias].unscoped = makeResolver(false)
+          localResolvers[modelType][alias] = scopedResolver
+          localResolvers[modelType][alias].unscoped = unscopedResolver
         })
       }
-    })
+    }
 
-    mutationResolvers.forEach((res) => {
-      const makeResolver = (scoped) => async (source, args, context, info) => {
-        // Check for a scope function
-        const scope = (scoped && model.scopes && model.scopes[res.type]) || unscoped
+    const makeQueryResolvers = makeResolvers(resolvers.Query)
+    const makeMutationResolvers = makeResolvers(resolvers.Mutation)
 
-        return accessor[res.type]
-          .apply(
-            defaultAccessor, [{
-              source,
-              info,
-              model,
-              context,
-              args: scope({ args: JSON.parse(JSON.stringify(args)), context }),
-            }],
-          )
-      }
-
-      resolvers.Mutation[extractModelType(model.name) + res.suffix] = makeResolver(true)
-      localResolvers[extractModelType(model.name)][res.type] = resolvers.Mutation[model.name + res.suffix]
-      localResolvers[extractModelType(model.name)][res.type].unscoped = makeResolver(false)
-
-      if (res.alias) {
-        res.alias.forEach((alias) => {
-          localResolvers[extractModelType(model.name)][alias] = resolvers.Mutation[model.name + res.suffix]
-          localResolvers[extractModelType(model.name)][alias].unscoped = makeResolver(false)
-        })
-      }
-    })
+    queryResolvers.forEach(makeQueryResolvers)
+    mutationResolvers.forEach(makeMutationResolvers)
 
     // Reference Resolver for Federation
-    resolvers[extractModelType(model.name)] = resolvers[extractModelType(model.name)] || {}
-    resolvers[extractModelType(model.name)].__resolveReference = async (reference) => accessor.read({
+    resolvers[modelType] = resolvers[modelType] || {}
+    resolvers[modelType].__resolveReference = async (reference) => accessor.read({
       args: {
         _id: reference._id,
       },
