@@ -207,15 +207,16 @@ function sanitizeModelComputed({ computed, parent, external }) {
     sanitized.mutations = sanitized.mutations || {}
 
     const { name } = parent._configuration
+    const queryName = extractModelType(name, false)
 
     queryResolvers.forEach((query) => {
-      sanitized.queries[extractModelType(name, false) + query.suffix] = sanitized.queries[name + query.suffix] || {
+      sanitized.queries[queryName + query.suffix] = sanitized.queries[queryName + query.suffix] || {
         extends: query.type,
         resolve: null,
       }
     })
     mutationResolvers.forEach((query) => {
-      sanitized.mutations[extractModelType(name, false) + query.suffix] = sanitized.mutations[name + query.suffix] || {
+      sanitized.mutations[queryName + query.suffix] = sanitized.mutations[queryName + query.suffix] || {
         extends: query.type,
         resolve: null,
       }
