@@ -1,5 +1,5 @@
 import {
-  Field, Property, SanitizedModel,
+  Fields, Field, Property, SanitizedModel,
 } from '@harmonyjs/types-persistence'
 
 import { extractModelType } from './types'
@@ -244,6 +244,7 @@ export function computeFieldResolvers({
     const fields : {[key: string]: Field} = (model.computed ? model.computed.fields : {}) || {}
     const queries : {[key: string]: Field} = (model.computed ? model.computed.queries : {}) || {}
     const mutations : {[key: string]: Field} = (model.computed ? model.computed.mutations : {}) || {}
+    const custom = (model.computed ? model.computed.custom : {}) || {}
 
     computeResolver({
       fields,
@@ -256,6 +257,12 @@ export function computeFieldResolvers({
     computeResolver({
       fields: mutations,
       rootName: 'Mutation',
+    })
+    Object.entries(custom).forEach(([customName, customFields]) => {
+      computeResolver({
+        fields: customFields,
+        rootName: customName,
+      })
     })
   })
 }

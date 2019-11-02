@@ -105,11 +105,19 @@ function sanitizeField({
     sanitized.of = field.of
 
     if (field.of instanceof Property || field.of instanceof Object) {
-      sanitized.of = sanitizeField({
-        field: field.of,
-        name: '',
-      })
-      sanitized.of.parent = sanitized
+      if (sanitized.type !== 'nested') {
+        sanitized.of = sanitizeField({
+          field: field.of,
+          name: '',
+        })
+        sanitized.of.parent = sanitized
+      } else {
+        sanitized.of = sanitizeNested({ // eslint-disable-line
+          field: field.of,
+          mode: null,
+          parent: sanitized,
+        })
+      }
     }
 
     // If args were provided, sanitize them
@@ -212,6 +220,7 @@ function sanitizeModelComputed({ computed, parent, external }) {
     fields: {},
     queries: {},
     mutations: {},
+    custom: {},
   }
 
   if (!external) {
@@ -253,6 +262,7 @@ function sanitizeModelComputed({ computed, parent, external }) {
     fields: sanitizeFields({ fields: sanitized.fields, parent }),
     queries: sanitizeFields({ fields: sanitized.queries, parent: null, force: FieldMode.OUTPUT }),
     mutations: sanitizeFields({ fields: sanitized.mutations, parent: null, force: FieldMode.OUTPUT }),
+    custom: sanitized.custom,
   }
 }
 

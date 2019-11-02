@@ -31,6 +31,13 @@ export type Computed = {
   fields: Fields,
   queries: Fields,
   mutations: Fields,
+  custom: {
+    [key: string]: {
+      [key: string]: {
+        resolve: (any: any) => any
+      }
+    }
+  }
 }
 
 export type Fields = {

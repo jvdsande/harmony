@@ -124,13 +124,20 @@ function extractNestedProperty(schema: Property) {
 
 
 function extractNestedArguments(schema: Property) {
-  return Object.values(schema.of)
+  const directArguments = Object.values(schema.of)
     .filter((q) => !!q.args)
     .flatMap((q) => {
-      const argType = new Property({ type: 'nested', of: q.args })
-
+      const argType = new Property({
+        type: 'nested',
+        of: q.args,
+      })
       return extractNestedProperty(argType)
     })
+
+  const nestedArguments = extractNestedProperty(schema)
+    .flatMap(extractNestedArguments)
+
+  return [...directArguments, ...nestedArguments]
 }
 
 
