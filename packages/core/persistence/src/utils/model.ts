@@ -111,6 +111,18 @@ function sanitizeField({
       })
       sanitized.of.parent = sanitized
     }
+
+    // If args were provided, sanitize them
+    if (field.args && field.args instanceof Object) {
+      const argParent = new Property({ type: 'raw', name: 'args ' })
+      argParent.parent = sanitized
+
+      sanitized.args = sanitizeNested({  // eslint-disable-line
+        field: field.args,
+        mode: null,
+        parent: argParent,
+      })
+    }
   } else if (field instanceof Array) {
     // If the field is an array, make it an array property
 

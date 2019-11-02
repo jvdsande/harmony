@@ -160,6 +160,11 @@ export class Property {
     return !!this._configuration.required
   }
 
+  withArgs(args) {
+    this.args = args
+    return this
+  }
+
   isUnique() {
     return !!this._configuration.unique
   }

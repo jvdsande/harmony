@@ -46,6 +46,12 @@ class TypesClass {
       of: (type) => new Property(({ type: 'reference', of: type.name ? type.name : type })),
     })
   }
+
+  get Schema() {
+    return ({
+      of: (type) => new Property(({ type: 'nested', of: type })),
+    })
+  }
 }
 
 const Types = new TypesClass()
