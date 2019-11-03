@@ -18,7 +18,11 @@ export default class ControllerApollo extends Controller {
     schema: string,
     resolvers: {
       [key: string]: any
-    }
+    },
+
+    context?: {
+      [key: string]: any
+    },
   }
 
   constructor(config) { // eslint-disable-line
@@ -33,6 +37,8 @@ export default class ControllerApollo extends Controller {
       schema,
       resolvers,
       mock,
+
+      context,
     } = this.config
 
     logger.info('Registering GraphQL endpoint...')
@@ -46,6 +52,7 @@ export default class ControllerApollo extends Controller {
       mocks: mock,
       mockEntireSchema: mock,
       context: ({ request }) => ({
+        ...context,
         authentication: request.authentication,
       }),
     })

@@ -44,6 +44,9 @@ export default class Persistence {
 
   logger : Logger = null
 
+  // eslint-disable-next-line react/static-property-placement
+  context : {[key: string]: any} = {}
+
   constructor(config) {
     this.initializeProperties(config)
   }
@@ -194,6 +197,7 @@ ${this.sanitizedModels
       schema,
       internalResolvers,
       events,
+      context,
     } = this
 
     const {
@@ -207,6 +211,7 @@ ${this.sanitizedModels
         constructor(config) {
           super({
             ...config,
+            context,
             schema,
             resolvers: internalResolvers,
             mock: defaultAccessor == null,
