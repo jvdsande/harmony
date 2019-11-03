@@ -273,6 +273,7 @@ export function sanitizeModel(model : Model) {
   const computed = sanitizeModelComputed({ computed: model.computed, parent: schema, external: model.external })
 
   const sanitized : SanitizedModel = {
+    ...model,
     name: model.name,
     schema,
     originalSchema,
