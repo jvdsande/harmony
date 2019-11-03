@@ -120,7 +120,13 @@ ${this.sanitizedModels
     `
   }
 
-  get resolvers() {
+  resolvers : {
+    [model: string]: {
+      [query: string]: (args: any) => any,
+    }
+  }
+
+  get internalResolvers() {
     const { accessors, defaultAccessor: defaultAccessorName } = this.config
     const models = this.sanitizedModels
 
@@ -156,6 +162,26 @@ ${this.sanitizedModels
       })
     }
 
+    const wrappedResolvers = {}
+    Object.keys(localResolvers).forEach((mod) => {
+      wrappedResolvers[mod] = {}
+      Object.keys(localResolvers[mod]).forEach((resolver) => {
+        wrappedResolvers[mod][resolver] = (localArgs) => localResolvers[mod][resolver](null, localArgs, null, {
+          fieldNodes:
+            [],
+        })
+
+        wrappedResolvers[mod][resolver].unscoped = (localArgs) => localResolvers[mod][resolver].unscoped(
+          null,
+          localArgs,
+          null,
+          { fieldNodes: [] },
+        )
+      })
+    })
+
+    this.resolvers = wrappedResolvers
+
     resolvers.Number = GraphQLLong
     resolvers.JSON = GraphQLJson
     resolvers.Date = GraphQLDate
@@ -166,7 +192,7 @@ ${this.sanitizedModels
   get controllers() {
     const {
       schema,
-      resolvers,
+      internalResolvers,
       events,
     } = this
 
@@ -182,7 +208,7 @@ ${this.sanitizedModels
           super({
             ...config,
             schema,
-            resolvers,
+            resolvers: internalResolvers,
             mock: defaultAccessor == null,
           })
         }

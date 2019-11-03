@@ -219,7 +219,6 @@ export default class AccessorMongoose extends Accessor {
     // Convert Persistence Models to Mongoose Schemas
     const schemas = {}
 
-    const plugins = this.config.plugins || []
     this.logger = logger
 
     logger.info('Initializing Mongoose Accessor')
@@ -266,12 +265,6 @@ export default class AccessorMongoose extends Accessor {
       schemas[model.name] = schema
     })
 
-    logger.info('Registering plugins')
-
-    plugins.forEach((plugin) => plugin.initialize({
-      models, schemas, events, logger,
-    }))
-
     logger.info('Creating Mongoose models')
 
     // Convert Mongoose Schemas to Mongoose models
@@ -309,7 +302,7 @@ export default class AccessorMongoose extends Accessor {
 
     Mongoose.connection.on('error', () => {
       logger.error('An error occured with MongoDB connection')
-      connectToMongo()
+      setTimeout(connectToMongo, 5000)
     })
 
     Mongoose.connection.on('disconnected', () => {
