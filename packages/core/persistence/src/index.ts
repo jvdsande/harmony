@@ -169,7 +169,7 @@ ${this.sanitizedModels
     Object.keys(localResolvers).forEach((mod) => {
       wrappedResolvers[mod] = {}
       Object.keys(localResolvers[mod]).forEach((resolver) => {
-        wrappedResolvers[mod][resolver] = (localArgs) => localResolvers[mod][resolver](null, localArgs, null, {
+        wrappedResolvers[mod][resolver] = (localArgs) => localResolvers[mod][resolver](null, localArgs, {}, {
           fieldNodes:
             [],
         })
@@ -177,7 +177,7 @@ ${this.sanitizedModels
         wrappedResolvers[mod][resolver].unscoped = (localArgs) => localResolvers[mod][resolver].unscoped(
           null,
           localArgs,
-          null,
+          {},
           { fieldNodes: [] },
         )
       })

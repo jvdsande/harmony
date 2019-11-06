@@ -18,7 +18,16 @@ export default class Login extends React.Component {
           },
         }
       }).then(({ login: token }) => {
-        Query.configure({ token })
+        Query.configure({
+          token,
+          endpoint: {
+            host: "http://localhost",
+            port: 8888,
+          },
+          path: {
+            graphql: "/graphql"
+          },
+        })
         window.localStorage.setItem('token', token)
         navigate('/chat')
       })

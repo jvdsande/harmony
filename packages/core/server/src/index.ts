@@ -67,6 +67,8 @@ export default class Server {
 
     await this.configureControllers()
 
+    await this.separateUpgradeRequests()
+
     // Start the server
     await this.server.start()
   }
@@ -84,6 +86,7 @@ export default class Server {
     // Create Socket.IO instance
     const io = IO(this.server.listener, {
       path: '/harmonyjs-socket',
+      serveClient: false,
     })
 
     // Add Redis layer if required
@@ -115,6 +118,24 @@ export default class Server {
 
       await registerControllers({ controllers, server: this.server, log: this.logger })
     }
+  }
+
+  async separateUpgradeRequests() {
+    const listeners = this.server.listener.listeners('upgrade')
+    const harmonyListener = listeners.shift()
+
+    this.server.listener.removeAllListeners('upgrade')
+    this.server.listener.on('upgrade', (req, socket, head) => {
+      if (req.url.startsWith('/harmonyjs-socket/')) {
+        // If the path starts with /harmonyjs-socket, forward it to the
+        // harmony socket-io listener
+        harmonyListener(req, socket, head)
+      } else {
+        // Else, forward it to all other listeners, which should handle it gracefully
+        // Note: if a controller uses socket-io, then it _will_ fail on upgrade requests
+        listeners.forEach((l) => l(req, socket, head))
+      }
+    })
   }
 
   createLogger = () => {
