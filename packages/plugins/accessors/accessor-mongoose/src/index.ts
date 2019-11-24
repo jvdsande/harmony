@@ -42,7 +42,7 @@ function toMongooseType(prop : Property) {
     return {
       type: Types.ObjectId,
       ref: prop.of as string,
-      indexed: prop.isIndexed(),
+      index: prop.isIndexed(),
       unique: prop.isUnique(),
     }
   }
@@ -50,7 +50,7 @@ function toMongooseType(prop : Property) {
   return {
     type: MongooseTypeMap[prop.type as string] || Types.Mixed,
     unique: prop.isUnique(),
-    indexed: prop.isIndexed(),
+    index: prop.isIndexed(),
   }
 }
 
@@ -68,7 +68,7 @@ function toMongooseSchema(schema : Property) {
           mongooseSchema[key] = {
             type: Types.Map,
             of: toMongooseSchema(prop.of as Property),
-            indexed: prop.isIndexed(),
+            index: prop.isIndexed(),
             unique: prop.isUnique(),
           }
         } else {
