@@ -74,6 +74,8 @@ export function computeMainResolvers({
         // Check for a scope function
         const scope = (scoped && model.scopes && model.scopes[res.type]) || unscoped
 
+        const scopedArgs = scope({ args: JSON.parse(JSON.stringify(args)), context })
+
         return accessor[res.type]
           .apply(
             defaultAccessor, [{
@@ -81,7 +83,7 @@ export function computeMainResolvers({
               info,
               model,
               context,
-              args: scope({ args: JSON.parse(JSON.stringify(args)), context }),
+              args: scopedArgs || args,
             }],
           )
       }

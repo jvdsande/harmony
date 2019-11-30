@@ -6,7 +6,7 @@ import ControllerApollo from '@harmonyjs/controller-apollo'
 import ControllerPersistenceEvents from '@harmonyjs/controller-persistence-events'
 
 import {
-  Accessor, Events, Model, SanitizedModel,
+  Accessor, Events, Model, SanitizedModel, PersistenceConfig,
 } from '@harmonyjs/types-persistence'
 
 import Logger from '@harmonyjs/logger'
@@ -22,20 +22,16 @@ import { ifWorker } from './utils/cluster'
 import { printGraphqlRoot, printGraphqlQueries, printGraphqlMutations } from './utils/types'
 
 // Export utility types and classes
-export { default as Types } from './entities/schema-types'
 export { FieldMode } from '@harmonyjs/types-persistence'
+export { default as Types } from './entities/schema-types'
 
 export default class Persistence {
-  config : {
-    models: Model[],
-    accessors?: {[key: string]: Accessor},
-    defaultAccessor?: string,
-    log: any,
-  } = {
+  config : PersistenceConfig = {
     models: [],
     accessors: {},
     defaultAccessor: null,
     log: null,
+    strict: false,
   }
 
   sanitizedModels : SanitizedModel[] = []
@@ -47,11 +43,11 @@ export default class Persistence {
   // eslint-disable-next-line react/static-property-placement
   context : {[key: string]: any} = {}
 
-  constructor(config) {
+  constructor(config : PersistenceConfig) {
     this.initializeProperties(config)
   }
 
-  initializeProperties(config) {
+  initializeProperties(config : PersistenceConfig) {
     if (!config) {
       return
     }
@@ -59,14 +55,18 @@ export default class Persistence {
     this.config.models = config.models || this.config.models
     this.config.accessors = config.accessors || this.config.accessors
     this.config.defaultAccessor = config.defaultAccessor || this.config.defaultAccessor
+    this.config.strict = config.strict || this.config.strict
+    this.config.log = config.log || this.config.log
   }
 
-  async init(config) {
+  async init(config : PersistenceConfig) {
     this.initializeProperties(config)
 
     this.createLogger()
 
-    const { accessors, models } = this.config
+    const {
+      accessors, models, strict, log,
+    } = this.config
     const { logger } = this
 
     if (!this.config.defaultAccessor) {
@@ -82,7 +82,7 @@ export default class Persistence {
     logger.info(`Initializing Persistence instance with ${models.length} models`)
 
     this.sanitizedModels = models
-      .map(sanitizeModel)
+      .map((model) => sanitizeModel(model, strict))
       .map((model) => {
         logger.info(`Model '${model.name}' imported.`)
         return model
@@ -90,8 +90,8 @@ export default class Persistence {
 
     await Promise.all(
       Object.values(accessors || {})
-        .map((accessor) => {
-          const accessorLogger = new Logger(accessor.name)
+        .map((accessor : Accessor) => {
+          const accessorLogger = new Logger(accessor.name, log)
           accessorLogger.level = logger.level
 
           return accessor.initialize({

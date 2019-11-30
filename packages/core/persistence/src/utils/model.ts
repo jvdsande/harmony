@@ -215,7 +215,9 @@ function sanitizeFields(
   return sanitized
 }
 
-function sanitizeModelComputed({ computed, parent, external }) {
+function sanitizeModelComputed({
+  computed, parent, external, scopes, strict,
+}) {
   const sanitized = computed || {
     fields: {},
     queries: {},
@@ -231,15 +233,27 @@ function sanitizeModelComputed({ computed, parent, external }) {
     const queryName = extractModelType(name, false)
 
     queryResolvers.forEach((query) => {
-      sanitized.queries[queryName + query.suffix] = sanitized.queries[queryName + query.suffix] || {
+      const fallback = (!strict || (!!scopes && !!scopes[query.type])) ? ({
         extends: query.type,
         resolve: null,
+      }) : null
+
+      const value = sanitized.queries[queryName + query.suffix] || fallback
+
+      if (value) {
+        sanitized.queries[queryName + query.suffix] = value
       }
     })
     mutationResolvers.forEach((query) => {
-      sanitized.mutations[queryName + query.suffix] = sanitized.mutations[queryName + query.suffix] || {
+      const fallback = (!strict || (!!scopes && !!scopes[query.type])) ? ({
         extends: query.type,
         resolve: null,
+      }) : null
+
+      const value = sanitized.mutations[queryName + query.suffix] || fallback
+
+      if (value) {
+        sanitized.mutations[queryName + query.suffix] = value
       }
     })
   }
@@ -267,10 +281,16 @@ function sanitizeModelComputed({ computed, parent, external }) {
 }
 
 // eslint-disable-next-line
-export function sanitizeModel(model : Model) {
+export function sanitizeModel(model : Model, strict : boolean = false) {
   const schema = sanitizeSchema({ schema: model.schema, name: model.name })
   const originalSchema = sanitizeSchema({ schema: model.schema, name: model.name })
-  const computed = sanitizeModelComputed({ computed: model.computed, parent: schema, external: model.external })
+  const computed = sanitizeModelComputed({
+    computed: model.computed,
+    parent: schema,
+    external: model.external,
+    scopes: model.scopes,
+    strict,
+  })
 
   const sanitized : SanitizedModel = {
     ...model,
