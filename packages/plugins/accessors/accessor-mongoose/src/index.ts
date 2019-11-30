@@ -283,8 +283,6 @@ export default class AccessorMongoose extends Accessor {
           useFindAndModify: false,
           dbName: this.config.database,
 
-          autoReconnect: true,
-          reconnectTries: Number.MAX_VALUE,
           connectTimeoutMS: 5000,
 
           useUnifiedTopology: true,
