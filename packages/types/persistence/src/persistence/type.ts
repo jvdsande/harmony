@@ -137,6 +137,11 @@ export class Property {
   }
 
   // Modifiers
+  withArgs(args) {
+    this.args = args
+    return this
+  }
+
   get indexed() {
     this._configuration.indexed = true
     return this
@@ -153,16 +158,11 @@ export class Property {
   }
 
   isIndexed() {
-    return !!this._configuration.indexed
+    return !!this._configuration.indexed || this.isUnique()
   }
 
   isRequired() {
     return !!this._configuration.required
-  }
-
-  withArgs(args) {
-    this.args = args
-    return this
   }
 
   isUnique() {

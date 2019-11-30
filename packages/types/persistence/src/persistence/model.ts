@@ -1,10 +1,9 @@
-import { SchemaType } from './schema-types'
 import { Property, PropertySchema } from './type'
 
 export type Model = {
   name: string,
   external?: boolean,
-  schema: PropertySchema | Property | Schema,
+  schema: PropertySchema | Property,
   computed?: Computed,
   scopes?: Scopes,
 
@@ -20,12 +19,6 @@ export type SanitizedModel = {
   scopes: Scopes,
   accessor: string,
 }
-
-export type Schema = {
-  [key: string]: SchemaEntry
-}
-
-export type SchemaEntry = SchemaType | Schema
 
 export type Computed = {
   fields: Fields,

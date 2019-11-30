@@ -15,6 +15,9 @@ persistence.init({
   // Setup our data by injecting the imported models
   models,
 
+  // Make strict, so that CRUD are only generated if they are custom or scoped
+  strict: true,
+
   accessors: {
     mongo: new AccessorMongoose({
       host: 'mongodb://localhost:27017/',
@@ -25,7 +28,9 @@ persistence.init({
   // Setup logging to go to the console.
   // If this is not provided, all logging will go into a .log file at the root
   log: {
-    console: true,
+    console: {
+      colors: true,
+    },
   },
 })
 
@@ -73,6 +78,9 @@ server.init({
   // Setup logging to go to the console.
   // If this is not provided, all logging will go into a .log file at the root
   log: {
-    console: true,
+    console: {
+      colors: true,
+      timestamp: true,
+    },
   },
 })

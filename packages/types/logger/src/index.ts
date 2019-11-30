@@ -4,7 +4,10 @@ export type LogConfig = {
   disabled?: boolean,
   level?: LogLevel,
   filename?: string,
-  console?: boolean,
+  console?: boolean | {
+    colors?: boolean,
+    timestamp?: boolean,
+  },
 }
 
 export interface LoggerClass {

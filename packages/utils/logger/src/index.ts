@@ -53,18 +53,31 @@ export default class Logger implements LoggerClass {
     const logFormat = Winston.format.printf(
       (i) => (
         `${suffix}${
-          colors.grey(`${moment(i.timestamp).format(timeFormat)}`)
-          + colors.bold(colors.grey(` ${cut} ${padded} [`))
+          (
+            (console && ((typeof console === 'boolean') || console.timestamp !== false))
+              ? `${colors.grey(moment(i.timestamp).format(timeFormat))} `
+              : ''
+          )
+          + colors.bold(colors.grey(`${cut} ${padded} [`))
           + colors.bold(type[i.level])
           + colors.bold(colors.grey(']'))
         } ${i.message}`
       ),
     )
 
+    const logBaseFormat = Winston.format.printf(
+      (i) => (
+        `${
+          (console && ((typeof console === 'boolean') || console.timestamp !== false))
+            ? `${moment(i.timestamp).format(timeFormat)} `
+            : ''
+        }${cut} ${padded} [${fileType[i.level]}] ${i.message}`
+      ),
+    )
+
     const fileFormat = Winston.format.printf(
       (i) => (
-        `${moment(i.timestamp)
-          .format(timeFormat)} ${cut} ${padded} [${fileType[i.level]}] ${i.message}`
+        `${moment(i.timestamp).format(timeFormat)} ${cut} ${padded} [${fileType[i.level]}] ${i.message}`
       ),
     )
 
@@ -75,7 +88,7 @@ export default class Logger implements LoggerClass {
         transports: [new Winston.transports.Console()],
         format: Winston.format.combine(
           Winston.format.timestamp(),
-          logFormat,
+          (typeof console === 'object' && console.colors === false) ? logBaseFormat : logFormat,
         ),
       })
     }

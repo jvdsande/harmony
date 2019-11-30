@@ -48,12 +48,14 @@ export async function registerPlugins({ plugins, server }) {
   }))
 }
 
-export async function registerControllers({ controllers, server, log }) {
+export async function registerControllers({
+  controllers, server, log, logConfig,
+}) {
   await Promise.all(controllers.map(async (c, i) => {
     const plugin = {
       name: `harmonyjs-${i}`,
       register: async () => {
-        const logger = new Logger(c.name)
+        const logger = new Logger(c.name, logConfig)
         logger.level = log.level
         await c.initialize({ server, logger })
       },

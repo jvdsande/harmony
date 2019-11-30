@@ -108,7 +108,7 @@ export default class Server {
   }
 
   async configureControllers() {
-    const { controllers } = this.config
+    const { controllers, log } = this.config
 
     // Check if any custom controllers need to be initialized
     if (controllers && controllers.length) {
@@ -116,7 +116,7 @@ export default class Server {
 
       await registerPlugins({ plugins, server: this.server })
 
-      await registerControllers({ controllers, server: this.server, log: this.logger })
+      await registerControllers({ controllers, server: this.server, log: this.logger, logConfig: log })
     }
   }
 
