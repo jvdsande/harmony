@@ -1,0 +1,248 @@
+---
+name: "@harmonyjs/persistence"
+route: /api/persistence
+menu: API
+---
+
+# HarmonyJS Persistence
+
+`@harmonyjs/persistence` handles the data of our application. It provides a convenient way to describe our models, and
+connect them to our databases through accessors.
+
+_**Note:** While not mandatory, [GraphQL](https://graphql.org/) is the main target of the persistence module, and is needed_
+_to take full advantage of HarmonyJS_
+
+## `Persistence`
+
+`@harmonyjs/persistence` default export is the `Persistence` constructor.
+
+This constructor allows us to create a `Persistence` instance, which can be configured to handle our database accesses.
+A `Persistence` instance only has two publicly available methods: the constructor itself, and an `initialize` function.
+
+### `Persistence::new(`[`PersistenceConfig`](#persistenceconfig)`: config): Persistence`
+
+Constructor to create a new `Persistence` instance. It takes a [`PersistenceConfig`](#persistenceconfig) object as parameter
+to configure the instance.
+
+No further initialization steps are executed. To initialize our instance, use the `Persistence::initialize` method.
+
+<b style={{display: "block", marginBottom: "-1.5rem" }}>Sample usage</b>
+
+```js
+import Persistence from '@harmonyjs/persistence'
+
+// Initialize a new Persistence instance
+const persistence = new Persistence({
+    models: [...],
+})
+```
+
+### `Persistence::initialize(): Promise<boolean>`
+
+Initialization function computing our models and setting up our database accessors.
+
+This functions returns a `Promise` which resolves when the accessors are done loading.
+
+<b style={{display: "block", marginBottom: "-1.5rem" }}>Sample usage</b>
+
+```js
+import Persistence from '@harmonyjs/persistence'
+
+async function run() {
+    // Initialize a new Persistence instance
+    const persistence = new Persistence({
+        models: [...],
+    })
+
+    console.log('Initializing the Persistence instance...')
+
+    // Start our Persistence instance
+    await persistence.initialize()
+
+    console.log('Persistence instance initialized!')
+}
+
+run()
+```
+
+### `Persistence::controllers`
+
+The `Persistence::controllers` getter exposes two ready-to-use Controllers:
+- `controllers.ControllerGraphQL` can be used to expose a GraphQL endpoint configured with the Persistence instance schema.
+Its constructor accepts one `configuration` argument, of the following type:
+```ts
+type ControllerGraphQLConfig = {
+    path: string, // The route on which to expose the GraphQL endpoint
+    enablePlayground: boolean, // Whether to enable the GraphQL Playground page on the endpoint
+}
+```
+- `controllers.ControllerEvents` can be used to forward our data events to the application's Socket.IO layer. It doesn't require
+any configuration.
+
+## `PersistenceConfig`
+
+The `PersistenceConfig` object configures a `Persistence` instance. Here are the various parameters available:
+
+```ts
+type PersistenceConfig = {
+  models: Model[],
+  accessors?: {[key: string]: Accessor},
+  defaultAccessor?: string,
+  strict?: boolean,
+  log?: LogConfig,
+}
+```
+
+### `PersistenceConfig::models`
+
+The mandatory `models` field is an array of data-models. Refer to the [`Model`](#model) definition to learn more about models.
+
+This field contains the list of all models to expose in the Persistence schema.
+
+### `PersistenceConfig::accessors`
+
+This optional field allows to give a mapping of [`Accessors`](/plugins/accessors). Each accessor has a unique key in the map,
+which can later be used to identify a [`Model`](#model)'s accessor.
+
+Refer to the [`Accessors`](/plugins/accessors) documentation to learn more.
+
+### `PersistenceConfig::defaultAccessor`
+
+Key of the accessor to use when no accessor is specified for a model. If not provided, defaults to the first accessor in the map.
+
+### `PersistenceConfig::strict`
+
+Whether to compile a schema in strict mode. When using strict mode, only CRUD actions for which a `scope` function has been provided
+will be added to the schema. To learn more about `scope` functions, refer to the [`Model`](#model) documentation.
+
+### `PersistenceConfig::log`
+
+Configuration of the way the persistence instance logs its actions. Refer to the [Log util documentation](/api/utils#logconfig)
+
+## `Model`
+
+The `Model` type is used to describe a collection of objects to store in a database. HarmonyJS provides a unified way to
+describe such a model, that can later be translated to fit any storage mechanism. This translation is the role of the [`Accessors`](/plugins/accessors) plugins.
+
+The `Model` type is as follows:
+
+```ts
+type Model = {
+  name: string,
+  schema: {
+    [key: string]: Property
+  },
+
+  computed?: Computed,
+  scopes?: Scopes,
+
+  accessor?: string,
+  external?: boolean,
+}
+```
+
+Only two properties are required: `name` and `schema`.
+
+- The `name` property is the name of the collection. This should be a singular noun. <br />
+If it needs to be a composed word, use kebab case: `'my-multiple-words-name'`
+- The `schema` property is an object defining the base form of our collection. It maps each field name to a [`Property`](#propertyandtypes)
+definition, which is declared using HarmonyJS's [`Types`](#propertyandtypes). You can see a sample `schema` in the [`Model` guide](/guides/creating-models).
+
+<br />
+
+The next two properties are optional and allows us to extend the capabilities of our model: `computed` and `scopes`
+
+- The `computed` property describes fields that appear when reading an element from the API. Those fields are not actually stored
+in the database: they are _computed_ at read-time by combining database fields. <br />
+The `computed` property is also the occasion to define custom queries linked to our model. Refer to the [`Computed`](#computed) type definition
+for more information.
+- The `scopes` property helps us customize CRUD calls to our model. For each model, HarmonyJS creates default resolvers for common CRUD actions (read, list, count, create, update, delete). <br />
+For each action, a `scope` function can be defined in order to access the query's argument so that we can edit them, inject some context, or
+even block certain accesses. <br />
+For more information about `scope` functions, refer to the [`Scopes`](#scopes) type definition.
+
+<br />
+
+Finally, the two last optional properties, `accessor` and `external`, are parameters to let HarmonyJS know how to handle certain aspect
+of the model lifecycle.
+
+- The `accessor` property is an optional string that can contain the key of an `Accessor` as defined in the [`PersistenceConfig::accessors`](#persistenceconfigaccessors) field. This tells
+HarmonyJS Persistence which accessor to use for this model.
+- The `external` boolean is an advanced field only needed when using [Apollo Federation](https://www.apollographql.com/docs/apollo-server/federation/introduction/).
+It tells the GraphQL schema compiler that the given model is external, provided by another federated service.
+
+### `Property` and `Types`
+
+The `Property` type is used to describe a Harmony model. In order to create a correctly formed `Property`, we use the `Types` object
+exported by `@harmonyjs/persistence`.
+
+The various `Types` properties allow to create a new `Property`:
+- `Types.String`: create a `Property` describing a string field.
+- `Types.Number`: create a `Property` describing an integer number field.
+- `Types.Float`: create a `Property` describing a floating number field.
+- `Types.Boolean`: create a `Property` describing a boolean field.
+- `Types.Date`: create a `Property` describing a date field.
+- `Types.ID`: create a `Property` describing an ID field.
+- `Types.Array`: create a `Property` describing an array. Use the `Property::of` chaining parameter to set the `Property` of which the array is made of.
+- `Types.Reference`: create a `Property` describing a field referencing another model element. Use the `Property::of` chaining parameter to set the referenced model by name.
+- `Types.JSON`: create a `Property` describing a field holding a custom JSON object. No validation is done inside the JSON object,
+since its schema is not defined.
+
+<br />
+
+`Properties` generated can be configured using a set of chaining parameters, which mutates the `Property` and then returns it. The various
+chaining parameters are as follow:
+- `Property::of`: used for `Types.Array` or `Types.Reference` to set what the array is made of, or the referenced model. <br />
+In the case of an array, it takes another `Property`. In the case of a reference, it takes a `Model` either by name (`string`), or directly as a `Model` object.
+- `Property::indexed`: tells HarmonyJS that our field should result in an index creation.
+- `Property::unique`: tells HarmonyJS that our field should result in a _unique_ index creation.
+- `Property::required`: tells HarmonyJS that our field is required for each write operation.
+- `Property::external`: used in the case of a federated system. Tells that a given field is an external field in a model definition. See [Apollo Federation](https://www.apollographql.com/docs/apollo-server/federation/introduction/).
+
+### `Computed`
+
+The `computed` field of a model allows us to extend the capabilities of our model by defining computed fields. It is only available
+when using the GraphQL schema system.
+
+Its composition is as follows:
+
+```ts
+type Computed = {
+  fields: {
+    [key: string]: Field
+  },
+  queries: {
+    [key: string]: ExtendableField
+  },
+  mutations: {
+    [key: string]: ExtendableField
+  },
+}
+```
+
+The `computed` fields is composed of three subfields: `fields`, which describes fields to add to our model; `queries`, which
+describes GraphQL queries linked to our model; and `mutations`, which describes GraphQL mutations linked to our model.
+
+Each of these three subfields implement a map of `Field` (or variant `ExtendableField`) by their name. The `Field` and `ExtendableField` type definitions are shown below.
+
+#### `Field`
+
+A `Field` is composed of the following properties:
+
+```ts
+type Field {
+  resolve: ({ args: Object, source: Object, resolvers: Resolver[], context: any }) => any
+  type?: PropertySchema | Property
+  args?: PropertySchema,
+  mode?: FieldModeEnum | FieldModeEnum[]
+}
+```
+
+At its core, a `Field` needs a `resolve` function, which tells GraphQL how to compute its value.
+It then needs either an `extends` field (only available for `queries` and `mutations`), or a `type` field.
+
+### `Scopes`
+
+## Other exports
+
+### FieldMode

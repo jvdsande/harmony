@@ -1,5 +1,7 @@
 import {
-  Property, PropertySchema, FieldMode, FieldModeEnum, Fields, Field, SanitizedModel, Model,
+  Property, PropertySchema, FieldMode, FieldModeEnum, Fields, SanitizedModel, Model, CompleteField,
+  Scopes, Computed, SanitizedComputed,
+  ExtendableField, SanitizedFields,
 } from '@harmonyjs/types-persistence'
 
 import Types from '../entities/schema-types'
@@ -7,7 +9,7 @@ import { mutationResolvers, queryResolvers } from './resolvers'
 import { extractModelType } from './types'
 
 /* eslint-disable no-param-reassign */
-function extendField(field: Field, modelName: string) {
+function extendField(field: CompleteField, modelName: string) {
   switch (field.extends) {
     case 'get':
     case 'read': {
@@ -113,7 +115,7 @@ function sanitizeField({
         sanitized.of.parent = sanitized
       } else {
         sanitized.of = sanitizeNested({ // eslint-disable-line
-          field: field.of,
+          field: field.of as PropertySchema,
           mode: null,
           parent: sanitized,
         })
@@ -149,8 +151,10 @@ function sanitizeField({
   return sanitized
 }
 
-function sanitizeNested({ field, parent, mode }) {
-  const sanitized = {}
+function sanitizeNested(
+  { field, parent, mode } : { field: PropertySchema, parent: Property, mode: FieldModeEnum | null },
+) {
+  const sanitized : PropertySchema = {}
 
   Object.keys(field).forEach((key) => {
     sanitized[key] = sanitizeField({
@@ -164,7 +168,7 @@ function sanitizeNested({ field, parent, mode }) {
   return sanitized
 }
 
-function sanitizeSchema({ schema, name }) {
+function sanitizeSchema({ schema, name } : { schema: PropertySchema, name: string }) : Property {
   const sanitized = new Property({ type: 'nested', of: {} })
 
   const mode = [FieldMode.INPUT, FieldMode.OUTPUT]
@@ -182,10 +186,9 @@ function sanitizeSchema({ schema, name }) {
 }
 
 function sanitizeFields(
-  { fields, parent, force } : { fields: Fields, parent: Property, force?: FieldModeEnum },
-) : Fields {
-  const sanitized = {}
-
+  { fields, parent, force } : { fields: Fields, parent?: Property, force?: FieldModeEnum },
+) : SanitizedFields {
+  const sanitized : SanitizedFields = {}
 
   Object.keys(fields || {})
     .forEach((key) => {
@@ -198,8 +201,8 @@ function sanitizeFields(
         mode,
         resolve,
         args: fields[key].args
-          ? sanitizeNested({ field: fields[key].args, parent: argsParent, mode: FieldMode.INPUT })
-          : null,
+          ? sanitizeNested({ field: fields[key].args || {}, parent: argsParent, mode: FieldMode.INPUT })
+          : undefined,
         type: sanitizeField({
           field: fields[key].type,
           name: key,
@@ -217,7 +220,13 @@ function sanitizeFields(
 
 function sanitizeModelComputed({
   computed, parent, external, scopes, strict,
-}) {
+} : {
+  computed?: Computed,
+  parent: Property,
+  scopes?: Scopes,
+  external: boolean,
+  strict: boolean,
+}) : SanitizedComputed {
   const sanitized = computed || {
     fields: {},
     queries: {},
@@ -260,22 +269,22 @@ function sanitizeModelComputed({
 
   if (sanitized.queries) {
     Object.values(sanitized.queries)
-      .forEach((query : Field) => {
-        extendField(query, parent.graphqlType)
+      .forEach((query : ExtendableField) => {
+        extendField(query as CompleteField, parent.graphqlType)
       })
   }
 
   if (sanitized.mutations) {
     Object.values(sanitized.mutations)
-      .forEach((query : Field) => {
-        extendField(query, parent.graphqlType)
+      .forEach((query : ExtendableField) => {
+        extendField(query as CompleteField, parent.graphqlType)
       })
   }
 
   return {
     fields: sanitizeFields({ fields: sanitized.fields, parent }),
-    queries: sanitizeFields({ fields: sanitized.queries, parent: null, force: FieldMode.OUTPUT }),
-    mutations: sanitizeFields({ fields: sanitized.mutations, parent: null, force: FieldMode.OUTPUT }),
+    queries: sanitizeFields({ fields: sanitized.queries as Fields, force: FieldMode.OUTPUT }),
+    mutations: sanitizeFields({ fields: sanitized.mutations as Fields, force: FieldMode.OUTPUT }),
     custom: sanitized.custom,
   }
 }
@@ -287,7 +296,7 @@ export function sanitizeModel(model : Model, strict : boolean = false) {
   const computed = sanitizeModelComputed({
     computed: model.computed,
     parent: schema,
-    external: model.external,
+    external: !!model.external,
     scopes: model.scopes,
     strict,
   })
@@ -307,8 +316,8 @@ export function sanitizeModel(model : Model, strict : boolean = false) {
 
   // Inject transient fields in schema
   Object.keys(sanitized.computed.fields)
-    .forEach((key) => {
-      sanitized.schema.of[key] = sanitized.computed.fields[key].type
+    .forEach((key : string) => {
+      (sanitized.schema.of as PropertySchema)[key] = sanitized.computed.fields[key].type
     })
 
   return sanitized

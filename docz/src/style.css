@@ -1,0 +1,18 @@
+code {
+  padding: 4px 8px;
+  background-color: rgb(246, 248, 250);
+  border-radius: 4px;
+  font-size: 0.9em;
+  text-decoration: initial;
+  font-style: initial;
+}
+
+h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
+  padding: 0;
+  background-color: transparent;
+  font-size: 1em;
+}
+
+h2, h3, h4 {
+  margin-top: 2em;
+}

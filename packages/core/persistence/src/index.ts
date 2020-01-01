@@ -29,8 +29,6 @@ export default class Persistence {
   config : PersistenceConfig = {
     models: [],
     accessors: {},
-    defaultAccessor: null,
-    log: null,
     strict: false,
   }
 
@@ -38,16 +36,77 @@ export default class Persistence {
 
   events = new Events()
 
-  logger : Logger = null
+  logger : Logger = new Logger('Persistence')
 
   // eslint-disable-next-line react/static-property-placement
   context : {[key: string]: any} = {}
 
   constructor(config : PersistenceConfig) {
     this.initializeProperties(config)
+
+    this.createLogger()
   }
 
-  initializeProperties(config : PersistenceConfig) {
+  async initialize() {
+    const {
+      accessors, models, strict, log,
+    } = this.config
+
+    const { logger } = this
+
+    if (!this.config.defaultAccessor) {
+      logger.warn(`No default accessor was specified. Will fallback to accessor '${
+        Object.keys(accessors || { default: 'mock' })[0] || 'mock'
+      }'`)
+      this.config.defaultAccessor = Object.keys(accessors || { default: null })[0] || undefined
+    }
+
+    const { defaultAccessor } = this.config
+
+    logger.info(`Accessors: [${Object.keys(accessors || {})}] - default: ${defaultAccessor || 'mock'}`)
+    logger.info(`Initializing Persistence instance with ${models.length} models`)
+
+    this.sanitizedModels = models
+      .map((model) => sanitizeModel(model, strict))
+      .map((model) => {
+        logger.info(`Model '${model.name}' imported.`)
+        return model
+      })
+
+    try {
+      await Promise.all(
+        Object.values(accessors || {})
+          .map((accessor: Accessor) => {
+            const accessorLogger = new Logger(accessor.name, log)
+            accessorLogger.level = logger.level
+
+            return accessor.initialize({
+              models: this.sanitizedModels,
+              events: this.events,
+              logger: accessorLogger,
+            })
+          }),
+      )
+    } catch (err) {
+      logger.error(err)
+      throw new Error('An error occurred while initializing accessors')
+    }
+  }
+
+  async init(config? : PersistenceConfig) {
+    this.initializeProperties(config)
+
+    this.createLogger()
+
+    this.logger.warn(
+      'Deprecation Notice: Persistence::init function is deprecated and will be removed in the next minor. '
+      + 'Use Persistence::initialize instead.',
+    )
+
+    await this.initialize()
+  }
+
+  private initializeProperties(config ?: PersistenceConfig) {
     if (!config) {
       return
     }
@@ -59,51 +118,7 @@ export default class Persistence {
     this.config.log = config.log || this.config.log
   }
 
-  async init(config : PersistenceConfig) {
-    this.initializeProperties(config)
-
-    this.createLogger()
-
-    const {
-      accessors, models, strict, log,
-    } = this.config
-    const { logger } = this
-
-    if (!this.config.defaultAccessor) {
-      logger.warn(`No default accessor was specified. Will fallback to accessor '${
-        Object.keys(accessors || { default: 'mock' })[0] || 'mock'
-      }'`)
-      this.config.defaultAccessor = Object.keys(accessors || { default: null })[0] || null
-    }
-
-    const { defaultAccessor } = this.config
-
-    logger.info(`Accessors: [${Object.keys(accessors)}] - default: ${defaultAccessor || 'mock'}`)
-    logger.info(`Initializing Persistence instance with ${models.length} models`)
-
-    this.sanitizedModels = models
-      .map((model) => sanitizeModel(model, strict))
-      .map((model) => {
-        logger.info(`Model '${model.name}' imported.`)
-        return model
-      })
-
-    await Promise.all(
-      Object.values(accessors || {})
-        .map((accessor : Accessor) => {
-          const accessorLogger = new Logger(accessor.name, log)
-          accessorLogger.level = logger.level
-
-          return accessor.initialize({
-            models: this.sanitizedModels,
-            events: this.events,
-            logger: accessorLogger,
-          })
-        }),
-    )
-  }
-
-  get schema() {
+  private get schema() {
     return `
 scalar Date
 scalar JSON
@@ -127,9 +142,9 @@ ${this.sanitizedModels
     [model: string]: {
       [query: string]: (args: any) => any,
     }
-  }
+  } = {}
 
-  get internalResolvers() {
+  private get internalResolvers() {
     const { accessors, defaultAccessor: defaultAccessorName } = this.config
     const models = this.sanitizedModels
 
@@ -137,7 +152,7 @@ ${this.sanitizedModels
 
     const localResolvers: { [key: string]: any } = {}
 
-    const defaultAccessor = accessors[defaultAccessorName]
+    const defaultAccessor = accessors ? accessors[defaultAccessorName || 'mock'] : undefined
 
     resolvers.Query = {}
     resolvers.Mutation = {}
@@ -165,16 +180,16 @@ ${this.sanitizedModels
       })
     }
 
-    const wrappedResolvers = {}
+    const wrappedResolvers : any = {}
     Object.keys(localResolvers).forEach((mod) => {
       wrappedResolvers[mod] = {}
       Object.keys(localResolvers[mod]).forEach((resolver) => {
-        wrappedResolvers[mod][resolver] = (localArgs) => localResolvers[mod][resolver](null, localArgs, {}, {
+        wrappedResolvers[mod][resolver] = (localArgs : any) => localResolvers[mod][resolver](null, localArgs, {}, {
           fieldNodes:
             [],
         })
 
-        wrappedResolvers[mod][resolver].unscoped = (localArgs) => localResolvers[mod][resolver].unscoped(
+        wrappedResolvers[mod][resolver].unscoped = (localArgs : any) => localResolvers[mod][resolver].unscoped(
           null,
           localArgs,
           {},
@@ -208,13 +223,16 @@ ${this.sanitizedModels
       ControllerGraphQL: class ControllerGraphQL extends ControllerApollo {
         name = 'ControllerGraphQL'
 
-        constructor(config) {
+        constructor(config : {
+          path: string, // The route on which to expose the GraphQL endpoint
+          enablePlayground: boolean, // Whether to enable the GraphQL Playground page on the endpoint
+        }) {
           super({
             ...config,
             context,
             schema,
             resolvers: internalResolvers,
-            mock: defaultAccessor == null,
+            mock: !defaultAccessor,
           })
         }
       },
@@ -230,7 +248,7 @@ ${this.sanitizedModels
     })
   }
 
-  createLogger() {
+  private createLogger() {
     const { log } = this.config
     const logConfig = log || {}
 

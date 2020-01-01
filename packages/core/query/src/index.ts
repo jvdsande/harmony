@@ -73,6 +73,7 @@ class Query {
     const host = (endpoint && endpoint.host) || ''
     const port = (endpoint && endpoint.port)
 
+
     const graphql = (path && path.graphql) || '/graphql'
     const socket = (path && path.socket) || '/harmonyjs-socket'
 
