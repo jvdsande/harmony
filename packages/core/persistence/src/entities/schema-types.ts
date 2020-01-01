@@ -1,4 +1,4 @@
-import { Property } from '@harmonyjs/types-persistence'
+import { Property, PropertySchema, Model } from '@harmonyjs/types-persistence'
 
 class TypesClass {
   get String() {
@@ -27,13 +27,13 @@ class TypesClass {
 
   get Map() {
     return ({
-      of: (type) => new Property({ type: 'map', of: type }),
+      of: (type : Property) => new Property({ type: 'map', of: type }),
     })
   }
 
   get Array() {
     return ({
-      of: (type) => new Property({ type: 'array', of: type }),
+      of: (type : Property | 'inherit') => new Property({ type: 'array', of: type }),
     })
   }
 
@@ -43,13 +43,16 @@ class TypesClass {
 
   get Reference() {
     return ({
-      of: (type) => new Property(({ type: 'reference', of: type.name ? type.name : type })),
+      of: (type : Model | string) => new Property(({
+        type: 'reference',
+        of: typeof type === 'string' ? type : type.name,
+      })),
     })
   }
 
   get Schema() {
     return ({
-      of: (type) => new Property(({ type: 'nested', of: type })),
+      of: (type : PropertySchema) => new Property(({ type: 'nested', of: type })),
     })
   }
 }

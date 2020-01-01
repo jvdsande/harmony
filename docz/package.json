@@ -1,0 +1,19 @@
+{
+  "name": "@harmonyjs/docs",
+  "version": "1.0.0",
+  "description": "Harmony JS docs",
+  "main": "index.js",
+  "scripts": {
+    "docz:dev": "docz dev",
+    "docz:build": "docz build",
+    "docz:serve": "docz build && docz serve"
+  },
+  "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "docz": "^2.2.0",
+    "docz-plugin-css": "^0.11.0",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0"
+  }
+}

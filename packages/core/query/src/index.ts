@@ -73,6 +73,7 @@ class Query {
     const host = (endpoint && endpoint.host) || ''
     const port = (endpoint && endpoint.port)
 
+
     const graphql = (path && path.graphql) || '/graphql'
     const socket = (path && path.socket) || '/harmonyjs-socket'
 
@@ -80,9 +81,10 @@ class Query {
     const socketPath = (socket.startsWith('/') ? '' : '/') + socket
 
     const portPath = (port ? `:${port}` : '')
+    const hostPath = (host.endsWith('/') ? host.slice(0, -1) : host)
 
-    config.uri = host + portPath + graphqlPath
-    const socketUri = host + portPath
+    config.uri = hostPath + portPath + graphqlPath
+    const socketUri = hostPath + portPath
 
 
     if (reactNative) {

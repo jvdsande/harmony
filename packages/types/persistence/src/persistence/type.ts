@@ -42,6 +42,7 @@ export class Property {
     const excludeFields = ['deepOf', 'required', 'indexed', 'unique', 'primary', 'external']
 
     const proto = Object.getPrototypeOf(this)
+
     for (const key of Object.getOwnPropertyNames(proto)) {
       const desc = Object.getOwnPropertyDescriptor(proto, key)
       const hasGetter = desc && typeof desc.get === 'function'

@@ -1,0 +1,167 @@
+---
+name: "@harmonyjs/server"
+route: /api/server
+menu: API
+---
+
+# HarmonyJS Server
+
+`@harmonyjs/server` handles the creation and runtime of a Node webserver. Under the hood, it uses HapiJS, but there is no
+need to know HapiJS in order to start using HarmonyJS.
+
+_**Note:** [HapiJS](https://hapi.dev/) knowledge is necessary to write your own [Controller Plugins](/plugins/controllers)_
+
+## `Server`
+
+`@harmonyjs/server` only exports one element, its default export: the `Server` constructor.
+
+This constructor allows us to create a `Server` instance, which can be configured to expose our application's webserver.
+A `Server` instance only has two publicly available methods: the constructor itself, and a `start` function.
+
+### `Server::new(`[`ServerConfig`](#serverconfig)`: config): Server`
+
+Constructor to create a new `Server` instance. It takes a [`ServerConfig`](#serverconfig) object as parameter
+to configure the instance.
+
+No further initialization steps are executed. To launch the server, use the `Server::start` method.
+
+<b style={{display: "block", marginBottom: "-1.5rem" }}>Sample usage</b>
+
+```js
+import Server from '@harmonyjs/server'
+
+// Initialize a new Server instance
+const server = new Server({
+    endpoint: {
+        host: '0.0.0.0',
+        port: 80,
+    },
+})
+```
+
+### `Server::start(): Promise<boolean>`
+
+Initialization function launching the webserver.
+
+This function returns a `Promise` which resolves when the server is done loading.
+
+<b style={{display: "block", marginBottom: "-1.5rem" }}>Sample usage</b>
+
+```js
+import Server from '@harmonyjs/server'
+
+async function run() {
+    // Initialize a new Server instance
+    const server = new Server({
+        endpoint: {
+            host: '0.0.0.0',
+            port: 80,
+        },
+    })
+
+    console.log('Launching the server...')
+
+    // Start our server
+    try {
+        await server.start()
+
+        console.log('Server launched!')
+    }
+    catch (err) {
+        console.log('An error occurred while launching the server')
+        console.error(err)
+    }
+}
+
+run()
+```
+
+## `ServerConfig`
+
+The `ServerConfig` object allows us to configure the server before running it. Here are the available options:
+
+```ts
+type ServerConfig = {
+  endpoint?: {
+    host: string,
+    port: number,
+  },
+  authentication?: {
+    secret: string,
+    validate?: (any) => Promise<boolean>,
+  },
+  cluster?: {
+    forks?: {
+      size?: number,
+      header?: string,
+      proxy?: boolean,
+    },
+    redis: boolean | {
+      key?: string,
+      host?: string,
+      port?: number,
+    },
+  },
+  controllers?: Controller[],
+  log?: LogConfig,
+}
+```
+
+### `ServerConfig::endpoint`
+
+The optional endpoint field allows us to choose the host and port to run or server on. Omitting this field will launch
+a server on `localhost:3000` by default.
+
+This field takes two subfields, `endpoint.host` and `endpoint.port`
+
+### `ServerConfig::authentication`
+
+This optional field handles the built-in JWT-authentication scheme. It has two subfields: `authentication.secret`, the
+secret to use to sign the JWT tokens emitted from the application, and `authentication.validate`, an optional function
+which receives the decoded token before each requests and returns a `Promise` resolving to `true` or `false` to indicate
+whether the token is considered valid or not.
+
+_**Note:** the `validate` function is the responsibility of the application and arrives_ after _the signature check_
+
+### `ServerConfig::cluster`
+
+The cluster configuration define how the app should handle replication, either locally using Node's forking system, or
+across multiple machines such as in a Kubernetes environment.
+
+#### `ServerConfig::cluster::forks`
+
+The `cluster.forks` subfield allows to configure how our application should split across multiple forks.
+
+Under the hood, HarmonyJS uses Socket.IO for client->server communication. Forks parameters allow to insure a socket connection
+is always forwarded to the correct server.
+
+It takes three optional parameters:
+
+- `size`: the number of instances to run. If lower than 2, then no forks are created. Defaults to `1`.
+- `header`: the header containing the real user IP address. Useful if used behind a proxy. Defaults to `'x-forwarded-for'`.
+- `proxy`: tells if the application is running behind a proxy. Defaults to `false`.
+
+#### `ServerConfig::cluster::redis`
+
+The `cluster.redis` subfield allows to configure our application for working on a clustered environment, such as Kubernetes.
+
+Under the hood, HarmonyJS uses Socket.IO for client->server communication. Redis parameters allow to insure that messages
+are spread to all clients, whichever the emitting server, and vice-versa.
+
+It takes three optional parameters:
+
+- `key`: the identifier of the Redis sync cache. Defaults to `'harmony'`. <br/>
+Use this key if you intend to run multiple HarmonyJS applications on the same cluster or using the same Redis server.
+- `host`: the hostname on which to access the Redis server. Defaults to `'localhost'`.
+- `port`: the port on which the Redis server is running. Defaults to `6379`.
+
+### `ServerConfig::controllers`
+
+The controllers array contains a list of Controllers. Controllers are HarmonyJS plugins allowing to describe how to handle
+specific routes, such as serving a static directory, routing to an SPA or exposing a GraphQL endpoint.
+
+To find more information about Controllers, refer to [their documentation](/plugins/controllers).
+
+### `ServerConfig::log`
+
+Configuration of the way the server instance logs its actions. Refer to the [Log util documentation](/api/utils#logconfig)

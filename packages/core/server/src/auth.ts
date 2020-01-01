@@ -17,8 +17,8 @@ export default async function (server: any, { secret, validate }: Authentication
         }
 
         return true
-      }, // validate function
-      verifyOptions: { algorithms: ['HS256'] }, // pick a strong algorithm
+      },
+      verifyOptions: { algorithms: ['HS256'] },
       urlKey: false,
     },
   )

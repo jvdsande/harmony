@@ -1,6 +1,9 @@
 // Require Hapi
 import Hapi from '@hapi/hapi'
 
+// Require types
+import { Controller } from '@harmonyjs/types-server'
+
 // Require SocketIO
 import IO from 'socket.io'
 import IORedis from 'socket.io-redis'
@@ -17,15 +20,29 @@ import { executeOnCluster, ifMaster, ifWorker } from './utils/cluster'
 import ControllerAuth from './auth'
 
 type ServerConfig = {
-  endpoint?: any,
-  controllers?: any,
-  authentication?: any,
-  cluster?: any,
+  endpoint?: {
+    host: string,
+    port: number,
+    autoListen?: boolean,
+  },
+  controllers?: Controller[],
+  authentication?: {
+    secret: string,
+    validate?: (any) => Promise<boolean>,
+  },
+  cluster?: {
+    redis: any,
+    forks?: {
+      size: number,
+      proxy: boolean,
+      header?: string,
+    }
+  },
   log?: LogConfig,
 }
 
 export default class Server {
-  config: ServerConfig = null
+  config: ServerConfig = {}
 
   logger = null
 
@@ -33,9 +50,35 @@ export default class Server {
 
   constructor(config: ServerConfig) {
     this.initializeProperties(config)
+
+    this.createLogger()
   }
 
-  initializeProperties(config: ServerConfig = {}) {
+  async start() {
+    try {
+      await this.createCluster()
+    } catch (err) {
+      this.logger.error(err)
+      throw new Error('Error while creating server cluster')
+    }
+
+    return true
+  }
+
+  async init(config: ServerConfig = this.config) {
+    this.initializeProperties(config)
+
+    this.createLogger()
+
+    this.logger.warn(
+      'Deprecation Notice: Server::init function is deprecated and will be removed in the next minor. '
+      + 'Use Server::start instead.',
+    )
+
+    await this.createCluster()
+  }
+
+  private initializeProperties(config: ServerConfig = this.config) {
     const {
       endpoint, controllers, authentication, cluster, log,
     } = config
@@ -48,15 +91,7 @@ export default class Server {
     this.config.log = log || this.config.log
   }
 
-  async init(config: ServerConfig) {
-    this.initializeProperties(config)
-
-    await this.createLogger()
-
-    await this.createCluster()
-  }
-
-  async launch() {
+  private async launch() {
     await this.logBanner()
 
     await this.createServer()
@@ -73,14 +108,14 @@ export default class Server {
     await this.server.start()
   }
 
-  async createServer() {
+  private async createServer() {
     const { endpoint } = this.config
 
     this.logger.info('Initializing Hapi Server')
     this.server = new Hapi.Server(endpoint)
   }
 
-  async configureSocketIO() {
+  private async configureSocketIO() {
     const { cluster } = this.config
 
     // Create Socket.IO instance
@@ -91,23 +126,29 @@ export default class Server {
 
     // Add Redis layer if required
     if (cluster && cluster.redis) {
-      io.adapter(IORedis(cluster.redis))
+      const redis = {
+        key: cluster.redis.key || 'harmony',
+        host: cluster.redis.host || 'localhost',
+        port: cluster.redis.port || 6379,
+      }
+
+      io.adapter(IORedis(redis))
     }
 
     this.server.io = io
   }
 
-  async configureAuthentication() {
+  private async configureAuthentication() {
     const { authentication } = this.config
 
     // Add Authentication
     this.logger.info('Initializing Authentication service...')
     const secret = authentication ? authentication.secret || '-' : '-'
-    await ControllerAuth(this.server, authentication || { secret })
+    await ControllerAuth(this.server, authentication || { secret, validate: undefined })
     this.logger.info('Authentication service initialized successfully')
   }
 
-  async configureControllers() {
+  private async configureControllers() {
     const { controllers, log } = this.config
 
     // Check if any custom controllers need to be initialized
@@ -116,11 +157,13 @@ export default class Server {
 
       await registerPlugins({ plugins, server: this.server })
 
-      await registerControllers({ controllers, server: this.server, log: this.logger, logConfig: log })
+      await registerControllers({
+        controllers, server: this.server, log: this.logger, logConfig: log,
+      })
     }
   }
 
-  async separateUpgradeRequests() {
+  private async separateUpgradeRequests() {
     const listeners = this.server.listener.listeners('upgrade')
     const harmonyListener = listeners.shift()
 
@@ -138,7 +181,7 @@ export default class Server {
     })
   }
 
-  createLogger = () => {
+  private createLogger = () => {
     const { log } = this.config
     const logConfig = log || {}
 
@@ -151,24 +194,24 @@ export default class Server {
     this.logger = new Logger('Server', logConfig)
   }
 
-  logBanner = () => {
+  private logBanner = () => {
     const { logger } = this
 
     logger.info(`Powered by
-  _    _
- | |  | |
- | |__| | __ _ _ __ _ __ ___   ___  _ __  _   _
- |  __  |/ _\` | '__| '_ \` _ \\ / _ \\| '_ \\| | | |
- | |  | | (_| | |  | | | | | | (_) | | | | |_| |
- |_|  |_|\\__,_|_|  |_| |_| |_|\\___/|_| |_|\\__, |
-                                           __/ |
-                                          |___/`)
+   _    _
+  | |  | |
+  | |__| | __ _ _ __ _ __ ___   ___  _ __  _   _
+  |  __  |/ _\` | '__| '_ \` _ \\ / _ \\| '_ \\| | | |
+  | |  | | (_| | |  | | | | | | (_) | | | | |_| |
+  |_|  |_|\\__,_|_|  |_| |_| |_|\\___/|_| |_|\\__, |
+                                            __/ |
+                                           |___/`)
   }
 
   // Node Cluster handling
   // Launch worker instances if required, connecting them to a master listener
   // for routing Socket.IO calls
-  async createCluster() {
+  private async createCluster() {
     const { cluster, endpoint, log } = this.config
 
     await executeOnCluster({

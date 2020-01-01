@@ -3,6 +3,7 @@ import Voca from 'voca'
 import {
   Field, FieldMode, Property, SanitizedModel, PropertySchema,
 } from '@harmonyjs/types-persistence'
+
 import Types from '../entities/schema-types'
 
 export function extractModelType(name: string, capitalize: boolean = true): string {
@@ -39,7 +40,7 @@ const arrayOperators : Operator[] = [
 ]
 
 
-export function printGraphqlProp({ property, input = false } : { property: Property, input?: boolean }) {
+export function printGraphqlProp({ property, input = false } : { property: Property, input?: boolean }) : string {
   const propertyType = input ? property.graphqlInputType : property.graphqlType
   const required = property.isRequired() ? '!' : ''
   const annotations = []
@@ -75,7 +76,7 @@ export function printGraphqlType({
   properties: Property[],
   external?: boolean,
   root?: boolean,
-}) {
+}) : string {
   const annotations = []
   const id = external ? '_id: ID @external' : '_id: ID'
 
@@ -111,7 +112,7 @@ export function printGraphqlInputType({
 }
 
 
-function extractNestedProperty(schema: Property) {
+function extractNestedProperty(schema: Property) : Property[] {
   return Object.values(schema.of)
     .filter((prop) => {
       const propIsNested = prop.type === 'nested'
@@ -123,7 +124,7 @@ function extractNestedProperty(schema: Property) {
 }
 
 
-function extractNestedArguments(schema: Property) {
+function extractNestedArguments(schema: Property) : Property[] {
   const directArguments = Object.values(schema.of)
     .filter((q) => !!q.args)
     .flatMap((q) => {
@@ -141,7 +142,7 @@ function extractNestedArguments(schema: Property) {
 }
 
 
-function printGraphqlNested(property : Property) {
+function printGraphqlNested(property : Property) : string {
   return [
     ...extractNestedProperty(property)
       .map(printGraphqlNested),
@@ -158,7 +159,7 @@ function printGraphqlNested(property : Property) {
   ].join('\n')
 }
 
-function makeOperatorProperty({ key, property, array = false } : { key: string, property: Property, array?: boolean}) {
+function makeOperatorProperty({ key, property } : { key: string, property: Property }) {
   if (property.type === 'nested') {
     const of : PropertySchema = {}
     const nested = new Property({ name: key, type: 'nested', of })
@@ -167,8 +168,11 @@ function makeOperatorProperty({ key, property, array = false } : { key: string, 
 
     Object.keys(property.of)
       .forEach((k) => {
-        nestedOperator.of[k] = makeOperatorProperty({ key: k, property: property.of[k] })
-        nestedOperator.of[k].parent = nestedOperator
+        (nestedOperator.of as PropertySchema)[k] = makeOperatorProperty({
+          key: k,
+          property: (property.of as PropertySchema)[k],
+        });
+        (nestedOperator.of as PropertySchema)[k].parent = nestedOperator
       })
 
     nestedOperator.parent = nested
@@ -178,7 +182,7 @@ function makeOperatorProperty({ key, property, array = false } : { key: string, 
   }
 
   if (property.type === 'array') {
-    const nestedProperty = makeOperatorProperty({ key: 'array', property: property.of as Property, array: true })
+    const nestedProperty = makeOperatorProperty({ key: 'array', property: property.of as Property })
 
     const arrayNested = new Property({ name: key, type: 'nested', of: {} })
 
@@ -191,9 +195,9 @@ function makeOperatorProperty({ key, property, array = false } : { key: string, 
       }
 
       operatorType.name = operator.name
-      operatorType.parent = arrayNested
+      operatorType.parent = arrayNested;
 
-      arrayNested.of[operator.name] = operatorType
+      (arrayNested.of as PropertySchema)[operator.name] = operatorType
     })
 
     return arrayNested
@@ -222,9 +226,9 @@ function makeOperatorProperty({ key, property, array = false } : { key: string, 
     }
 
     operatorType.name = operator.name
-    operatorType.parent = prop
+    operatorType.parent = prop;
 
-    prop.of[operator.name] = operatorType
+    (prop.of as PropertySchema)[operator.name] = operatorType
   })
 
   return prop
@@ -239,9 +243,9 @@ function makeOperatorType(model : SanitizedModel) {
 
   Object.keys(model.schema.of)
     .forEach((key) => {
-      const property = model.schema.of[key]
-      operator.of[key] = makeOperatorProperty({ key, property })
-      operator.of[key].parent = operator
+      const property = (model.schema.of as PropertySchema)[key];
+      (operator.of as PropertySchema)[key] = makeOperatorProperty({ key, property });
+      (operator.of as PropertySchema)[key].parent = operator
     })
 
   operator.mode = [FieldMode.INPUT]

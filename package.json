@@ -53,6 +53,7 @@
     "@hapi/hapi": "^18.4.0",
     "@hapi/inert": "^5.2.2",
     "@hapi/vision": "^5.5.4",
+    "@types/voca": "^1.4.0",
     "apollo-boost": "^0.4.4",
     "apollo-server-hapi": "^2.9.7",
     "colors": "^1.4.0",

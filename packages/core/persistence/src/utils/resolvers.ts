@@ -1,11 +1,18 @@
 import {
-  Fields, Field, Property, SanitizedModel,
+  FieldBase, Field, Property, SanitizedModel,
+  ScopeEnum, Accessor,
 } from '@harmonyjs/types-persistence'
 
 import { extractModelType } from './types'
 
+type ResolverDefinition = {
+  type: ScopeEnum,
+  suffix: string,
+  alias?: string[],
+}
+
 // Query
-export const queryResolvers = [
+export const queryResolvers : ResolverDefinition[] = [
   {
     type: 'read',
     suffix: '',
@@ -21,7 +28,7 @@ export const queryResolvers = [
 ]
 
 // Mutations
-export const mutationResolvers = [
+export const mutationResolvers : ResolverDefinition[] = [
   {
     type: 'create',
     suffix: 'Create',
@@ -44,7 +51,7 @@ export const mutationResolvers = [
   },
 ]
 
-const unscoped = ({ args }) => args
+const unscoped = ({ args } : { args: any }) => args
 
 
 /* eslint-disable no-param-reassign */
@@ -54,6 +61,12 @@ export function computeMainResolvers({
   defaultAccessor,
   resolvers,
   localResolvers,
+} : {
+  models: SanitizedModel[],
+  accessors?: { [key: string]: Accessor },
+  defaultAccessor: Accessor,
+  resolvers: any,
+  localResolvers: any,
 }) {
   models.forEach((model) => {
     const modelType = extractModelType(model.name)
@@ -61,7 +74,7 @@ export function computeMainResolvers({
 
     localResolvers[modelType] = {}
 
-    const modelAccessor = model.accessor ? accessors[model.accessor] : defaultAccessor
+    const modelAccessor = (accessors && model.accessor) ? accessors[model.accessor] : defaultAccessor
     const accessor = modelAccessor || defaultAccessor
 
     if (model.external) {
@@ -69,8 +82,8 @@ export function computeMainResolvers({
       return
     }
 
-    const makeResolvers = (mainType) => (res) => {
-      const makeResolver = (scoped) => async (source, args, context, info) => {
+    const makeResolvers = (mainType : any) => (res : ResolverDefinition) => {
+      const makeResolver = (scoped : boolean) => async (source : any, args : any, context : any, info : any) => {
         // Check for a scope function
         const scope = (scoped && model.scopes && model.scopes[res.type]) || unscoped
 
@@ -111,7 +124,7 @@ export function computeMainResolvers({
 
     // Reference Resolver for Federation
     resolvers[modelType] = resolvers[modelType] || {}
-    resolvers[modelType].__resolveReference = async (reference) => accessor.read({
+    resolvers[modelType].__resolveReference = async (reference : { _id: string }) => accessor.read({
       args: {
         _id: reference._id,
       },
@@ -123,7 +136,7 @@ export function computeMainResolvers({
   })
 }
 
-function flattenNestedType(nested) {
+function flattenNestedType(nested : Property) : Property[] {
   return [
     nested,
     ...Object.values(nested.of)
@@ -143,20 +156,30 @@ export function computeReferenceResolvers({
   accessors,
   defaultAccessor,
   resolvers,
+} : {
+  models: SanitizedModel[],
+  accessors?: { [key: string]: Accessor },
+  defaultAccessor: Accessor,
+  resolvers: any,
 }) {
   const types = models.flatMap((model) => flattenNestedType(model.schema))
 
-  const makeReferenceResolver = (type, fieldName, comparator, isArray) => {
+  const makeReferenceResolver = (type : Property, fieldName : string, comparator : string, isArray : boolean) => {
     const typeName = type.name
 
-    const model = models.find((m) => m.name === comparator)
+    const model : SanitizedModel | undefined = models.find((m) => m.name === comparator)
+
+    if (!model) {
+      throw new Error(`No model found for name${comparator}`)
+    }
+
     const rootName = extractModelType(model.name)
 
-    const modelAccessor = model.accessor ? accessors[model.accessor] : defaultAccessor
+    const modelAccessor = (accessors && model.accessor) ? accessors[model.accessor] : defaultAccessor
     const accessor = modelAccessor || defaultAccessor
 
     resolvers[typeName] = resolvers[typeName] || {}
-    resolvers[typeName][fieldName] = async (source, args, context, info) => {
+    resolvers[typeName][fieldName] = async (source : any, args : any, context : any, info : any) => {
       if (model.external) {
         // In case of an external Federation model, return a Representation
         return {
@@ -187,12 +210,17 @@ export function computeReferenceResolvers({
       .filter((prop : Property) => (prop.of && prop.of instanceof Property && prop.of.type === 'reference'))
 
     // Make direct reference fields
-    references.forEach((prop : Property) => makeReferenceResolver(type, prop._configuration.name, prop.of, false))
+    references.forEach((prop : Property) => makeReferenceResolver(
+      type,
+      prop._configuration.name,
+      prop.of as string,
+      false,
+    ))
 
     // Make composed reference fields
     composedReferences.forEach(
       (prop : Property) => makeReferenceResolver(
-        type, prop._configuration.name, prop.of instanceof Property && prop.of.of,
+        type, prop._configuration.name, (prop.of instanceof Property && prop.of.of) as string,
         prop.type === 'array',
       ),
     )
@@ -203,35 +231,40 @@ export function computeFieldResolvers({
   models,
   resolvers,
   localResolvers,
+} : {
+  models: SanitizedModel[],
+  resolvers: any,
+  localResolvers: any,
 }) {
   // Compute fields resolvers
   models.forEach((model : SanitizedModel) => {
-    function computeResolver({ fields, rootName } : { fields: {[key: string]: Field}, rootName: string}) {
+    function computeResolver({ fields, rootName } : { fields: {[key: string]: FieldBase}, rootName: string}) {
       Object.entries(fields)
         .forEach(([name, field]) => {
           if (field.resolve) {
             resolvers[rootName] = resolvers[rootName] || {}
-            resolvers[rootName][name] = async (source, args, context, info) => {
-              const wrappedResolvers = {}
+            resolvers[rootName][name] = async (source : any, args : any, context : any, info : any) => {
+              const wrappedResolvers : any = {}
 
               Object.keys(localResolvers)
                 .forEach((mod) => {
                   wrappedResolvers[mod] = {}
                   Object.keys(localResolvers[mod])
                     .forEach((resolver) => {
-                      wrappedResolvers[mod][resolver] = (localArgs) => localResolvers[mod][resolver](
+                      wrappedResolvers[mod][resolver] = (localArgs : any) => localResolvers[mod][resolver](
                         source,
                         localArgs,
                         context,
                         info,
                       )
 
-                      wrappedResolvers[mod][resolver].unscoped = (localArgs) => localResolvers[mod][resolver].unscoped(
-                        source,
-                        localArgs,
-                        context,
-                        info,
-                      )
+                      wrappedResolvers[mod][resolver]
+                        .unscoped = (localArgs : any) => localResolvers[mod][resolver].unscoped(
+                          source,
+                          localArgs,
+                          context,
+                          info,
+                        )
                     })
                 })
 
