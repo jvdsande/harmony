@@ -80,9 +80,10 @@ class Query {
     const socketPath = (socket.startsWith('/') ? '' : '/') + socket
 
     const portPath = (port ? `:${port}` : '')
+    const hostPath = (host.endsWith('/') ? host.slice(0, -1) : host)
 
-    config.uri = host + portPath + graphqlPath
-    const socketUri = host + portPath
+    config.uri = hostPath + portPath + graphqlPath
+    const socketUri = hostPath + portPath
 
 
     if (reactNative) {
