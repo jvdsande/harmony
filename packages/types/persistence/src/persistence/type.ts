@@ -25,10 +25,14 @@ type TypeEnum =
   | 'raw'
 
 export type PropertySchema = {
-  [key: string]: Property
+  [key: string]: Property | PropertySchema | [Property] | [PropertySchema]
 }
 
-export type PropertyOf = string | Property | PropertySchema
+export type SanitizedPropertySchema = {
+  [key: string]: Property,
+}
+
+export type PropertyOf = string | Property | SanitizedPropertySchema
 
 export class Property {
   toJSON() {
@@ -65,7 +69,7 @@ export class Property {
 
   parent?: Property
 
-  args?: PropertySchema
+  args?: SanitizedPropertySchema
 
   _configuration : {
     indexed: boolean,
@@ -125,7 +129,7 @@ export class Property {
     return this._configuration.mode || (this.parent && this.parent.mode) || []
   }
 
-  set mode(mode) {
+  set mode(mode : FieldModeEnum[] | null) {
     this._configuration.mode = mode
   }
 

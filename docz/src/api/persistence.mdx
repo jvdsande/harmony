@@ -129,9 +129,7 @@ The `Model` type is as follows:
 ```ts
 type Model = {
   name: string,
-  schema: {
-    [key: string]: Property
-  },
+  schema: PropertySchema,
 
   computed?: Computed,
   scopes?: Scopes,
@@ -147,6 +145,17 @@ Only two properties are required: `name` and `schema`.
 If it needs to be a composed word, use kebab case: `'my-multiple-words-name'`
 - The `schema` property is an object defining the base form of our collection. It maps each field name to a [`Property`](#propertyandtypes)
 definition, which is declared using HarmonyJS's [`Types`](#propertyandtypes). You can see a sample `schema` in the [`Model` guide](/guides/creating-models).
+
+The `PropertySchema` definition is as follows:
+
+```ts
+type PropertySchema = {
+    [key: string]: Property | PropertySchema | [Property] | [PropertySchema]
+}
+```
+
+As can be seen, each field can either be a `Property` or a new `PropertySchema`. It can also be wrapped in an array as
+a shorthand for declaring array types.
 
 <br />
 
@@ -230,19 +239,51 @@ Each of these three subfields implement a map of `Field` (or variant `Extendable
 A `Field` is composed of the following properties:
 
 ```ts
-type Field {
+type Field = {
   resolve: ({ args: Object, source: Object, resolvers: Resolver[], context: any }) => any
-  type?: PropertySchema | Property
-  args?: PropertySchema,
+  type: Property | PropertySchema | [Property] | [PropertySchema]
+  args?: PropertySchema
   mode?: FieldModeEnum | FieldModeEnum[]
 }
 ```
 
 At its core, a `Field` needs a `resolve` function, which tells GraphQL how to compute its value.
-It then needs either an `extends` field (only available for `queries` and `mutations`), or a `type` field.
+The `resolve` functions takes a unique parameter, which is a map of various structures relevant to the field resolution:
+`args` contains the argument object passed to the GraphQL field query, `source` contains the parent model as retrieved from
+the database, `resolvers` is a map of [`Resolvers`](#resolvers) by their model name, and `context` is the Persistence context,
+constructed through [`Providers`](/plugins/providers).
+
+
+A `Field` then needs a `type` property, which is either a Persistence `Property` like in a model's schema, or an object map of
+`Property`, also called a `PropertySchema`. The `type` tells GraphQL what form the value returned by the resolve function will take.
+
+<br />
+
+The `args` field is another `PropertySchema` which allows us to optionally specify arguments the field can take when queried.
+For more information about field arguments, see the [Argument section of the GraphQL specification](https://graphql.org/learn/schema/#arguments).
+
+The final property, `mode`, corresponds to the input/output mode of the field. By default, computed fields are only
+output fields. You can decide to create an input computed field in order to be able to pass custom transient fields to
+mutation queries.
+
+To set the mode, simply import `FieldMode` from `@harmonyjs/persistence` and set the mode to `FieldMode.INPUT`, `FieldMode.OUTPUT`, or use
+an array to set both (`[FieldMode.INPUT, FieldMode.OUTPUT]`)
+
+#### `ExtendableField`
+
+`ExtendableField` is a variant of `Field` used to describe queries and mutations. It doesn't implement a `mode` property,
+as it is not intended to describe a model's fields. Here is the definition of `ExtendableField`:
+
+```ts
+type ExtendableField = {
+  resolve: ({ args: Object, source: Object, resolvers: Resolver[], context: any }) => any
+  type?: Property | PropertySchema | [Property] | [PropertySchema]
+  args?: PropertySchema
+  extends?: ResolverEnum
+}
+```
+
+In addition
 
 ### `Scopes`
 
-## Other exports
-
-### FieldMode

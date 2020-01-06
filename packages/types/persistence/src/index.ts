@@ -13,11 +13,13 @@ export {
   CompleteField,
   SanitizedFields, SanitizedField,
 
-  Scope, Scopes, ScopeEnum,
+  Scope, Scopes, ResolverEnum,
   Computed, SanitizedComputed,
 } from './persistence/model'
 export { default as Events } from './persistence/events'
-export { Property, PropertyOf, PropertySchema } from './persistence/type'
+export {
+  Property, PropertyOf, PropertySchema, SanitizedPropertySchema,
+} from './persistence/type'
 
 export type PersistenceConfig = {
   models: Model[],

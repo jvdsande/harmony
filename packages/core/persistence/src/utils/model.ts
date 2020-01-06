@@ -2,6 +2,7 @@ import {
   Property, PropertySchema, FieldMode, FieldModeEnum, Fields, SanitizedModel, Model, CompleteField,
   Scopes, Computed, SanitizedComputed,
   ExtendableField, SanitizedFields,
+  SanitizedPropertySchema,
 } from '@harmonyjs/types-persistence'
 
 import Types from '../entities/schema-types'
@@ -91,7 +92,7 @@ function extendField(field: CompleteField, modelName: string) {
 function sanitizeField({
   field, name,
 } : {
-  field: Property | PropertySchema | Property[] | PropertySchema[],
+  field: Property | PropertySchema | [Property] | [PropertySchema],
   name: string,
 }) {
   const sanitized = new Property({ type: 'raw', name })
@@ -152,9 +153,9 @@ function sanitizeField({
 }
 
 function sanitizeNested(
-  { field, parent, mode } : { field: PropertySchema, parent: Property, mode: FieldModeEnum | null },
+  { field, parent, mode } : { field: PropertySchema, parent: Property, mode: FieldModeEnum[] | null },
 ) {
-  const sanitized : PropertySchema = {}
+  const sanitized : SanitizedPropertySchema = {}
 
   Object.keys(field).forEach((key) => {
     sanitized[key] = sanitizeField({
@@ -198,10 +199,10 @@ function sanitizeFields(
       const argsParent = new Property({ type: 'raw', name: 'Args' })
 
       sanitized[key] = {
-        mode,
+        mode: Array.isArray(mode) ? mode : [mode],
         resolve,
         args: fields[key].args
-          ? sanitizeNested({ field: fields[key].args || {}, parent: argsParent, mode: FieldMode.INPUT })
+          ? sanitizeNested({ field: fields[key].args || {}, parent: argsParent, mode: [FieldMode.INPUT] })
           : undefined,
         type: sanitizeField({
           field: fields[key].type,
@@ -210,7 +211,7 @@ function sanitizeFields(
       }
 
       argsParent.parent = sanitized[key].type
-      sanitized[key].type.mode = mode
+      sanitized[key].type.mode = sanitized[key].mode || null
       sanitized[key].type.parent = parent
       sanitized[key].type.args = sanitized[key].args
     })

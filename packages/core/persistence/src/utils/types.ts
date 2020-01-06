@@ -1,7 +1,7 @@
 import Voca from 'voca'
 
 import {
-  Field, FieldMode, Property, SanitizedModel, PropertySchema,
+  Field, FieldMode, Property, SanitizedModel, PropertySchema, SanitizedPropertySchema,
 } from '@harmonyjs/types-persistence'
 
 import Types from '../entities/schema-types'
@@ -146,11 +146,11 @@ function printGraphqlNested(property : Property) : string {
   return [
     ...extractNestedProperty(property)
       .map(printGraphqlNested),
-    property.mode.includes(FieldMode.OUTPUT) ? printGraphqlType({
+    (property.mode && property.mode.includes(FieldMode.OUTPUT)) ? printGraphqlType({
       name: property.graphqlType,
       properties: Object.values(property.of).filter((prop) => prop.mode.includes(FieldMode.OUTPUT)),
     }) : '',
-    property.mode.includes(FieldMode.INPUT) ? printGraphqlInputType({
+    (property.mode && property.mode.includes(FieldMode.INPUT)) ? printGraphqlInputType({
       name: property.graphqlInputType,
       properties: Object.values(property.of).filter((prop) => prop.mode.includes(FieldMode.INPUT)),
     }) : '',
@@ -161,18 +161,18 @@ function printGraphqlNested(property : Property) : string {
 
 function makeOperatorProperty({ key, property } : { key: string, property: Property }) {
   if (property.type === 'nested') {
-    const of : PropertySchema = {}
+    const of : SanitizedPropertySchema = {}
     const nested = new Property({ name: key, type: 'nested', of })
 
     const nestedOperator = new Property({ name: 'match', type: 'nested', of: {} })
 
     Object.keys(property.of)
       .forEach((k) => {
-        (nestedOperator.of as PropertySchema)[k] = makeOperatorProperty({
+        (nestedOperator.of as SanitizedPropertySchema)[k] = makeOperatorProperty({
           key: k,
-          property: (property.of as PropertySchema)[k],
+          property: (property.of as SanitizedPropertySchema)[k],
         });
-        (nestedOperator.of as PropertySchema)[k].parent = nestedOperator
+        (nestedOperator.of as SanitizedPropertySchema)[k].parent = nestedOperator
       })
 
     nestedOperator.parent = nested
@@ -243,9 +243,9 @@ function makeOperatorType(model : SanitizedModel) {
 
   Object.keys(model.schema.of)
     .forEach((key) => {
-      const property = (model.schema.of as PropertySchema)[key];
-      (operator.of as PropertySchema)[key] = makeOperatorProperty({ key, property });
-      (operator.of as PropertySchema)[key].parent = operator
+      const property = (model.schema.of as SanitizedPropertySchema)[key];
+      (operator.of as SanitizedPropertySchema)[key] = makeOperatorProperty({ key, property });
+      (operator.of as SanitizedPropertySchema)[key].parent = operator
     })
 
   operator.mode = [FieldMode.INPUT]

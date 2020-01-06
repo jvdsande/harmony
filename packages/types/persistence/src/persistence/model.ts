@@ -1,4 +1,4 @@
-import { Property, PropertySchema } from './type'
+import { Property, PropertySchema, SanitizedPropertySchema } from './type'
 
 type KeyMap<T> = {
   [key: string]: T
@@ -51,18 +51,19 @@ export type SanitizedFields = KeyMap<SanitizedField>
 
 export type FieldBase = {
   resolve: (arg: { args: any, source: any, resolvers: any[], context: any, info: any }) => any,
-  mode?: FieldModeEnum | FieldModeEnum[]
 }
 type FieldType = FieldBase & {
   type: PropertySchema | Property,
   args?: PropertySchema,
+  mode?: FieldModeEnum | FieldModeEnum[]
 }
 type FieldTypeNotExtends = FieldType & {
   extends?: never,
+  mode?: never,
 }
 
 type FieldExtends = FieldBase & {
-  extends: string,
+  extends: ResolverEnum,
 }
 type FieldExtendsNotType = FieldExtends & {
   type?: never,
@@ -71,7 +72,8 @@ type FieldExtendsNotType = FieldExtends & {
 
 export type SanitizedField = FieldBase & {
   type: Property,
-  args?: PropertySchema,
+  args?: SanitizedPropertySchema,
+  mode?: FieldModeEnum[]
 }
 
 export type Field = FieldType
@@ -82,9 +84,9 @@ export type FieldModeEnum = 'OUTPUT' | 'INPUT'
 
 export type Scope = (arg: ScopeParams) => any
 
-export type ScopeEnum = 'read'|'readMany'|'count'|'create'|'createMany'|'update'|'updateMany'|'delete'|'deleteMany'
+export type ResolverEnum = 'read'|'readMany'|'count'|'create'|'createMany'|'update'|'updateMany'|'delete'|'deleteMany'
 
-export type Scopes = CustomKeyMap<Scope, ScopeEnum>
+export type Scopes = CustomKeyMap<Scope, ResolverEnum>
 
 export type ScopeParams = {
   args: any,

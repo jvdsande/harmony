@@ -1,4 +1,4 @@
-import { Property, PropertySchema, Model } from '@harmonyjs/types-persistence'
+import { Property, SanitizedPropertySchema, Model } from '@harmonyjs/types-persistence'
 
 class TypesClass {
   get String() {
@@ -52,7 +52,7 @@ class TypesClass {
 
   get Schema() {
     return ({
-      of: (type : PropertySchema) => new Property(({ type: 'nested', of: type })),
+      of: (type : SanitizedPropertySchema) => new Property(({ type: 'nested', of: type })),
     })
   }
 }
