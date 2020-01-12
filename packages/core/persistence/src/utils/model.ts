@@ -195,7 +195,7 @@ function sanitizeFields(
 ) : SanitizedFields {
   const sanitized : SanitizedFields = {}
 
-  Object.keys(fields || {})
+  Object.keys(fields)
     .forEach((key) => {
       const mode = force || fields[key].mode || [FieldMode.INPUT, FieldMode.OUTPUT]
       const resolve = fields[key].resolve || null
@@ -252,10 +252,10 @@ function sanitizeModelComputed({
         resolve: null,
       }) : null
 
-      const value = sanitized.queries[queryName + query.suffix] || fallback
+      const value = sanitized.queries![queryName + query.suffix] || fallback
 
       if (value) {
-        sanitized.queries[queryName + query.suffix] = value
+        sanitized.queries![queryName + query.suffix] = value
       }
     })
     mutationResolvers.forEach((query) => {
@@ -264,10 +264,10 @@ function sanitizeModelComputed({
         resolve: null,
       }) : null
 
-      const value = sanitized.mutations[queryName + query.suffix] || fallback
+      const value = sanitized.mutations![queryName + query.suffix] || fallback
 
       if (value) {
-        sanitized.mutations[queryName + query.suffix] = value
+        sanitized.mutations![queryName + query.suffix] = value
       }
     })
   }
@@ -287,10 +287,10 @@ function sanitizeModelComputed({
   }
 
   return {
-    fields: sanitizeFields({ fields: sanitized.fields, parent }),
+    fields: sanitizeFields({ fields: sanitized.fields || {}, parent }),
     queries: sanitizeFields({ fields: sanitized.queries as Fields, force: FieldMode.OUTPUT }),
     mutations: sanitizeFields({ fields: sanitized.mutations as Fields, force: FieldMode.OUTPUT }),
-    custom: sanitized.custom,
+    custom: sanitized.custom || {},
   }
 }
 
