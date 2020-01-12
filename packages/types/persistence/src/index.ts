@@ -13,7 +13,7 @@ export {
   CompleteField,
   SanitizedFields, SanitizedField,
 
-  Scope, Scopes, ResolverEnum,
+  Scope, Scopes, ResolverEnum, AliasedResolverEnum,
   Computed, SanitizedComputed,
 } from './persistence/model'
 export { default as Events } from './persistence/events'

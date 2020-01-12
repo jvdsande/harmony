@@ -12,7 +12,6 @@ import { extractModelType } from './types'
 /* eslint-disable no-param-reassign */
 function extendField(field: CompleteField, modelName: string) {
   switch (field.extends) {
-    case 'get':
     case 'read': {
       field.type = new Property({ type: 'raw', of: modelName })
       field.args = {
@@ -22,7 +21,6 @@ function extendField(field: CompleteField, modelName: string) {
       }
       break
     }
-    case 'list':
     case 'readMany': {
       field.type = Types.Array.of(new Property({ type: 'raw', of: modelName }))
       field.args = {

@@ -85,6 +85,7 @@ export type FieldModeEnum = 'OUTPUT' | 'INPUT'
 export type Scope = (arg: ScopeParams) => any
 
 export type ResolverEnum = 'read'|'readMany'|'count'|'create'|'createMany'|'update'|'updateMany'|'delete'|'deleteMany'
+export type AliasedResolverEnum = ResolverEnum|'get'|'list'|'edit'
 
 export type Scopes = CustomKeyMap<Scope, ResolverEnum>
 

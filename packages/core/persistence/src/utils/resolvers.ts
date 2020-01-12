@@ -1,12 +1,12 @@
 import {
   FieldBase, Field, Property, SanitizedModel,
-  ScopeEnum, Accessor,
+  ResolverEnum, Accessor,
 } from '@harmonyjs/types-persistence'
 
 import { extractModelType } from './types'
 
 type ResolverDefinition = {
-  type: ScopeEnum,
+  type: ResolverEnum,
   suffix: string,
   alias?: string[],
 }
