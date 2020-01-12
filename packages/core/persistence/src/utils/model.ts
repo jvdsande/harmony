@@ -105,6 +105,10 @@ function sanitizeField({
     sanitized.type = field.type
     sanitized.of = field.of
 
+    if (sanitized._configuration.mode && !Array.isArray(sanitized._configuration.mode)) {
+      sanitized._configuration.mode = [sanitized._configuration.mode]
+    }
+
     if (field.of instanceof Property || field.of instanceof Object) {
       if (sanitized.type !== 'nested') {
         sanitized.of = sanitizeField({
@@ -161,7 +165,9 @@ function sanitizeNested(
       name: key,
     })
     sanitized[key].parent = parent
-    sanitized[key].mode = mode
+    if (sanitized[key].mode === null || !sanitized[key].mode!.length) {
+      sanitized[key].mode = mode
+    }
   })
 
   return sanitized

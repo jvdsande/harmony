@@ -34,6 +34,7 @@ export type SanitizedPropertySchema = {
 
 export type PropertyOf = string | Property | SanitizedPropertySchema
 
+// eslint-disable-next-line import/prefer-default-export
 export class Property {
   toJSON() {
     const jsonObj = { ...this }
@@ -47,6 +48,7 @@ export class Property {
 
     const proto = Object.getPrototypeOf(this)
 
+    // eslint-disable-next-line no-restricted-syntax
     for (const key of Object.getOwnPropertyNames(proto)) {
       const desc = Object.getOwnPropertyDescriptor(proto, key)
       const hasGetter = desc && typeof desc.get === 'function'

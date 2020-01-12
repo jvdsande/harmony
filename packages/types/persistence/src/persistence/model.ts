@@ -29,10 +29,10 @@ export type SanitizedModel = {
 }
 
 export type Computed = {
-  fields: Fields,
-  queries: ExtendableFields,
-  mutations: ExtendableFields,
-  custom: KeyMap<KeyMap<{
+  fields?: Fields,
+  queries?: ExtendableFields,
+  mutations?: ExtendableFields,
+  custom?: KeyMap<KeyMap<{
     resolve: (any: any) => any
   }>>
 }
