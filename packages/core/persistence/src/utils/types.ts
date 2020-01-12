@@ -104,7 +104,9 @@ export function printGraphqlInputType({
 }) {
   return 'input {{name}} {\n  {{properties}}\n}'
     .replace('{{name}}', name)
-    .replace('{{properties}}', properties.map((property) => printGraphqlProp({ property, input: true })).join('\n  '))
+    .replace('{{properties}}', properties
+      .filter((property) => !property.mode || property.mode.includes(FieldMode.INPUT))
+      .map((property) => printGraphqlProp({ property, input: true })).join('\n  '))
     .trim()
     .split('\n')
     .filter((l) => !!l.trim())
