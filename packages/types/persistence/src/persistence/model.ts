@@ -50,7 +50,7 @@ export type SanitizedFields = KeyMap<SanitizedField>
 
 
 export type FieldBase = {
-  resolve: (arg: { args: any, source: any, resolvers: any[], context: any, info: any }) => any,
+  resolve: (arg: { args: any, source: any, resolvers: KeyMap<any>, context: any, info: any }) => any,
 }
 type FieldType = FieldBase & {
   type: PropertySchema | Property,

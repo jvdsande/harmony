@@ -273,10 +273,20 @@ export function printGraphqlRoot(model : SanitizedModel) {
     external: model.external,
   })
 
+
+  const makeInputProperty = (property : Property) => {
+    // eslint-disable-next-line no-param-reassign
+    property.mode = [FieldMode.INPUT, FieldMode.OUTPUT]
+    return property
+  }
+
+  const idField = makeInputProperty(new Property({ type: 'id', name: '_id' }))
+  const idFieldRequired = makeInputProperty(new Property({ type: 'id', name: '_id' })).required
+
   const inputType = printGraphqlInputType({
     name: graphqlInputType,
     properties: [
-      new Property({ type: 'id', name: '_id' }),
+      idField,
       ...Object.values(model.schema.of).filter((prop) => prop.mode.includes(FieldMode.INPUT)),
     ],
   })
@@ -284,7 +294,7 @@ export function printGraphqlRoot(model : SanitizedModel) {
   const inputWithIdType = printGraphqlInputType({
     name: `${graphqlInputType}WithID`,
     properties: [
-      new Property({ type: 'id', name: '_id' }).required,
+      idFieldRequired,
       ...Object.values(model.schema.of).filter((prop) => prop.mode.includes(FieldMode.INPUT)),
     ],
   })
@@ -292,21 +302,20 @@ export function printGraphqlRoot(model : SanitizedModel) {
   const filterType = printGraphqlInputType({
     name: `${graphqlInputType}Filter`,
     properties: [
-
-      new Property({ type: 'id', name: '_id' }),
+      idField,
       ...Object.values(model.schema.of).filter((prop) => prop.mode.includes(FieldMode.INPUT)),
-      new Property({
+      makeInputProperty(new Property({
         type: 'array', name: '_or', of: new Property({ type: 'raw', of: `${graphqlInputType}Filter` }),
-      }),
-      new Property({
+      })),
+      makeInputProperty(new Property({
         type: 'array', name: '_and', of: new Property({ type: 'raw', of: `${graphqlInputType}Filter` }),
-      }),
-      new Property({
+      })),
+      makeInputProperty(new Property({
         type: 'array', name: '_nor', of: new Property({ type: 'raw', of: `${graphqlInputType}Filter` }),
-      }),
-      new Property({
+      })),
+      makeInputProperty(new Property({
         type: 'raw', name: '_operators', of: operatorType,
-      }),
+      })),
     ],
   })
 
