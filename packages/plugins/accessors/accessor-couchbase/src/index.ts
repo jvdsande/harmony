@@ -152,17 +152,25 @@ export default class AccessorCouchbase extends Accessor {
       throw new Error(`You are using an unsupported operator on a Couchbase accessor: ${operator}`)
     }
 
+    const printValue = (v) => {
+      if (typeof v === 'string') {
+        return `"${v}"`
+      }
+
+      if (Array.isArray(v)) {
+        return `[${v.map(printValue)}]`
+      }
+
+      return `${v}`
+    }
+
     return n1qlOperation
       .map((field) => {
         if (field === '_key') {
           return key
         }
         if (field === '_value') {
-          if (typeof value === 'string') {
-            return `"${value}"`
-          }
-
-          return `${value}`
+          return printValue(value)
         }
         if (Array.isArray(field)) {
           return this.buildOperatorFieldClause(field, key, value, operator)
@@ -193,19 +201,27 @@ export default class AccessorCouchbase extends Accessor {
       delete sanitizedFilter._id
     }
 
+    const printValue = (value) => {
+      if (typeof value === 'string') {
+        return `"${value}"`
+      }
+
+      if (Array.isArray(value)) {
+        return `[${value.map(printValue)}]`
+      }
+
+      return `${value}`
+    }
+
     if (Object.keys(sanitizedFilter).length) {
       let mainQuery = `${Object.entries(sanitizedFilter)
         .filter(([key]) => !['$or', '$and', '$nor'].includes(key))
         .map(([key, value]) => {
-          if (typeof value === 'string') {
-            return `${key} = "${value}"`
-          }
-
           if (typeof value === 'object') {
             return this.buildOperatorClause(key, value)
           }
 
-          return `${key} = ${value}`
+          return `${key} = ${printValue(value)}`
         })
         .join(' AND ')
       }`
