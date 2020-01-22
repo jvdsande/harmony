@@ -88,6 +88,9 @@ function sanitizeOperators(operators) {
   Object.entries(operators)
     .forEach(([operator, params] : [string, PropertySchema]) => {
       sanitized[operatorMap[operator]] = params
+      if (params instanceof Date) {
+        sanitized[operatorMap[operator]] = params.toISOString()
+      }
 
       if (operator === 'element') {
         sanitized[operatorMap[operator]] = sanitizeOperators(params)
@@ -118,13 +121,16 @@ function sanitizeFilter(filter) {
   delete newFilter._and
   delete newFilter._nor
 
+  const $and = [...(filter._and || [])]
+  const $or = [...(filter._or || [])]
+  const $nor = [...(filter._nor || [])]
+
   if (newFilter._ids) {
     newFilter._id = { $in: newFilter._ids }
     delete newFilter._ids
   }
 
   if (filter._operators) {
-    filter._and = filter._and || [] // eslint-disable-line
     const ops = {}
 
     Object.entries(filter._operators)
@@ -132,19 +138,19 @@ function sanitizeFilter(filter) {
         ops[field] = sanitizeOperators(operators)
       })
 
-    filter._and.push(ops)
+    $and.push(ops)
   }
 
-  if (filter._or) {
-    newFilter.$or = filter._or.map(sanitizeFilter)
+  if ($or.length) {
+    newFilter.$or = $or.map(sanitizeFilter)
   }
 
-  if (filter._and) {
-    newFilter.$and = filter._and.map(sanitizeFilter)
+  if ($and) {
+    newFilter.$and = $and.map(sanitizeFilter)
   }
 
-  if (filter._nor) {
-    newFilter.$nor = filter._nor.map(filter._nor)
+  if ($nor) {
+    newFilter.$nor = $nor.map(filter._nor)
   }
 
   return toMongoFilterDottedObject({ ...newFilter })
