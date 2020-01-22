@@ -145,12 +145,12 @@ function sanitizeFilter(filter) {
     newFilter.$or = $or.map(sanitizeFilter)
   }
 
-  if ($and) {
+  if ($and.length) {
     newFilter.$and = $and.map(sanitizeFilter)
   }
 
-  if ($nor) {
-    newFilter.$nor = $nor.map(filter._nor)
+  if ($nor.length) {
+    newFilter.$nor = $nor.map(sanitizeFilter)
   }
 
   return toMongoFilterDottedObject({ ...newFilter })
