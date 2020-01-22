@@ -97,17 +97,20 @@ function sanitizeField({
 
   if (field instanceof Property) {
     // If the field was a correct property, copy its configuration
+    sanitized._federation = { ...field._federation }
+    sanitized._configuration = { ...field._configuration }
 
-    sanitized._federation = field._federation
-    sanitized._configuration = field._configuration
+    if (sanitized._configuration.mode) {
+      sanitized._configuration.mode = Array.isArray(sanitized._configuration.mode)
+        ? [...sanitized._configuration.mode]
+        : [sanitized._configuration.mode]
+    }
+
     sanitized.name = name
 
     sanitized.type = field.type
     sanitized.of = field.of
 
-    if (sanitized._configuration.mode && !Array.isArray(sanitized._configuration.mode)) {
-      sanitized._configuration.mode = [sanitized._configuration.mode]
-    }
 
     if (field.of instanceof Property || field.of instanceof Object) {
       if (sanitized.type !== 'nested') {
