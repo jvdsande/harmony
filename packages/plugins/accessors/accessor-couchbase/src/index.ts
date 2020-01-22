@@ -20,6 +20,21 @@ const operatorMap = {
   element: '$elemMatch',
 }
 
+const N1QLOperators = {
+  $not: ['_key', 'NOT', '_value'],
+  $eq: ['_key', '=', '_value'],
+  $ne: ['_key', '!=', '_value'],
+  $exists: ['_key', { true: 'IS NOT MISSING', false: 'IS MISSING' }],
+  $in: ['_key', 'IN', '_value'],
+  $nin: ['NOT', ['_key', 'IN', '_value']],
+  $gte: ['_key', '>=', '_value'],
+  $lte: ['_key', '<=', '_value'],
+  $gt: ['_key', '>', '_value'],
+  $lt: ['_key', '<', '_value'],
+  $regex: ['REGEXP_MATCHES(', '_key', ',', '_value', ')'],
+  $elemMatch: null,
+}
+
 function sanitizeOperators(operators) {
   const sanitized = {}
 
@@ -131,6 +146,112 @@ export default class AccessorCouchbase extends Accessor {
     return ''
   }
 
+  buildOperatorFieldClause(n1qlOperation, key, value, operator) {
+    if (!n1qlOperation) {
+      this.logger.error(`Unsupported operator on a Couchbase accessor: ${operator}`)
+      throw new Error(`You are using an unsupported operator on a Couchbase accessor: ${operator}`)
+    }
+
+    return n1qlOperation
+      .map((field) => {
+        if (field === '_key') {
+          return key
+        }
+        if (field === '_value') {
+          if (typeof value === 'string') {
+            return `"${value}"`
+          }
+
+          return `${value}`
+        }
+        if (Array.isArray(field)) {
+          return this.buildOperatorFieldClause(field, key, value, operator)
+        }
+        if (typeof field === 'object') {
+          return field[`${value}`]
+        }
+
+        return field
+      })
+      .join(' ')
+  }
+
+  buildOperatorClause(key, operators) {
+    return Object.entries(operators)
+      .map(([operator, value]) => {
+        const n1qlOperation = N1QLOperators[operator]
+        return this.buildOperatorFieldClause(n1qlOperation, key, value, operator)
+      })
+      .join(' AND ')
+  }
+
+  buildSanitizedFilterClause(sanitizedFilter, join = 'AND') {
+    if (sanitizedFilter._id) {
+      // eslint-disable-next-line no-param-reassign
+      sanitizedFilter['meta().id'] = sanitizedFilter._id
+      // eslint-disable-next-line no-param-reassign
+      delete sanitizedFilter._id
+    }
+
+    if (Object.keys(sanitizedFilter).length) {
+      let mainQuery = `${Object.entries(sanitizedFilter)
+        .filter(([key]) => !['$or', '$and', '$nor'].includes(key))
+        .map(([key, value]) => {
+          if (typeof value === 'string') {
+            return `${key} = "${value}"`
+          }
+
+          if (typeof value === 'object') {
+            return this.buildOperatorClause(key, value)
+          }
+
+          return `${key} = ${value}`
+        })
+        .join(' AND ')
+      }`
+
+      // If there was an "$and" clause, add all clauses to the chain
+      if (sanitizedFilter.$and) {
+        const andQuery = sanitizedFilter.$and
+          .map((clause) => this.buildSanitizedFilterClause(clause))
+          .join(' ')
+          .slice(3)
+
+        const addAnd = mainQuery.trim() !== '' ? ' AND' : ''
+
+        mainQuery += `${addAnd}(${andQuery})`
+      }
+
+      // If there was an "$or" clause, add all clauses to the chain as a unique AND clause
+      if (sanitizedFilter.$or) {
+        const orQuery = sanitizedFilter.$or
+          .map((clause) => this.buildSanitizedFilterClause(clause, 'OR'))
+          .join(' ')
+          .slice(3)
+
+        const addAnd = mainQuery.trim() !== '' ? ' AND' : ''
+
+        mainQuery += `${addAnd}(${orQuery})`
+      }
+
+      // If there was an "$nor" clause, add all clauses to the chain as a unique AND clause
+      if (sanitizedFilter.$nor) {
+        const orQuery = sanitizedFilter.$nor
+          .map((clause) => this.buildSanitizedFilterClause(clause, 'OR'))
+          .join(' ')
+          .slice(3)
+
+        const addAnd = mainQuery.trim() !== '' ? ' AND' : ''
+
+        mainQuery += `${addAnd} NOT (${orQuery})`
+      }
+
+      return `${join} (${mainQuery})`
+    }
+
+    return ''
+  }
+
   buildFilterClause(filter) {
     if (!filter) {
       return ''
@@ -138,19 +259,7 @@ export default class AccessorCouchbase extends Accessor {
 
     const sanitizedFilter = sanitizeFilter(toMongoFilterDottedObject(filter))
 
-    if (sanitizedFilter._id) {
-      sanitizedFilter['meta().id'] = sanitizedFilter._id
-      delete sanitizedFilter._id
-    }
-
-    if (Object.keys(sanitizedFilter).length) {
-      return `AND (${Object.entries(sanitizedFilter)
-        .map(([key, value]) => (typeof value === 'string' ? `${key} = "${value}"` : `${key} = ${value}`))
-        .join(' AND ')
-      })`
-    }
-
-    return ''
+    return this.buildSanitizedFilterClause(sanitizedFilter)
   }
 
   buildQueryString(type, clauses) {

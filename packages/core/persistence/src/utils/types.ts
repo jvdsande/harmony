@@ -248,7 +248,16 @@ function makeOperatorType(model : SanitizedModel) {
       const property = (model.schema.of as SanitizedPropertySchema)[key];
       (operator.of as SanitizedPropertySchema)[key] = makeOperatorProperty({ key, property });
       (operator.of as SanitizedPropertySchema)[key].parent = operator
-    })
+    });
+
+  (operator.of as SanitizedPropertySchema)._id = makeOperatorProperty({
+    key: '_id',
+    property: new Property({
+      name: '_id',
+      type: 'id',
+    }),
+  });
+  (operator.of as SanitizedPropertySchema)._id.parent = operator
 
   operator.mode = [FieldMode.INPUT]
 
