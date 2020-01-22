@@ -339,7 +339,7 @@ export default class AccessorCouchbase extends Accessor {
 
     const typeClause = this.buildTypeClause(model)
     const filterClause = this.buildFilterClause(args.filter)
-    const skipClause = (args.skip !== undefined) ? `OFFSET ${args.skip}` : ''
+    const skipClause = (args.skip) ? `OFFSET ${args.skip}` : ''
     const limitClause = 'LIMIT 1'
     const orderByClause = 'ORDER BY id'
 
@@ -375,8 +375,8 @@ export default class AccessorCouchbase extends Accessor {
 
     const typeClause = this.buildTypeClause(model)
     const filterClause = this.buildFilterClause(args.filter)
-    const skipClause = (args.skip !== undefined) ? `OFFSET ${args.skip}` : ''
-    const limitClause = (args.limit !== undefined) ? `LIMIT ${args.limit}` : ''
+    const skipClause = (args.skip) ? `OFFSET ${args.skip}` : ''
+    const limitClause = (args.limit) ? `LIMIT ${args.limit}` : ''
     const orderByClause = (skipClause || limitClause) ? 'ORDER BY id' : ''
       + ''
     const queryString = this.buildQueryString(
