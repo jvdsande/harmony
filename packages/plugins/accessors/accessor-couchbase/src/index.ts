@@ -257,7 +257,7 @@ export default class AccessorCouchbase extends Accessor {
       return ''
     }
 
-    const sanitizedFilter = sanitizeFilter(toMongoFilterDottedObject(filter))
+    const sanitizedFilter = toMongoFilterDottedObject(sanitizeFilter(filter))
 
     return this.buildSanitizedFilterClause(sanitizedFilter)
   }
