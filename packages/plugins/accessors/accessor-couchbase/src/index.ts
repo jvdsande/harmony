@@ -31,7 +31,7 @@ const N1QLOperators = {
   $lte: ['_key', '<=', '_value'],
   $gt: ['_key', '>', '_value'],
   $lt: ['_key', '<', '_value'],
-  $regex: ['REGEXP_MATCHES(', '_key', ',', '_value', ')'],
+  $regex: ['REGEXP_LIKE(', '_key', ',', '_value', ')'],
   $elemMatch: null,
 }
 
