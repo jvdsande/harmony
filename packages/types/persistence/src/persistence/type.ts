@@ -25,7 +25,7 @@ type TypeEnum =
   | 'raw'
 
 export type PropertySchema = {
-  [key: string]: Property | PropertySchema | [Property] | [PropertySchema]
+  [key: string]: Property | PropertySchema | Property[] | PropertySchema[]
 }
 
 export type SanitizedPropertySchema = {

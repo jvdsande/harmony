@@ -158,7 +158,7 @@ function sanitizeFilter(filter) {
 
 function extractPopulatePaths({ model, info }) {
   // Construct the field selection mapping
-  const fields = {}
+  const fields : {[key: string]: Property} = {}
 
   const extractSelections = (selections, path, schema) => {
     selections.forEach((selection) => {
@@ -183,11 +183,10 @@ function extractPopulatePaths({ model, info }) {
   }
 
   extractBaseSelections(info.fieldNodes)
-  // @ts-ignore
   delete fields._id
 
   return Object.entries(fields)
-    .filter(([path, def]: [string, Property]) => def.type === 'reference')
+    .filter(([path, def]) => def.type === 'reference')
     .map(([path]) => path)
 }
 

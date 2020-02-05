@@ -140,7 +140,7 @@ export default class AccessorCouchbase extends Accessor {
     )
 
     if (typeFieldClause || typeChannelsClause) {
-      return `AND (${[typeFieldClause, typeChannelsClause].filter((c) => !!c).join(' OR ')})`
+      return `(${[typeFieldClause, typeChannelsClause].filter((c) => !!c).join(' OR ')})`
     }
 
     return ''
@@ -280,7 +280,7 @@ export default class AccessorCouchbase extends Accessor {
 
   buildQueryString(type, clauses) {
     return `
-          ${type} FROM \`${this.config.bucket}\` WHERE 1=1 ${clauses.join(' ')}
+          ${type} FROM \`${this.config.bucket}\` WHERE ${clauses.join(' ')}
     `
   }
 
