@@ -31,11 +31,8 @@
   "author": "Jérémie VAN DER SANDE <jeremie.vandersande@gmail.com>",
   "license": "ISC",
   "gitHead": "a896e4656e71ab6dc197b1b0f88ac1635582a459",
-  "dependencies": {
-    "graphql": "^14.6.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "typescript": "^3.7.5"
-  },
-  "peerDependencies": {}
+  }
 }
