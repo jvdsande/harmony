@@ -37,6 +37,6 @@
   "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",
   "license": "ISC",
   "devDependencies": {
-    "typescript": "^3.5.3"
+    "typescript": "^3.7.5"
   }
 }

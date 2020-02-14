@@ -35,12 +35,12 @@
   "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",
   "license": "ISC",
   "devDependencies": {
-    "typescript": "^3.5.3"
+    "typescript": "^3.7.5"
   },
   "dependencies": {
-    "hapi-react-views": "^10.0.1",
-    "http-proxy": "^1.17.0",
-    "react": "^16.9.0",
-    "react-dom": "^16.9.0"
+    "hapi-react-views": "^10.1.1",
+    "http-proxy": "^1.18.0",
+    "react": "^16.12.0",
+    "react-dom": "^16.12.0"
   }
 }

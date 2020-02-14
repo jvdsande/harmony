@@ -8,6 +8,7 @@
     "@harmonyjs"
   ],
   "rules": {
+    "import/extensions": ["error", {"ts": "never"}],
     "react/no-unescaped-entities": "off",
     "no-unused-vars": "off",
     "compat/compat": "off",

@@ -26,6 +26,6 @@
     "eslint-plugin-react-hooks": "^1.7.0"
   },
   "devDependencies": {
-    "typescript": "^3.5.3"
+    "typescript": "^3.7.5"
   }
 }

@@ -6,7 +6,7 @@ import ControllerApollo from '@harmonyjs/controller-apollo'
 import ControllerPersistenceEvents from '@harmonyjs/controller-persistence-events'
 
 import {
-  Accessor, Events, Model, SanitizedModel, PersistenceConfig,
+  Accessor, Events, SanitizedModel, PersistenceConfig,
 } from '@harmonyjs/types-persistence'
 
 import Logger from '@harmonyjs/logger'
