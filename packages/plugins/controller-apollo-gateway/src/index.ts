@@ -3,7 +3,7 @@ import { ApolloServer, Config } from 'apollo-server-hapi'
 import { ApolloGateway, RemoteGraphQLDataSource, GatewayConfig } from '@apollo/gateway'
 import { ServiceDefinition } from '@apollo/federation'
 
-import { RouteOptions } from '@hapi/hapi'
+import { RouteOptions } from 'hapi'
 
 import { Controller } from '@harmonyjs/types-server'
 

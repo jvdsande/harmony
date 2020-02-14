@@ -2,7 +2,7 @@
 import { ApolloServer, gql, Config } from 'apollo-server-hapi'
 import { buildFederatedSchema } from '@apollo/federation'
 
-import { RouteOptions } from '@hapi/hapi'
+import { RouteOptions } from 'hapi'
 
 import { Controller } from '@harmonyjs/types-server'
 

@@ -6,8 +6,7 @@
   },
   "description": "ESLint config for Harmony projects",
   "main": "index.js",
-  "scripts": {
-  },
+  "scripts": {},
   "repository": {
     "type": "git",
     "url": "https://github.com/jvdsande/harmonyjs.git"
