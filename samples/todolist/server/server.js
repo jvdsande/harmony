@@ -9,7 +9,6 @@ import ControllerSPA from '@harmonyjs/controller-spa'
 
 // Require Accessors for Persistence
 import AccessorMongoose from '@harmonyjs/accessor-mongoose'
-import AccessorMongoosePluginElasticSerach from '@harmonyjs/accessor-mongoose-plugin-elasticsearch'
 
 // Load models
 import models from './persistence/models'
@@ -25,13 +24,6 @@ persistence.init({
     mongo: new AccessorMongoose({
       host: 'mongodb://mongo:27017/',
       database: 'harmony-example',
-      plugins: [
-        new AccessorMongoosePluginElasticSerach({
-          host: 'localhost',
-          port: 9200,
-          prefix: 'development',
-        }),
-      ],
     }),
   },
   defaultAccessor: 'mongo',

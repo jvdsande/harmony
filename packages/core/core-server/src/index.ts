@@ -14,7 +14,6 @@ import Logger from '@harmonyjs/logger'
 
 // Require utils
 import { getPluginsFromControllers, registerControllers, registerPlugins } from './utils/controllers'
-import { executeOnCluster, ifMaster, ifWorker } from './utils/cluster'
 
 // Require Auth Controller
 import ControllerAuth from './auth'
@@ -31,12 +30,11 @@ type ServerConfig = {
     validate?: (any) => Promise<boolean>,
   },
   cluster?: {
-    redis: any,
-    forks?: {
-      size: number,
-      proxy: boolean,
-      header?: string,
-    }
+    redis: {
+      key?: string,
+      host?: string,
+      port?: string,
+    },
   },
   log?: LogConfig,
 }
@@ -56,10 +54,10 @@ export default class Server {
 
   async start() {
     try {
-      await this.createCluster()
+      await this.launch()
     } catch (err) {
       this.logger.error(err)
-      throw new Error('Error while creating server cluster')
+      throw new Error('Error while creating server')
     }
 
     return true
@@ -75,7 +73,7 @@ export default class Server {
       + 'Use Server::start instead.',
     )
 
-    await this.createCluster()
+    await this.launch()
   }
 
   private initializeProperties(config: ServerConfig = this.config) {
@@ -92,6 +90,8 @@ export default class Server {
   }
 
   private async launch() {
+    const { endpoint } = this.config
+
     await this.logBanner()
 
     await this.createServer()
@@ -106,6 +106,8 @@ export default class Server {
 
     // Start the server
     await this.server.start()
+
+    this.logger.info(`Main server created on port ${endpoint.host}:${endpoint.port}`)
   }
 
   private async createServer() {
@@ -185,11 +187,6 @@ export default class Server {
     const { log } = this.config
     const logConfig = log || {}
 
-    // Append worker id to forks' filename
-    ifWorker((worker) => {
-      logConfig.filename = logConfig.filename && `[${worker.id}]_${(logConfig.filename)}`
-    })
-
     // Prepare the logger
     this.logger = new Logger('Server', logConfig)
   }
@@ -206,54 +203,5 @@ export default class Server {
   |_|  |_|\\__,_|_|  |_| |_| |_|\\___/|_| |_|\\__, |
                                             __/ |
                                            |___/`)
-  }
-
-  // Node Cluster handling
-  // Launch worker instances if required, connecting them to a master listener
-  // for routing Socket.IO calls
-  private async createCluster() {
-    const { cluster, endpoint, log } = this.config
-
-    await executeOnCluster({
-      cluster,
-      prepare: () => {
-        // Do not specify a listening port, and disable autoListen: the listening will be done on master
-        const { port } = endpoint
-        delete endpoint.port
-        endpoint.autoListen = false
-
-        return port
-      },
-      main: async () => this.launch(),
-      worker: () => {
-        // After initialization is done, re-enable logs
-        this.logger.level = (log && log.level) || 'info'
-
-        // Then return the worker's listener
-        return this.server.listener
-      },
-      onWorkerMount: (worker) => {
-        // Disable logs for workers except the first one
-        if (worker.id > 1) {
-          this.logger.level = 'error'
-        }
-      },
-      onWorkerExit: (worker) => {
-        this.logger.info(`Worker ${worker.id} (${worker.process.pid}) died`)
-      },
-      listen: (port) => {
-        ifMaster(() => {
-          // Add short delay to allow workers to get started
-          setTimeout(() => {
-            this.logger.info(
-              `Main server created on port ${endpoint.host}:${port || endpoint.port}`,
-            )
-          }, 750)
-        })
-        ifWorker((worker) => this.logger.info(
-          `Worker ${worker.id} (${worker.process.pid}) initialized`,
-        ))
-      },
-    })
   }
 }

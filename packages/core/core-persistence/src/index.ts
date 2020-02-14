@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 import GraphQLLong from 'graphql-type-long'
 import GraphQLJson from 'graphql-type-json'
 import GraphQLDate from 'graphql-date'
@@ -18,7 +19,6 @@ import {
   computeMainResolvers,
   computeReferenceResolvers,
 } from './utils/resolvers'
-import { ifWorker } from './utils/cluster'
 import { printGraphqlRoot, printGraphqlQueries, printGraphqlMutations } from './utils/types'
 
 // Export utility types and classes
@@ -251,15 +251,6 @@ ${this.sanitizedModels
   private createLogger() {
     const { log } = this.config
     const logConfig = log || {}
-
-    // Append worker id to forks' filename
-    ifWorker((worker) => {
-      logConfig.filename = logConfig.filename && `[${worker.id}]_${(logConfig.filename)}`
-
-      if (worker.id > 1) {
-        logConfig.level = 'error'
-      }
-    })
 
     // Prepare the logger
     this.logger = new Logger('Persistence', logConfig)

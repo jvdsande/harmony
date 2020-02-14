@@ -24,7 +24,7 @@
   },
   "scripts": {
     "mixt:build": "pika build",
-    "mixt:watch": "nodemon -e ts,js,tsx,jsx,json,yml --watch src --exec \"npm run build\"",
+    "mixt:watch": "nodemon -e ts,js,tsx,jsx,json,yml --watch src --exec \"npm run mixt:build\"",
     "mixt:release": "cd ./pkg && npm publish"
   },
   "repository": {
