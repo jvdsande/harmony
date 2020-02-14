@@ -27,6 +27,10 @@
     "mixt:watch": "nodemon -e ts,js,tsx,jsx,json,yml --watch src --exec \"npm run build\"",
     "mixt:release": "cd ./pkg && npm publish"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jvdsande/harmonyjs.git"
+  },
   "keywords": [
     "SPA",
     "Harmony",

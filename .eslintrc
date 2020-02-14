@@ -1,24 +1,3 @@
 {
-  "parser": "@typescript-eslint/parser",
-  "parserOptions": {
-    "sourceType": "module",
-    "allowImportExportEverywhere": true
-  },
-  "extends": [
-    "@harmonyjs"
-  ],
-  "rules": {
-    "import/extensions": ["error", {"ts": "never"}],
-    "react/no-unescaped-entities": "off",
-    "no-unused-vars": "off",
-    "compat/compat": "off",
-    "camelcase": "warn",
-    "max-classes-per-file": "off"
-  },
-  "plugins": [ "@typescript-eslint", "import" ],
-  "settings": {
-    "import/resolver": {
-      "typescript": {}
-    }
-  }
+  "extends": "@harmonyjs"
 }
