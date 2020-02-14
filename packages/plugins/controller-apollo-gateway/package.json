@@ -1,0 +1,43 @@
+{
+  "name": "@harmonyjs/controller-apollo-gateway",
+  "version": "1.0.0-rc.1",
+  "description": "Apollo Gateway controller for Harmony",
+  "main": "index.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "@pika/pack": {
+    "pipeline": [
+      [
+        "@pika/plugin-ts-standard-pkg"
+      ],
+      [
+        "@pika/plugin-build-node"
+      ],
+      [
+        "@pika/plugin-build-web"
+      ]
+    ]
+  },
+  "mixt": {
+    "dist": "./pkg"
+  },
+  "scripts": {
+    "mixt:build": "pika build",
+    "mixt:watch": "nodemon -e ts,js,tsx,jsx,json,yml --watch src --exec \"npm run build\"",
+    "mixt:release": "cd ./pkg && npm publish"
+  },
+  "keywords": [
+    "Apollo",
+    "Gateway",
+    "Federation",
+    "GraphQL",
+    "Harmony",
+    "HarmonyJS"
+  ],
+  "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^3.5.3"
+  }
+}

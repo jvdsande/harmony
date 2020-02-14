@@ -1,0 +1,36 @@
+{
+  "name": "@harmonyjs/types-persistence",
+  "version": "1.0.0-rc.7",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "Typescript definitions for Harmony",
+  "main": "index.js",
+  "mixt": {
+    "dist": "./pkg"
+  },
+  "@pika/pack": {
+    "pipeline": [
+      [
+        "@pika/plugin-ts-standard-pkg"
+      ],
+      [
+        "@pika/plugin-build-node"
+      ],
+      [
+        "@pika/plugin-build-web"
+      ]
+    ]
+  },
+  "scripts": {
+    "mixt:build": "pika build",
+    "mixt:watch": "nodemon -e ts,js,tsx,jsx,json,yml --watch src --exec \"npm run build\"",
+    "mixt:release": "cd ./pkg && npm publish"
+  },
+  "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",
+  "license": "ISC",
+  "gitHead": "a896e4656e71ab6dc197b1b0f88ac1635582a459",
+  "devDependencies": {
+    "typescript": "^3.5.3"
+  }
+}
