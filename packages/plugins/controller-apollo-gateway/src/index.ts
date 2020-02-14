@@ -1,7 +1,9 @@
 // Require ApolloGraphql
-import { ApolloServer } from 'apollo-server-hapi'
-import { ApolloGateway, RemoteGraphQLDataSource } from '@apollo/gateway'
+import { ApolloServer, Config } from 'apollo-server-hapi'
+import { ApolloGateway, RemoteGraphQLDataSource, GatewayConfig } from '@apollo/gateway'
 import { ServiceDefinition } from '@apollo/federation'
+
+import { RouteOptions } from '@hapi/hapi'
 
 import { Controller } from '@harmonyjs/types-server'
 
@@ -14,7 +16,11 @@ export default class ControllerApolloGateway extends Controller {
   config : {
     path: string,
     enablePlayground?: boolean,
-    services: ServiceDefinition[]
+    services: ServiceDefinition[],
+
+    gatewayConfig?: Omit<GatewayConfig, 'serviceList'|'buildService'>
+    apolloConfig?: Omit<Config, 'gateway'|'playground'|'introspection'|'context'|'subscriptions'>
+    routeConfig?: Omit<RouteOptions, 'auth'>
   }
 
   constructor(config) { // eslint-disable-line
@@ -26,12 +32,17 @@ export default class ControllerApolloGateway extends Controller {
       path,
       enablePlayground,
       services,
+
+      gatewayConfig,
+      apolloConfig,
+      routeConfig,
     } = this.config
     logger.info('Registering GraphQL Federation endpoint...')
 
     const gateway = new ApolloGateway({
+      ...(gatewayConfig || {}),
       serviceList: services,
-      buildService({ name, url }) {
+      buildService({ url }) {
         return new RemoteGraphQLDataSource({
           url,
           willSendRequest({ request, context }) {
@@ -45,6 +56,7 @@ export default class ControllerApolloGateway extends Controller {
     })
 
     const apolloServer = new ApolloServer({
+      ...(apolloConfig || {}),
       gateway,
 
       playground: !!enablePlayground,
@@ -64,6 +76,7 @@ export default class ControllerApolloGateway extends Controller {
           mode: 'try',
         },
         cors: true,
+        ...(routeConfig || {}),
       },
     })
 

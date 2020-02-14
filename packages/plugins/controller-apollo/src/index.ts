@@ -1,6 +1,8 @@
 // Require ApolloGraphql
-import { ApolloServer, gql } from 'apollo-server-hapi'
+import { ApolloServer, gql, Config } from 'apollo-server-hapi'
 import { buildFederatedSchema } from '@apollo/federation'
+
+import { RouteOptions } from '@hapi/hapi'
 
 import { Controller } from '@harmonyjs/types-server'
 
@@ -23,6 +25,9 @@ export default class ControllerApollo extends Controller {
     context?: {
       [key: string]: any
     },
+
+    apolloConfig?: Omit<Config, 'schema'|'playground'|'introspection'|'mocks'|'mockEntireSchema'|'context'>
+    routeConfig?: Omit<RouteOptions, 'auth'>
   }
 
   constructor(config) { // eslint-disable-line
@@ -39,6 +44,9 @@ export default class ControllerApollo extends Controller {
       mock,
 
       context,
+
+      apolloConfig,
+      routeConfig,
     } = this.config
 
     logger.info('Registering GraphQL endpoint...')
@@ -46,6 +54,7 @@ export default class ControllerApollo extends Controller {
     const typeDefs = gql(schema)
 
     const apolloServer = new ApolloServer({
+      ...(apolloConfig || {}),
       schema: buildFederatedSchema([{ typeDefs, resolvers }]),
       playground: !!enablePlayground,
       introspection: !!enablePlayground,
@@ -66,6 +75,7 @@ export default class ControllerApollo extends Controller {
           mode: 'try',
         },
         cors: true,
+        ...(routeConfig || {}),
       },
     })
 
