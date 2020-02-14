@@ -1,10 +1,8 @@
 {
-  "packages": "packages",
   "sources": [
-    "types",
-    "utils",
-    "plugins/accessors",
-    "plugins/controllers",
-    "core"
+    "packages/types",
+    "packages/utils",
+    "packages/plugins",
+    "packages/core"
   ]
 }
