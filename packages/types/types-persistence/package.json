@@ -1,6 +1,6 @@
 {
   "name": "@harmonyjs/types-persistence",
-  "version": "1.0.0-rc.7",
+  "version": "1.0.0-rc.8",
   "publishConfig": {
     "access": "public"
   },
@@ -32,5 +32,7 @@
   "gitHead": "a896e4656e71ab6dc197b1b0f88ac1635582a459",
   "devDependencies": {
     "typescript": "^3.7.5"
-  }
+  },
+  "dependencies": {},
+  "peerDependencies": {}
 }
