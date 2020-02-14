@@ -8,12 +8,8 @@ module.exports = {
   },
 
   globals: {
-    'window': true,
-    'document': true,
-    'React': true,
-    'React.Fragment': true,
-    'PropTypes': true,
-    'RouterPropTypes': true,
+    window: true,
+    document: true,
   },
 
   env: {
