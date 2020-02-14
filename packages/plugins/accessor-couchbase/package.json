@@ -34,6 +34,7 @@
     "typescript": "^3.7.5"
   },
   "dependencies": {
+    "couchbase": "^2.6.10",
     "uuid": "^3.4.0"
   }
 }
