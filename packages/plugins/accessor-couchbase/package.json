@@ -1,6 +1,6 @@
 {
   "name": "@harmonyjs/accessor-couchbase",
-  "version": "1.0.0-rc.8",
+  "version": "1.0.0-rc.9",
   "publishConfig": {
     "access": "public"
   },
@@ -40,5 +40,6 @@
   "dependencies": {
     "couchbase": "^2.6.10",
     "uuid": "^3.4.0"
-  }
+  },
+  "peerDependencies": {}
 }
