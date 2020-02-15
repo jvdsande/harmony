@@ -39,6 +39,5 @@
   },
   "dependencies": {
     "mongoose": "^5.9.0"
-  },
-  "peerDependencies": {}
+  }
 }
