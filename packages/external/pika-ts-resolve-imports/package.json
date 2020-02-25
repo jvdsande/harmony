@@ -1,6 +1,6 @@
 {
   "name": "@harmonyjs/pika-plugin-ts-resolve-imports",
-  "version": "1.0.0-rc2.0",
+  "version": "1.0.0-rc2.1",
   "publishConfig": {
     "access": "public"
   },
