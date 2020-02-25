@@ -69,6 +69,7 @@ export async function build({
       // Get path from baseUrl
       const resolvedPath = path.resolve(cwd, baseUrl, spec)
       const resolvedInSource = !!files.find((f) => f.startsWith(resolvedPath))
+      const resolvedIsIndex = !!files.find((f) => f.startsWith(path.resolve(resolvedPath, 'index')))
       const resolvedSpec = `${path.relative(path.resolve(cwd, baseUrl), resolvedPath)}`
       const fileDirPath = filePath.replace(/[^/]*?$/, '')
       const filePathDepth = path.relative(fileDirPath, dirPath) || '.'
@@ -90,7 +91,7 @@ export async function build({
 
       count += 1
 
-      return `${type}port ${imp}from '${filePathDepth}/${resolvedSpec}'`
+      return `${type}port ${imp}from '${filePathDepth}/${resolvedSpec}${resolvedIsIndex ? '/index' : ''}'`
     })
 
     await fs.writeFile(filePath, newFileContents, { encoding: 'utf8' })
