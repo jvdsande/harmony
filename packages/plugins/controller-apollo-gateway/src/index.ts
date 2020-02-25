@@ -1,5 +1,4 @@
-import { ServiceDefinition } from '@apollo/federation'
-import { ApolloGateway, GatewayConfig, RemoteGraphQLDataSource } from '@apollo/gateway'
+import { ApolloGateway, GatewayConfig, RemoteGraphQLDataSource, ServiceEndpointDefinition } from '@apollo/gateway'
 import { ApolloServer, Config } from '@harmonyjs/apollo-fastify'
 import { RouteOptions } from 'fastify'
 
@@ -11,7 +10,7 @@ import { Controller } from '@harmonyjs/types-server'
 const ControllerApolloGateway : Controller<{
   path: string,
   enablePlayground?: boolean,
-  services: ServiceDefinition[],
+  services: ServiceEndpointDefinition[],
 
   gatewayConfig?: Omit<GatewayConfig, 'serviceList'|'buildService'>
   apolloConfig?: Omit<Config, 'gateway'|'playground'|'introspection'|'context'|'subscriptions'>
