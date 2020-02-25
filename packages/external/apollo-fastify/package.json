@@ -47,7 +47,7 @@
     "graphql-tools": "^4.0.6"
   },
   "peerDependencies": {
-    "@hapi/hapi": "^19.1.0",
+    "fastify": "^2.12.0",
     "graphql": "^0.12.0 || ^0.13.0 || ^14.0.0"
   }
 }
