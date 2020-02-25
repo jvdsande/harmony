@@ -15,24 +15,17 @@ export {
   PropertyMode, Model, Computed, Scopes, Schema,
 } from '@harmonyjs/types-persistence'
 
-export default function Persistence(deprecatedConfig: Partial<PersistenceConfig>) {
+export default function Persistence() {
   // Create an instance
   const instance : Partial<PersistenceInstance> = {
     events: EventsHandler(),
   }
 
-  instance.initialize = async (configuration: Partial<PersistenceConfig>) => {
+  instance.initialize = async (configuration: PersistenceConfig) => {
     instance.configuration = configurePersistence({ config: configuration })
     instance.logger = Logger({ name: 'Persistence', configuration: instance.configuration.log })
 
     const { logger, configuration: config } = instance
-
-    if (deprecatedConfig) {
-      instance.logger.warn(
-        '[Deprecation Notice] Passing configuration in the constructor is deprecated and will be removed in the '
-        + 'next minor. Pass the configuration to Persistence::initialize instead',
-      )
-    }
 
     const {
       adapters, models, strict,
@@ -54,17 +47,6 @@ export default function Persistence(deprecatedConfig: Partial<PersistenceConfig>
       defaultAdapterName: configuration.defaultAdapter,
     })
     instance.controllers = await defineControllers({ instance: instance as PersistenceInstance })
-  }
-
-
-  // @deprecated
-  instance.init = async (initConfig?: Partial<PersistenceConfig>) => {
-    await instance.initialize!(initConfig || deprecatedConfig || {})
-
-    instance.logger!.warn(
-      '[Deprecation Notice] Persistence::init is deprecated and will be removed in the next minor. '
-      + 'Use Persistence::initialize instead.',
-    )
   }
 
   return instance as PersistenceInstance

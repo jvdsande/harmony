@@ -14,7 +14,7 @@ import {
   logBanner, registerControllers, separateUpgradeListeners, startListening,
 } from 'steps/launch'
 
-export default function Server(deprecatedConfig?: Partial<ServerConfig>) : ServerInstance {
+export default function Server() : ServerInstance {
   // Create an instance
   const instance : Partial<ServerInstance> = {}
 
@@ -24,13 +24,6 @@ export default function Server(deprecatedConfig?: Partial<ServerConfig>) : Serve
     instance.logger = Logger({ name: 'Server', configuration: instance.configuration.log })
 
     const { logger, configuration: config } = instance
-
-    if (deprecatedConfig) {
-      instance.logger.warn(
-        '[Deprecation Notice] Passing configuration in the constructor is deprecated and will be removed in the '
-        + 'next minor. Pass the configuration to Server::initialize instead',
-      )
-    }
 
     // Create server instance (Fastify)
     instance.server = createServer({ logger })
@@ -65,17 +58,6 @@ export default function Server(deprecatedConfig?: Partial<ServerConfig>) : Serve
       logger.error(err)
       throw new Error('Error while creating server')
     }
-  }
-
-
-  // @deprecated
-  instance.init = async (initConfig?: Partial<ServerConfig>) => {
-    await instance.initialize!(initConfig || deprecatedConfig || {})
-
-    instance.logger!.warn(
-      '[Deprecation Notice] Server::init is deprecated and will be removed in the next minor. '
-      + 'Use Server::initialize instead.',
-    )
   }
 
   return instance as ServerInstance
