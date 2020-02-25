@@ -34,6 +34,9 @@
   "author": "Jérémie VAN DER SANDE <jeremie.vandersande@gmail.com>",
   "license": "ISC",
   "gitHead": "a896e4656e71ab6dc197b1b0f88ac1635582a459",
+  "dependencies": {
+    "@harmonyjs/types-server": "*"
+  },
   "devDependencies": {
     "eslint": "^6.8.0",
     "typescript": "^3.7.5"
