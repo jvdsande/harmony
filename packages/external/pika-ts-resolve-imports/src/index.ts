@@ -111,7 +111,7 @@ export async function build({
   await Promise.all(allTypesFilePaths.map(resolveImports(typesDir)))
 
   if (count) {
-    reporter.info(`Resolved ${count} imports/exports in ${path.relative(cwd, srcDir)}`)
+    reporter.info(`Resolved ${count} imports/exports in ${path.relative(cwd, typesDir)}`)
   }
 
   reporter.info('Imports resolved')
