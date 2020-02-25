@@ -1,7 +1,7 @@
 import Persistence, { Types } from '@harmonyjs/persistence'
 import Server from '@harmonyjs/server'
 
-import AccessorMongoose from '@harmonyjs/accessor-mongoose'
+import AdapterMongoose from '@harmonyjs/adapter-mongoose'
 
 const PreferenceModel = {
   name: 'preference',
@@ -18,8 +18,8 @@ const UserModel = {
     fields: {
       preference: {
         type: Types.Reference.of('preference'),
-        needs: ['_id'],
         async resolve({ source, resolvers }) {
+          console.log("resolving user.preference")
           return resolvers.Preference.read({ user: source._id })
         },
       },
@@ -29,27 +29,32 @@ const UserModel = {
 }
 
 const persistence = new Persistence()
-
-persistence.init({
-  models: [PreferenceModel, UserModel],
-  accessors: {
-    mongo: new AccessorMongoose({
-      host: 'mongodb://mongo:27017/',
-      database: 'federated',
-    }),
-  },
-})
-
 const server = new Server()
 
-server.init({
-  endpoint: {
-    host: 'localhost',
-    port: '4002',
-  },
-  controllers: [
-    new persistence.controllers.ControllerGraphQL({
-      path: '/',
-    }),
-  ],
-})
+async function run() {
+  await persistence.initialize({
+    models: [PreferenceModel, UserModel],
+    adapters: {
+      mongo: new AdapterMongoose({
+        host: 'mongodb://localhost:27017/',
+        database: 'federated-preference',
+      }),
+    },
+  })
+
+  await server.initialize({
+    endpoint: {
+      host: 'localhost',
+      port: '4002',
+    },
+    controllers: [
+      persistence.controllers.ControllerGraphQL({
+        path: '/',
+        enablePlayground: true,
+      }),
+    ],
+  })
+}
+
+run()
+

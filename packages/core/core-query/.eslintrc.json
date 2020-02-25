@@ -1,0 +1,10 @@
+{
+  "extends": "@harmonyjs",
+  "settings": {
+    "import/resolver": {
+      "typescript": {
+        "directory": "packages/core/core-query"
+      }
+    }
+  }
+}

@@ -2,6 +2,7 @@
   "sources": [
     "packages/types",
     "packages/utils",
+    "packages/external",
     "packages/plugins",
     "packages/core"
   ]

@@ -1,195 +1,164 @@
-import Cluster from 'cluster'
-
 import * as Winston from 'winston'
 import moment from 'moment'
 import colors from 'colors/safe'
 
-import { LoggerClass, LogConfig, LogLevel } from '@harmonyjs/types-logger'
+export type LogLevel = 'error' | 'warn' | 'info' | 'debug' | 'verbose' | 'silly'
 
-export default class Logger implements LoggerClass {
-  logger: any
-
-  fileLogger: any
-
-  constructor(name: string, config?: LogConfig) {
-    const {
-      disabled, level, filename, console,
-    } = config || {
-      disabled: false,
-      level: 'info',
-      filename: null,
-      console: false,
-    }
-
-    const type = {
-      error: colors.red('ERROR  '),
-      warn: colors.yellow('WARNING'),
-      info: colors.yellow('INFO   '),
-      verbose: colors.green('VERBOSE'),
-      debug: colors.green('DEBUG  '),
-      silly: colors.magenta('SILLY  '),
-    }
-
-    const fileType = {
-      error: 'ERROR  ',
-      warn: 'WARNING',
-      info: 'INFO   ',
-      verbose: 'VERBOSE',
-      debug: 'DEBUG  ',
-      silly: 'SILLY  ',
-    }
-
-    const NAME_LENGTH = 16
-
-    const cut = name.slice(0, NAME_LENGTH)
-    const frontSpaces = NAME_LENGTH - cut.length
-    const padded = Array(frontSpaces + 1)
-      .join(' ')
-
-    const timeFormat = 'YY/MM/DD HH:mm:ss.SSS'
-
-    const suffix = Cluster.isMaster ? '' : `[Instance ${Cluster.worker.id}] `
-
-    const logFormat = Winston.format.printf(
-      (i) => (
-        `${suffix}${
-          (
-            (console && ((typeof console === 'boolean') || console.timestamp !== false))
-              ? `${colors.grey(moment(i.timestamp).format(timeFormat))} `
-              : ''
-          )
-          + colors.bold(colors.grey(`${cut} ${padded} [`))
-          + colors.bold(type[i.level])
-          + colors.bold(colors.grey(']'))
-        } ${i.message}`
-      ),
-    )
-
-    const logBaseFormat = Winston.format.printf(
-      (i) => (
-        `${
-          (console && ((typeof console === 'boolean') || console.timestamp !== false))
-            ? `${moment(i.timestamp).format(timeFormat)} `
-            : ''
-        }${cut} ${padded} [${fileType[i.level]}] ${i.message}`
-      ),
-    )
-
-    const fileFormat = Winston.format.printf(
-      (i) => (
-        `${moment(i.timestamp).format(timeFormat)} ${cut} ${padded} [${fileType[i.level]}] ${i.message}`
-      ),
-    )
-
-    if (console || (process.env.NODE_ENV !== 'production')) {
-      this.logger = Winston.createLogger({
-        silent: disabled,
-        level: level || 'info',
-        transports: [new Winston.transports.Console()],
-        format: Winston.format.combine(
-          Winston.format.timestamp(),
-          (typeof console === 'object' && console.colors === false) ? logBaseFormat : logFormat,
-        ),
-      })
-    }
-
-    if (filename || process.env.NODE_ENV === 'production') {
-      this.fileLogger = Winston.createLogger({
-        silent: disabled,
-        level: level || 'info',
-        transports: [new Winston.transports.File({
-          filename: filename ? (suffix + filename) : `${suffix}harmony.log`,
-        })],
-        format: Winston.format.combine(
-          Winston.format.timestamp(),
-          fileFormat,
-        ),
-      })
-    }
-  }
-
-  set level(level: LogLevel) {
-    if (this.logger) {
-      this.logger.level = level
-    }
-  }
-
-  set fileLevel(level: LogLevel) {
-    if (this.fileLogger) {
-      this.fileLogger.level = level
-    }
-  }
-
-  get level() {
-    if (this.logger) {
-      return this.logger.level
-    }
-
-    return 'info'
-  }
-
-  error = (...args: any[]) => {
-    if (this.logger) {
-      this.logger.error(...args)
-    }
-    if (this.fileLogger) {
-      this.fileLogger.error(...args)
-    }
-  }
-
-  warn = (...args: any[]) => {
-    if (this.logger) {
-      this.logger.warn(...args)
-    }
-    if (this.fileLogger) {
-      this.fileLogger.warn(...args)
-    }
-  }
-
-  info = (...args: any[]) => {
-    if (this.logger) {
-      this.logger.info(...args)
-    }
-    if (this.fileLogger) {
-      this.fileLogger.info(...args)
-    }
-  }
-
-  verbose = (...args: any[]) => {
-    if (this.logger) {
-      this.logger.verbose(...args)
-    }
-    if (this.fileLogger) {
-      this.fileLogger.verbose(...args)
-    }
-  }
-
-  debug = (...args: any[]) => {
-    if (this.logger) {
-      this.logger.debug(...args)
-    }
-    if (this.fileLogger) {
-      this.fileLogger.debug(...args)
-    }
-  }
-
-  silly = (...args: any[]) => {
-    if (this.logger) {
-      this.logger.silly(...args)
-    }
-    if (this.fileLogger) {
-      this.fileLogger.silly(...args)
-    }
-  }
-
-  log = (...args: any[]) => {
-    if (this.logger) {
-      this.logger.warn('Avoid using the \'log\' command, prefer \'info\', \'debug\' or \'warn\'')
-      this.logger.debug(...args)
-    }
-    if (this.fileLogger) {
-      this.fileLogger.warn('Avoid using the \'log\' command, prefer \'info\', \'debug\' or \'warn\'')
-      this.fileLogger.debug(...args)
-    }
-  }
+export type LoggerConfig = {
+  disabled?: boolean,
+  level?: LogLevel,
+  filename?: string,
+  console?: boolean | {
+    colors?: boolean,
+    timestamp?: boolean,
+  },
 }
+
+export interface ILogger {
+  configure(config: LoggerConfig): this
+
+  error(message: string, ...meta: any[]): this
+  warn(message: string, ...meta: any[]): this
+  info(message: string, ...meta: any[]): this
+  verbose(message: string, ...meta: any[]): this
+  debug(message: string, ...meta: any[]): this
+  silly(message: string, ...meta: any[]): this
+  log(message: string, ...meta: any[]): this
+
+  level: LogLevel
+}
+
+let NAME_LENGTH = 16
+
+function Logger({ name, configuration } : { name: string, configuration: LoggerConfig }) : ILogger {
+  const local = {
+    logger: Winston.createLogger({ transports: [], silent: true }),
+    fileLogger: Winston.createLogger({ transports: [], silent: true }),
+  }
+
+  const instance : Partial<ILogger> = ({
+    configure(config) {
+      const {
+        disabled = false, level = 'info', filename = undefined, console = (process.env.NODE_ENV !== 'production'),
+      } = config
+
+      NAME_LENGTH = Math.max(NAME_LENGTH, name.length)
+
+      const timeFormat = 'YY/MM/DD HH:mm:ss.SSS'
+      const useTimestamps = (console && ((typeof console === 'boolean') || console.timestamp !== false))
+      const useColors = (console && ((typeof console === 'boolean') || console.colors !== false))
+
+      const pass = (s: string) => s
+      const grey = useColors ? colors.grey : pass
+      const red = useColors ? colors.red : pass
+      const yellow = useColors ? colors.yellow : pass
+      const green = useColors ? colors.green : pass
+      const magenta = useColors ? colors.magenta : pass
+      const bold = useColors ? colors.bold : pass
+
+      const type = {
+        error: red('ERROR  '),
+        warn: yellow('WARNING'),
+        info: yellow('INFO   '),
+        verbose: green('VERBOSE'),
+        debug: green('DEBUG  '),
+        silly: magenta('SILLY  '),
+      }
+
+      const fileType = {
+        error: 'ERROR  ',
+        warn: 'WARNING',
+        info: 'INFO   ',
+        verbose: 'VERBOSE',
+        debug: 'DEBUG  ',
+        silly: 'SILLY  ',
+      }
+
+      const logFormat = Winston.format.printf(
+        (i) => {
+          const cut = name.slice(0, NAME_LENGTH)
+          const frontSpaces = NAME_LENGTH - cut.length
+          const padded = Array(frontSpaces + 1)
+            .join(' ')
+
+          return (
+            [
+              useTimestamps ? `${grey(moment(i.timestamp).format(timeFormat))} ` : '',
+              bold(grey(`${cut} ${padded}[`)),
+              bold(type[i.level as LogLevel]),
+              bold(grey(']')),
+              ` ${i.message}`,
+            ].join('')
+          )
+        },
+      )
+
+      const fileFormat = Winston.format.printf(
+        (i) => {
+          const cut = name.slice(0, NAME_LENGTH)
+          const frontSpaces = NAME_LENGTH - cut.length
+          const padded = Array(frontSpaces + 1)
+            .join(' ')
+
+          return (
+            `${moment(i.timestamp).format(timeFormat)} ${cut} ${padded} [${fileType[i.level as LogLevel]}] ${i.message}`
+          )
+        },
+      )
+
+      if (console) {
+        local.logger.configure({
+          silent: disabled,
+          level: level || 'info',
+          transports: [new Winston.transports.Console()],
+          format: Winston.format.combine(Winston.format.timestamp(), logFormat),
+        })
+      }
+
+      if (filename || process.env.NODE_ENV === 'production') {
+        local.fileLogger.configure({
+          silent: disabled,
+          level: level || 'info',
+          transports: [new Winston.transports.File({ filename: filename || 'harmony.log' })],
+          format: Winston.format.combine(Winston.format.timestamp(), fileFormat),
+        })
+      }
+
+      // eslint-disable-next-line no-use-before-define
+      return instance as ILogger
+    },
+
+    log(message: string, ...meta: any[]) {
+      local.logger.warn('Avoid using the \'log\' command, prefer \'info\', \'debug\' or \'warn\'')
+      local.logger.debug(message, ...meta)
+      local.fileLogger.debug(message, ...meta)
+
+      return instance as ILogger
+    },
+
+    get level() {
+      return local.logger.level as LogLevel
+    },
+    set level(level: LogLevel) {
+      local.logger.level = level
+      local.fileLogger.level = level
+    },
+  })
+
+  instance.configure!(configuration)
+
+  const modes : LogLevel[] = ['error', 'warn', 'info', 'verbose', 'debug', 'silly']
+
+  modes.forEach((mode) => {
+    instance[mode] = (message: string, ...meta: any[]) => {
+      local.logger[mode](message, ...meta)
+      local.fileLogger[mode](message, ...meta)
+
+      return instance as ILogger
+    }
+  })
+
+  return instance as ILogger
+}
+
+export default Logger

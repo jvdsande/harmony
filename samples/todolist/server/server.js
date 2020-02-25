@@ -7,70 +7,73 @@ import Persistence from '@harmonyjs/persistence'
 // Require Controllers fro Server
 import ControllerSPA from '@harmonyjs/controller-spa'
 
-// Require Accessors for Persistence
-import AccessorMongoose from '@harmonyjs/accessor-mongoose'
+// Require Adapters for Persistence
+import AdapterMongoose from '@harmonyjs/adapter-mongoose'
 
 // Load models
 import models from './persistence/models'
 
 // Create a Server and a Persistence instance
-const server = new Server()
 const persistence = new Persistence()
+const server = Server()
 
-// Configure persistence with our models, and add a Mongoose Accessor for storing and reading data
-persistence.init({
-  models,
-  accessors: {
-    mongo: new AccessorMongoose({
-      host: 'mongodb://mongo:27017/',
-      database: 'harmony-example',
-    }),
-  },
-  defaultAccessor: 'mongo',
-})
+async function run() {
+  // Configure persistence with our models, and add a Mongoose Adapter for storing and reading data
+  await persistence.initialize({
+    models,
+    adapters: {
+      mongo: AdapterMongoose({
+        host: 'mongodb://localhost:27017/',
+        database: 'harmony-todolist',
+      }),
+    },
+    defaultAdapter: 'mongo',
+  })
 
-// Extract our Persistence instance's controllers
-const { ControllerGraphQL, ControllerEvents } = persistence.controllers
+  // Extract our Persistence instance's controllers
+  const { ControllerGraphQL, ControllerEvents } = persistence.controllers
 
-// Configure our server and launch it
-server.init({
-  // On localhost:3000
-  endpoint: {
-    host: 'localhost',
-    port: 3000,
-  },
+  // Configure our server and launch it
+  await server.initialize({
+    // On localhost:3000
+    endpoint: {
+      host: '0.0.0.0',
+      port: 3000,
+    },
 
-  controllers: [
-    // Exposing the GraphQL schema on /graphql
-    new ControllerGraphQL({
-      path: '/graphql',
-      enablePlayground: true,
-    }),
+    controllers: [
+      // Exposing the GraphQL schema on /graphql
+      new ControllerGraphQL({
+        path: '/graphql',
+        enablePlayground: true,
+      }),
 
-    // Forwarding the Persistence events on SocketIO
-    new ControllerEvents(),
+      // Forwarding the Persistence events on SocketIO
+      new ControllerEvents(),
 
-    // Exposing an SPA from static files (production) or by proxying Webpack (development), using
-    // Hapi Views
-    new ControllerSPA({
-      path: '/',
-
-      statics: {
-        dir: path.resolve(__dirname, '../chatroom-spa/public/'),
+      // Exposing an SPA from static files (production) or by proxying Webpack (development)
+      ControllerSPA({
         path: '/public',
-      },
+        dir: path.resolve(__dirname, '../public/'),
 
-      views: {
-        dir: path.resolve(__dirname, './views'),
-        paths: {
-          '/{path*}': 'index.jsx',
+        views: [{
+          path: '/',
+          dir: path.resolve(__dirname, './views/'),
+          file: 'index.html',
+        }, {
+          path: '/test',
+          dir: path.resolve(__dirname, './views/'),
+          file: 'test.html',
+        }],
+
+        webpack: {
+          active: true,
+          endpoint: 'http://localhost',
+          port: 8090,
         },
-      },
+      }),
+    ],
+  })
+}
 
-      hmr: {
-        endpoint: 'localhost',
-        port: 8090,
-      },
-    }),
-  ],
-})
+run()

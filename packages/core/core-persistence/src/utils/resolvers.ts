@@ -1,18 +1,19 @@
 import {
-  FieldBase, Field, Property, SanitizedModel,
-  ResolverEnum, Accessor,
+  ClassicResolverFunction, IAdapter, IProperty, IPropertySchema, ModelResolver, ReferenceResolverFunction, Resolver,
+  ResolverArgs, ResolverContext, ResolverEnum, ResolverFunction, ResolverInfo, ResolverResolvers, ResolverSource,
+  SanitizedModel,
 } from '@harmonyjs/types-persistence'
 
-import { extractModelType } from './types'
+import { extractModelType } from 'utils/property/utils'
 
-type ResolverDefinition = {
+export type ResolverDefinition = {
   type: ResolverEnum,
   suffix: string,
   alias?: string[],
 }
 
 // Query
-export const queryResolvers : ResolverDefinition[] = [
+export const queryResolvers: ResolverDefinition[] = [
   {
     type: 'read',
     suffix: '',
@@ -28,7 +29,7 @@ export const queryResolvers : ResolverDefinition[] = [
 ]
 
 // Mutations
-export const mutationResolvers : ResolverDefinition[] = [
+export const mutationResolvers: ResolverDefinition[] = [
   {
     type: 'create',
     suffix: 'Create',
@@ -51,254 +52,355 @@ export const mutationResolvers : ResolverDefinition[] = [
   },
 ]
 
-const unscoped = ({ args } : { args: any }) => args
-
-
-/* eslint-disable no-param-reassign */
-export function computeMainResolvers({
-  models,
-  accessors,
-  defaultAccessor,
-  resolvers,
-  localResolvers,
+function computeFieldResolver({
+  resolver, modelResolvers,
 } : {
-  models: SanitizedModel[],
-  accessors?: { [key: string]: Accessor },
-  defaultAccessor: Accessor,
-  resolvers: any,
-  localResolvers: any,
+  resolver: Resolver, modelResolvers: Record<string, ModelResolver>
 }) {
-  models.forEach((model) => {
-    const modelType = extractModelType(model.name)
-    const modelQuery = extractModelType(model.name, false)
+  return (
+    source: ResolverSource,
+    args: ResolverArgs,
+    context: ResolverContext,
+    info: ResolverInfo,
+  ) => {
+    const wrappedResolvers : ResolverResolvers = {}
 
-    localResolvers[modelType] = {}
+    Object.keys(modelResolvers)
+      .forEach((mod) => {
+        const modelResolver = modelResolvers[mod]
 
-    const modelAccessor = (accessors && model.accessor) ? accessors[model.accessor] : defaultAccessor
-    const accessor = modelAccessor || defaultAccessor
-
-    if (model.external) {
-      // Do not generate base resolvers for external models
-      return
-    }
-
-    const makeResolvers = (mainType : any) => (res : ResolverDefinition) => {
-      const makeResolver = (scoped : boolean) => async (source : any, args : any, context : any, info : any) => {
-        // Check for a scope function
-        const scope = (scoped && model.scopes && model.scopes[res.type]) || unscoped
-
-        const scopedArgs = scope({ args: JSON.parse(JSON.stringify(args)), context })
-
-        return accessor[res.type]
-          .apply(
-            defaultAccessor, [{
+        Object.keys(modelResolver)
+          .forEach((res) => {
+            wrappedResolvers[mod] = wrappedResolvers[mod] || {}
+            // @ts-ignore
+            wrappedResolvers[mod][res] = (nArgs : ResolverArgs) => modelResolver[res]({
+              args: nArgs,
               source,
               info,
-              model,
               context,
-              args: scopedArgs || args,
-            }],
-          )
-      }
+            })
+          })
+      })
 
-      const scopedResolver = makeResolver(true)
-      const unscopedResolver = makeResolver(false)
-
-      mainType[modelQuery + res.suffix] = scopedResolver
-      localResolvers[modelType][res.type] = scopedResolver
-      localResolvers[modelType][res.type].unscoped = unscopedResolver
-
-      if (res.alias) {
-        res.alias.forEach((alias) => {
-          localResolvers[modelType][alias] = scopedResolver
-          localResolvers[modelType][alias].unscoped = unscopedResolver
-        })
-      }
-    }
-
-    const makeQueryResolvers = makeResolvers(resolvers.Query)
-    const makeMutationResolvers = makeResolvers(resolvers.Mutation)
-
-    queryResolvers.forEach(makeQueryResolvers)
-    mutationResolvers.forEach(makeMutationResolvers)
-
-    // Reference Resolver for Federation
-    resolvers[modelType] = resolvers[modelType] || {}
-    resolvers[modelType].__resolveReference = async (reference : { _id: string }) => accessor.read({
-      args: {
-        _id: reference._id,
-      },
-      model,
-      source: null,
-      context: null,
-      info: null,
+    return resolver({
+      source,
+      args,
+      context,
+      info,
+      resolvers: wrappedResolvers,
     })
-  })
+  }
 }
 
-function flattenNestedType(nested : Property) : Property[] {
-  return [
-    nested,
-    ...Object.values(nested.of)
-      .filter((prop : Property) => {
-        const propIsNested = prop.type === 'nested'
-        const deepIsNested = !!prop.deepOf && prop.deepOf.type === 'nested'
-
-        return propIsNested || deepIsNested
-      })
-      .map((prop : Property) => (prop.type === 'nested' ? prop : prop.deepOf))
-      .flatMap(flattenNestedType),
-  ]
-}
-
-export function computeReferenceResolvers({
-  models,
-  accessors,
-  defaultAccessor,
-  resolvers,
+export function getResolvers({
+  modelResolvers, models,
 } : {
-  models: SanitizedModel[],
-  accessors?: { [key: string]: Accessor },
-  defaultAccessor: Accessor,
-  resolvers: any,
+  modelResolvers: Record<string, ModelResolver>, models: SanitizedModel[]
 }) {
-  const types = models.flatMap((model) => flattenNestedType(model.schema))
+  const resolvers: { [key: string]: any } = {}
 
-  const makeReferenceResolver = (type : Property, fieldName : string, comparator : string, isArray : boolean) => {
-    const typeName = type.name
+  resolvers.Query = {}
+  resolvers.Mutation = {}
 
-    const model : SanitizedModel | undefined = models.find((m) => m.name === comparator)
+  Object.keys(modelResolvers)
+    .forEach((model) => {
+      const baseName = model[0].toLowerCase() + model.slice(1)
 
-    if (!model) {
-      throw new Error(`No model found for name${comparator}`)
-    }
-
-    const rootName = extractModelType(model.name)
-
-    const modelAccessor = (accessors && model.accessor) ? accessors[model.accessor] : defaultAccessor
-    const accessor = modelAccessor || defaultAccessor
-
-    resolvers[typeName] = resolvers[typeName] || {}
-    resolvers[typeName][fieldName] = async (source : any, args : any, context : any, info : any) => {
-      if (model.external) {
-        // In case of an external Federation model, return a Representation
-        return {
-          __typename: rootName,
-          _id: source[fieldName],
-        }
+      const harmonyModel = models.find((m) => m.schemas.main.graphqlName === model)
+      if (!harmonyModel || harmonyModel.external) {
+        return
       }
 
-      const resolver = isArray ? accessor.resolveRefs : accessor.resolveRef
-
-      // Else, use the accessor reference resolver
-      return resolver({
-        source,
-        args,
-        context,
-        info,
-        fieldName,
-        model,
+      queryResolvers.forEach((res) => {
+        resolvers.Query[baseName + res.suffix] = (
+          source: ResolverSource,
+          args: ResolverArgs,
+          context: ResolverContext,
+          info: ResolverInfo,
+        ) => modelResolvers[model][res.type]({
+          source, args, context, info,
+        })
       })
+      mutationResolvers.forEach((res) => {
+        resolvers.Mutation[baseName + res.suffix] = (
+          source: ResolverSource,
+          args: ResolverArgs,
+          context: ResolverContext,
+          info: ResolverInfo,
+        ) => modelResolvers[model][res.type]({
+          source, args, context, info,
+        })
+      })
+    })
+
+  // Find reference fields
+  function extractReference(field : IProperty) {
+    if (field.type === 'reference') {
+      // Handle reference
+      const isArray = field.parent && field.parent.type === 'array'
+      const fieldName = (isArray ? (field.parent && field.parent.name) : field.name) || ''
+      const baseName = (isArray
+        ? field.parent && field.parent.parent && field.parent.parent.graphqlName
+        : field.parent && field.parent.graphqlName
+      ) || ''
+      const model = extractModelType(field.of)
+
+      resolvers[baseName] = resolvers[baseName] || {}
+      const resolver = isArray ? modelResolvers[model].references : modelResolvers[model].reference
+
+      resolvers[baseName][fieldName] = (
+        source: ResolverSource,
+        args: ResolverArgs,
+        context: ResolverContext,
+        info: ResolverInfo,
+      ) => resolver({
+        source, context, info, fieldName, foreignFieldName: '_id',
+      })
+    }
+    if (field.type === 'reversed-reference') {
+      // Handle reversed reference
+      const isArray = field.parent && field.parent.type === 'array'
+      const fieldName = (isArray ? (field.parent && field.parent.name) : field.name) || ''
+      const baseName = (isArray
+        ? field.parent && field.parent.parent && field.parent.parent.graphqlName
+        : field.parent && field.parent.graphqlName
+      ) || ''
+      const model = extractModelType(field.of)
+
+      if (!modelResolvers[model]) {
+        throw new Error(`No model found for name ${model}`)
+      }
+
+      resolvers[baseName] = resolvers[baseName] || {}
+      const resolver = isArray ? modelResolvers[model].references : modelResolvers[model].reference
+
+      resolvers[baseName][fieldName] = (
+        source: ResolverSource,
+        args: ResolverArgs,
+        context: ResolverContext,
+        info: ResolverInfo,
+      ) => resolver({
+        source, context, info, foreignFieldName: field.on, fieldName: '_id',
+      })
+    }
+    if (field.type === 'schema') {
+      // eslint-disable-next-line no-use-before-define
+      extractReferences(field)
+    }
+    if (field.type === 'array') {
+      extractReference(field.deepOf)
     }
   }
 
-  types.forEach((type) => {
-    const references = Object.values(type.of)
-      .filter((prop : Property) => prop.type === 'reference')
+  function extractReferences(schema : IPropertySchema) {
+    Object.keys(schema.of)
+      .forEach((field) => {
+        extractReference(schema.of[field])
+      })
+  }
 
-    const composedReferences = Object.values(type.of)
-      .filter((prop : Property) => (prop.of && prop.of instanceof Property && prop.of.type === 'reference'))
+  models.forEach((model) => {
+    // Create references resolvers from main schema
+    extractReferences(model.schemas.main)
 
-    // Make direct reference fields
-    references.forEach((prop : Property) => makeReferenceResolver(
-      type,
-      prop._configuration.name,
-      prop.of as string,
-      false,
-    ))
+    // Create references resolvers from computed schema
+    extractReferences(model.schemas.computed)
 
-    // Make composed reference fields
-    composedReferences.forEach(
-      (prop : Property) => makeReferenceResolver(
-        type, prop._configuration.name, (prop.of instanceof Property && prop.of.of) as string,
-        prop.type === 'array',
-      ),
-    )
+    // Create resolvers from computed fields
+    Object.keys(model.resolvers.computed)
+      .forEach((field) => {
+        const baseName = extractModelType(model.name)
+
+        resolvers[baseName] = resolvers[baseName] || {}
+        resolvers[baseName][field] = computeFieldResolver({
+          resolver: model.resolvers.computed[field],
+          modelResolvers,
+        })
+      })
+
+    // Create queries
+    Object.keys(model.resolvers.queries)
+      .forEach((field) => {
+        resolvers.Query[field] = computeFieldResolver({
+          resolver: model.resolvers.queries[field],
+          modelResolvers,
+        })
+      })
+
+    // Create mutations
+    Object.keys(model.resolvers.mutations)
+      .forEach((field) => {
+        resolvers.Mutation[field] = computeFieldResolver({
+          resolver: model.resolvers.mutations[field],
+          modelResolvers,
+        })
+      })
+
+    // Create custom resolvers
+    Object.keys(model.resolvers.custom)
+      .forEach((baseName) => {
+        resolvers[baseName] = resolvers[baseName] || {}
+        Object.keys(model.resolvers.custom[baseName])
+          .forEach((field) => {
+            resolvers[baseName][field] = computeFieldResolver({
+              resolver: model.resolvers.custom[baseName][field],
+              modelResolvers,
+            })
+          })
+      })
+
+    // Create federation resolver
+    if (!model.external) {
+      resolvers[extractModelType(model.name)] = resolvers[extractModelType(model.name)] || {}
+      resolvers[extractModelType(model.name)].__resolveReference = (reference: { _id: string }) => (
+        modelResolvers[extractModelType(model.name)].read({
+          args: {
+            filter: {
+              _id: reference._id,
+            },
+          },
+        })
+      )
+    }
   })
+
+  return resolvers
 }
 
-export function computeFieldResolvers({
-  models,
-  resolvers,
-  localResolvers,
+function makeResolver({
+  adapter, model, type, scope,
 } : {
-  models: SanitizedModel[],
-  resolvers: any,
-  localResolvers: any,
-}) {
-  // Compute fields resolvers
-  models.forEach((model : SanitizedModel) => {
-    function computeResolver({ fields, rootName } : { fields: {[key: string]: FieldBase}, rootName: string}) {
-      Object.entries(fields)
-        .forEach(([name, field]) => {
-          if (field.resolve) {
-            resolvers[rootName] = resolvers[rootName] || {}
-            resolvers[rootName][name] = async (source : any, args : any, context : any, info : any) => {
-              const wrappedResolvers : any = {}
+  adapter?: IAdapter, model: SanitizedModel, type: ResolverEnum, scope?: Function
+}) : ClassicResolverFunction {
+  if (!adapter) {
+    return () => null
+  }
 
-              Object.keys(localResolvers)
-                .forEach((mod) => {
-                  wrappedResolvers[mod] = {}
-                  Object.keys(localResolvers[mod])
-                    .forEach((resolver) => {
-                      wrappedResolvers[mod][resolver] = (localArgs : any) => localResolvers[mod][resolver](
-                        source,
-                        localArgs,
-                        context,
-                        info,
-                      )
-
-                      wrappedResolvers[mod][resolver]
-                        .unscoped = (localArgs : any) => localResolvers[mod][resolver].unscoped(
-                          source,
-                          localArgs,
-                          context,
-                          info,
-                        )
-                    })
-                })
-
-              return field.resolve({
-                source, args, context, info, resolvers: wrappedResolvers,
-              })
-            }
-          }
-        })
+  return ({
+    source, args, context, info,
+  } : {
+    source?: ResolverSource,
+    args?: ResolverArgs,
+    context?: ResolverContext,
+    info?: ResolverInfo,
+  }) => {
+    if (!adapter) {
+      return () => null
     }
 
-    const fields : {[key: string]: Field} = (model.computed ? model.computed.fields : {}) || {}
-    const queries : {[key: string]: Field} = (model.computed ? model.computed.queries : {}) || {}
-    const mutations : {[key: string]: Field} = (model.computed ? model.computed.mutations : {}) || {}
-    const custom = (model.computed ? model.computed.custom : {}) || {}
+    return adapter[type]({
+      source,
+      args: ((scope && scope(args)) || args) as any,
+      context,
+      info: info || {} as ResolverInfo,
+      model,
+    })
+  }
+}
 
-    computeResolver({
-      fields,
-      rootName: extractModelType(model.name),
+function makeReferenceResolver({
+  adapter, model, type,
+} : {
+  adapter?: IAdapter, model: SanitizedModel, type: 'resolveRef'|'resolveRefs', scope?: Function
+}) : ReferenceResolverFunction {
+  if (!adapter) {
+    return () => null
+  }
+
+  return ({
+    source, fieldName, foreignFieldName, context, info,
+  } : {
+    fieldName: string,
+    foreignFieldName: string,
+    source?: ResolverSource,
+    context?: ResolverContext,
+    info?: ResolverInfo,
+  }) => {
+    if (model.external) {
+      if (foreignFieldName !== '_id') {
+        throw new Error('Reversed References cannot be used on an external schema!')
+      }
+
+      // In case of an external Federation model, return a Representation
+      return {
+        resolveRef: () => {
+          const element = source && source[fieldName]
+          const _id = (element && element._id) ? element._id : element
+
+          console.log({
+            __typename: model.schemas.main.graphqlName,
+            _id,
+          })
+
+          return ({
+            __typename: model.schemas.main.graphqlName,
+            _id,
+          })
+        },
+        resolveRefs: () => source
+          && source[fieldName]
+          && Array.isArray(source[fieldName])
+          && source[fieldName].map((element: { _id: string }) => {
+            const _id = (element && element._id) ? element._id : element
+
+            return ({
+              __typename: model.schemas.main.graphqlName,
+              _id,
+            })
+          }),
+      }[type]()
+    }
+
+    if (!adapter) {
+      return null
+    }
+
+    return adapter[type]({
+      fieldName,
+      foreignFieldName,
+      source,
+      context,
+      info: info || {} as ResolverInfo,
+      model,
     })
-    computeResolver({
-      fields: queries,
-      rootName: 'Query',
+  }
+}
+
+export function makeResolvers({ adapter, model } : { adapter?: IAdapter, model: SanitizedModel }) {
+  const resolvers : Record<string, ResolverFunction&{unscoped?:ResolverFunction}> = {}
+
+  const rootResolvers = [...queryResolvers, ...mutationResolvers]
+
+  rootResolvers.forEach((res) => {
+    resolvers[res.type] = makeResolver({
+      type: res.type,
+      adapter,
+      model,
+      scope: model.scopes[res.type],
     })
-    computeResolver({
-      fields: mutations,
-      rootName: 'Mutation',
+
+    resolvers[res.type].unscoped = makeResolver({
+      type: res.type,
+      adapter,
+      model,
     })
-    Object.entries(custom).forEach(([customName, customFields]) => {
-      computeResolver({
-        fields: customFields,
-        rootName: customName,
-      })
+
+    res.alias?.forEach((alias) => {
+      resolvers[alias] = resolvers[res.type]
     })
   })
+
+  resolvers.reference = makeReferenceResolver({
+    type: 'resolveRef',
+    adapter,
+    model,
+  })
+
+  resolvers.references = makeReferenceResolver({
+    type: 'resolveRefs',
+    adapter,
+    model,
+  })
+
+  return resolvers as ModelResolver
 }
-/* eslint-enable no-param-reassign */

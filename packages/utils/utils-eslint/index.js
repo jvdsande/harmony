@@ -87,9 +87,6 @@ module.exports = {
   ],
 
   settings: {
-    'polyfills': ['promises'],
-    'import/resolver': {
-      typescript: {},
-    },
+    polyfills: ['promises'],
   },
 }

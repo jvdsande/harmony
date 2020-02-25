@@ -31,11 +31,12 @@ module.exports = (e) => {
   const entry = {
     /* Configure your entry points. Each entry point will result in a "build/[name].js" bundle */
     app: './client/index.jsx',
+    other: './client/index.jsx',
   }
 
   const output = {
     filename: '[name].js',
-    path: path.resolve(__dirname, 'build'),
+    path: path.resolve(__dirname, 'public'),
     publicPath: 'public/',
   }
 
@@ -81,11 +82,6 @@ module.exports = (e) => {
   const resolve = {
     mainFields: ['browser', 'main', 'module'],
     extensions: ['.jsx', '.js', '.json'],
-    alias: {
-      app: path.resolve(__dirname, 'client/app'),
-      login: path.resolve(__dirname, 'client/login'),
-      shared: path.resolve(__dirname, 'client/shared'),
-    },
   }
 
   const optimization = {}

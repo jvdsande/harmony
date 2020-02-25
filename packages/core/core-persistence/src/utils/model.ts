@@ -1,332 +1,315 @@
 import {
-  Property, PropertySchema, FieldMode, FieldModeEnum, Fields, SanitizedModel, Model, CompleteField,
-  Scopes, Computed, SanitizedComputed,
-  ExtendableField, SanitizedFields,
-  SanitizedPropertySchema,
+  Fields, ExtendableFields, Resolvers, Scopes,
+  IProperty, PropertyMode,
+  Model, SanitizedModel, Schema, ExtendableField,
 } from '@harmonyjs/types-persistence'
+import { createOperatorType } from 'utils/property/operators'
+import { queryResolvers, ResolverDefinition, mutationResolvers } from 'utils/resolvers'
 
-import Types from '../entities/schema-types'
-import { mutationResolvers, queryResolvers } from './resolvers'
-import { extractModelType } from './types'
+import Types from 'utils/types'
 
-/* eslint-disable no-param-reassign */
-function extendField(field: CompleteField, modelName: string) {
+import PropertyFactory from 'utils/property/factory'
+import { extractModelType, wrap } from 'utils/property/utils'
+import { sanitizeSchemaLikeValue, sanitizeSchema } from 'utils/property/sanitation'
+
+function extendField(field: ExtendableField, modelName: string): IProperty|undefined {
   switch (field.extends) {
     case 'read': {
-      field.type = new Property({ type: 'raw', of: modelName })
-      field.args = {
-        filter: new Property({ type: 'raw', of: `${modelName}InputFilter` }),
-        skip: Types.Number,
-        sort: Types.Number,
-      }
-      break
+      return PropertyFactory({ type: 'raw', of: modelName, name: modelName })
+        .withArgs({
+          filter: PropertyFactory({ type: 'raw', of: `${modelName}FilterInput`, name: `${modelName}Filter` }),
+          skip: Types.Number,
+          sort: Types.Number,
+        })
     }
     case 'readMany': {
-      field.type = Types.Array.of(new Property({ type: 'raw', of: modelName }))
-      field.args = {
-        filter: new Property({ type: 'raw', of: `${modelName}InputFilter` }),
-        skip: Types.Number,
-        limit: Types.Number,
-        sort: Types.Number,
-      }
-      break
+      return Types.Array.of(PropertyFactory({ type: 'raw', of: modelName, name: '' }))
+        .withArgs({
+          filter: PropertyFactory({ type: 'raw', of: `${modelName}FilterInput`, name: `${modelName}Filter` }),
+          skip: Types.Number,
+          limit: Types.Number,
+          sort: Types.Number,
+        })
     }
     case 'count': {
-      field.type = Types.Number
-      field.args = {
-        filter: new Property({ type: 'raw', of: `${modelName}InputFilter` }),
-      }
-      break
+      return Types.Number
+        .withArgs({
+          filter: PropertyFactory({ type: 'raw', of: `${modelName}FilterInput`, name: `${modelName}Filter` }),
+        })
     }
     case 'create': {
-      field.type = new Property({ type: 'raw', of: modelName })
-      field.args = {
-        record: new Property({ type: 'raw', of: `${modelName}Input!` }),
-      }
-      break
+      return PropertyFactory({ type: 'raw', of: modelName, name: '' })
+        .withArgs({
+          record: PropertyFactory({ type: 'raw', of: `${modelName}CreateInput`, name: `${modelName}Create` }).required,
+        })
     }
     case 'createMany': {
-      field.type = Types.Array.of(new Property({ type: 'raw', of: modelName }))
-      field.args = {
-        records: Types.Array.of(new Property({ type: 'raw', of: `${modelName}Input!` })),
-      }
-      break
+      return Types.Array.of(PropertyFactory({ type: 'raw', of: modelName, name: '' }))
+        .withArgs({
+          records: Types.Array.of(
+            PropertyFactory({ type: 'raw', of: `${modelName}CreateInput`, name: `${modelName}Create` }).required,
+          ).required,
+        })
     }
     case 'update': {
-      field.type = new Property({ type: 'raw', of: modelName })
-      field.args = {
-        record: new Property({ type: 'raw', of: `${modelName}InputWithID!` }),
-      }
-      break
+      return PropertyFactory({ type: 'raw', of: modelName, name: '' })
+        .withArgs({
+          record: PropertyFactory({ type: 'raw', of: `${modelName}UpdateInput`, name: `${modelName}Update` }).required,
+        })
     }
     case 'updateMany': {
-      field.type = Types.Array.of(new Property({ type: 'raw', of: modelName }))
-      field.args = {
-        records: Types.Array.of(new Property({ type: 'raw', of: `${modelName}InputWithID!` })),
-      }
-      break
+      return Types.Array.of(PropertyFactory({ type: 'raw', of: modelName, name: '' }))
+        .withArgs({
+          records: Types.Array.of(
+            PropertyFactory({ type: 'raw', of: `${modelName}UpdateInput`, name: `${modelName}Update` }).required,
+          ).required,
+        })
     }
     case 'delete': {
-      field.type = new Property({ type: 'raw', of: modelName })
-      field.args = {
-        _id: Types.ID.required,
-      }
-      break
+      return PropertyFactory({ type: 'raw', of: modelName, name: '' })
+        .withArgs({
+          _id: Types.ID.required,
+        })
     }
     case 'deleteMany': {
-      field.type = Types.Array.of(new Property({ type: 'raw', of: modelName }))
-      field.args = {
-        _ids: Types.Array.of(Types.ID.required),
-      }
-      break
+      return Types.Array.of(PropertyFactory({ type: 'raw', of: modelName, name: '' }))
+        .withArgs({
+          _ids: Types.Array.of(Types.ID.required).required,
+        })
     }
     default:
       break
   }
+
+  return undefined
 }
-/* eslint-enable no-param-reassign */
 
+function extractMainSchema({ schema, name }: { schema: Schema, name: string }) {
+  const sanitized = sanitizeSchema({ schema, name })
 
-function sanitizeField({
-  field, name,
-} : {
-  field: Property | PropertySchema | Property[] | PropertySchema[],
-  name: string,
-}) {
-  const sanitized = new Property({ type: 'raw', name })
-
-  if (field instanceof Property) {
-    // If the field was a correct property, copy its configuration
-    sanitized._federation = { ...field._federation }
-    sanitized._configuration = { ...field._configuration }
-
-    if (sanitized._configuration.mode) {
-      sanitized._configuration.mode = Array.isArray(sanitized._configuration.mode)
-        ? [...sanitized._configuration.mode]
-        : [sanitized._configuration.mode]
-    }
-
-    sanitized.name = name
-
-    sanitized.type = field.type
-    sanitized.of = field.of
-
-
-    if (field.of instanceof Property || field.of instanceof Object) {
-      if (sanitized.type !== 'nested') {
-        sanitized.of = sanitizeField({
-          field: field.of,
-          name: '',
-        })
-        sanitized.of.parent = sanitized
-      } else {
-        sanitized.of = sanitizeNested({ // eslint-disable-line
-          field: field.of as PropertySchema,
-          mode: null,
-          parent: sanitized,
-        })
+  Object.keys(sanitized.of)
+    .forEach((key) => {
+      if (sanitized.of[key].mode.length < 1) {
+        sanitized.of[key].mode.push(PropertyMode.OUTPUT)
+        sanitized.of[key].mode.push(PropertyMode.INPUT)
       }
-    }
-
-    // If args were provided, sanitize them
-    if (field.args && field.args instanceof Object) {
-      const argParent = new Property({ type: 'raw', name: 'args ' })
-      argParent.parent = sanitized
-
-      sanitized.args = sanitizeNested({  // eslint-disable-line
-        field: field.args,
-        mode: null,
-        parent: argParent,
-      })
-    }
-  } else if (field instanceof Array) {
-    // If the field is an array, make it an array property
-
-    sanitized.type = 'array'
-    sanitized.of = sanitizeField({
-      field: field[0], name: '',
     })
-    sanitized.of.parent = sanitized
-  } else if (field instanceof Object) {
-    // If the field was an object, make it a nested property
 
-    sanitized.type = 'nested'
-    sanitized.of = sanitizeNested({ field: field, parent: sanitized, mode: null }) // eslint-disable-line
+  return sanitized
+}
+
+function extractComputedSchema({ fields, name }: { fields?: Fields, name: string }) {
+  const schema: Schema = {}
+
+  if (!fields) {
+    return PropertyFactory({ type: 'schema', name, of: {} })
   }
-
-  return sanitized
-}
-
-function sanitizeNested(
-  { field, parent, mode } : { field: PropertySchema, parent: Property, mode: FieldModeEnum[] | null },
-) {
-  const sanitized : SanitizedPropertySchema = {}
-
-  Object.keys(field).forEach((key) => {
-    sanitized[key] = sanitizeField({
-      field: field[key],
-      name: key,
-    })
-    sanitized[key].parent = parent
-    if (sanitized[key].mode === null || !sanitized[key].mode!.length) {
-      sanitized[key].mode = mode
-    }
-  })
-
-  return sanitized
-}
-
-function sanitizeSchema({ schema, name } : { schema: PropertySchema, name: string }) : Property {
-  const sanitized = new Property({ type: 'nested', of: {} })
-
-  const mode = [FieldMode.INPUT, FieldMode.OUTPUT]
-
-  sanitized.name = name
-  sanitized.mode = mode
-
-  sanitized.of = sanitizeNested({
-    field: schema,
-    parent: sanitized,
-    mode: null,
-  })
-
-  return sanitized
-}
-
-function sanitizeFields(
-  { fields, parent, force } : { fields: Fields, parent?: Property, force?: FieldModeEnum },
-) : SanitizedFields {
-  const sanitized : SanitizedFields = {}
 
   Object.keys(fields)
     .forEach((key) => {
-      const mode = force || fields[key].mode || [FieldMode.INPUT, FieldMode.OUTPUT]
-      const resolve = fields[key].resolve || null
+      schema[key] = fields[key].type
+    })
 
-      const argsParent = new Property({ type: 'raw', name: 'Args' })
+  const sanitized = sanitizeSchema({ schema, name })
 
-      sanitized[key] = {
-        mode: Array.isArray(mode) ? mode : [mode],
-        resolve,
-        args: fields[key].args
-          ? sanitizeNested({ field: fields[key].args || {}, parent: argsParent, mode: [FieldMode.INPUT] })
-          : undefined,
-        type: sanitizeField({
-          field: fields[key].type,
-          name: key,
-        }),
+  Object.keys(sanitized.of)
+    .forEach((key) => {
+      if (fields[key] && fields[key].args) {
+        sanitized.of[key].withArgs(sanitizeSchema({ schema: fields[key].args!, name: 'args' }))
       }
 
-      argsParent.parent = sanitized[key].type
-      sanitized[key].type.mode = sanitized[key].mode || null
-      sanitized[key].type.parent = parent
-      sanitized[key].type.args = sanitized[key].args
+      if (fields[key] && fields[key].mode) {
+        sanitized.of[key].mode = wrap(fields[key].mode)
+      }
+
+      if (sanitized.of[key].mode.length < 1) {
+        sanitized.of[key].mode.push(PropertyMode.OUTPUT)
+      }
     })
 
   return sanitized
 }
 
-function sanitizeModelComputed({
-  computed, parent, external, scopes, strict,
+function extractRootSchema({
+  fields, name, base, external, strict, scopes,
 } : {
-  computed?: Computed,
-  parent: Property,
-  scopes?: Scopes,
-  external: boolean,
-  strict: boolean,
-}) : SanitizedComputed {
-  const sanitized = computed || {
-    fields: {},
-    queries: {},
-    mutations: {},
-    custom: {},
-  }
+  fields: ExtendableFields, name: string, base: ResolverDefinition[], external: boolean, strict: boolean, scopes: Scopes
+}) {
+  const schema : Schema = {}
 
-  if (!external) {
-    sanitized.queries = sanitized.queries || {}
-    sanitized.mutations = sanitized.mutations || {}
-
-    const { name } = parent._configuration
-    const queryName = extractModelType(name, false)
-
-    queryResolvers.forEach((query) => {
-      const fallback = (!strict || (!!scopes && !!scopes[query.type])) ? ({
-        extends: query.type,
-        resolve: null,
-      }) : null
-
-      const value = sanitized.queries![queryName + query.suffix] || fallback
-
-      if (value) {
-        sanitized.queries![queryName + query.suffix] = value
-      }
-    })
-    mutationResolvers.forEach((query) => {
-      const fallback = (!strict || (!!scopes && !!scopes[query.type])) ? ({
-        extends: query.type,
-        resolve: null,
-      }) : null
-
-      const value = sanitized.mutations![queryName + query.suffix] || fallback
-
-      if (value) {
-        sanitized.mutations![queryName + query.suffix] = value
-      }
-    })
-  }
-
-  if (sanitized.queries) {
-    Object.values(sanitized.queries)
-      .forEach((query : ExtendableField) => {
-        extendField(query as CompleteField, parent.graphqlType)
-      })
-  }
-
-  if (sanitized.mutations) {
-    Object.values(sanitized.mutations)
-      .forEach((query : ExtendableField) => {
-        extendField(query as CompleteField, parent.graphqlType)
-      })
-  }
-
-  return {
-    fields: sanitizeFields({ fields: sanitized.fields || {}, parent }),
-    queries: sanitizeFields({ fields: sanitized.queries as Fields, force: FieldMode.OUTPUT }),
-    mutations: sanitizeFields({ fields: sanitized.mutations as Fields, force: FieldMode.OUTPUT }),
-    custom: sanitized.custom || {},
-  }
-}
-
-// eslint-disable-next-line
-export function sanitizeModel(model : Model, strict : boolean = false) {
-  const schema = sanitizeSchema({ schema: model.schema, name: model.name })
-  const originalSchema = sanitizeSchema({ schema: model.schema, name: model.name })
-  const computed = sanitizeModelComputed({
-    computed: model.computed,
-    parent: schema,
-    external: !!model.external,
-    scopes: model.scopes,
-    strict,
+  // Fill schema with default queries
+  base.forEach((res) => {
+    if (!external && (!strict || scopes[res.type])) {
+      schema[extractModelType(name, false) + res.suffix] = extendField(
+        { extends: res.type, resolve: null as any },
+        extractModelType(name),
+      )!
+    }
   })
 
-  const sanitized : SanitizedModel = {
-    ...model,
+  // Fill schema with provided queries
+  Object.keys(fields).forEach((queryName) => {
+    const field : ExtendableField = fields[queryName]
+
+    if (field.extends) {
+      const extended = extendField(field, extractModelType(name))
+      if (extended) {
+        schema[queryName] = extended
+      }
+    } else {
+      const property = sanitizeSchemaLikeValue({ schema: field.type, name: queryName })
+
+      property.mode = wrap(field.mode)
+      if (field.args) {
+        property.withArgs(field.args)
+      }
+
+      schema[queryName] = property
+    }
+  })
+
+  return extractMainSchema({ schema, name })
+}
+
+function extractResolvers({ fields }: { fields: ExtendableFields|Fields }): Resolvers {
+  const resolvers: Resolvers = {}
+
+  Object.keys(fields).forEach((field) => {
+    if (fields[field].resolve) {
+      resolvers[field] = fields[field].resolve!
+    }
+  })
+
+  return resolvers
+}
+
+// eslint-disable-next-line import/prefer-default-export
+export function sanitizeModel({ model, strict }: { model: Model, strict: boolean }): SanitizedModel {
+  return ({
     name: model.name,
-    schema,
-    originalSchema,
-    computed,
-
-    accessor: model.accessor,
-    scopes: { ...model.scopes },
-
+    adapter: model.adapter,
+    schemas: {
+      main: extractMainSchema({
+        schema: model.schema, name: model.name,
+      }),
+      computed: extractComputedSchema({
+        fields: model.computed?.fields, name: model.name,
+      }),
+      queries: extractRootSchema({
+        fields: model.computed?.queries || {},
+        name: model.name,
+        base: queryResolvers,
+        external: !!model.external,
+        strict,
+        scopes: model.scopes || {} as any,
+      }),
+      mutations: extractRootSchema({
+        fields: model.computed?.mutations || {},
+        name: model.name,
+        base: mutationResolvers,
+        external: !!model.external,
+        strict,
+        scopes: model.scopes || {} as any,
+      }),
+    },
+    resolvers: {
+      queries: extractResolvers({ fields: model.computed?.queries || {} }),
+      mutations: extractResolvers({ fields: model.computed?.mutations || {} }),
+      computed: extractResolvers({ fields: model.computed?.fields || {} }),
+      custom: model.computed?.custom || {},
+    },
+    scopes: model.scopes || {} as any,
     external: !!model.external,
+  })
+}
+
+export function printSchema({ model }: { model: SanitizedModel }) {
+  const outputSchema: Schema = {}
+  const inputFilterSchema: Schema = {}
+  const inputCreateSchema: Schema = {}
+  const inputUpdateSchema: Schema = {}
+
+  // Divide schema keys between input fields and output fields
+  const extract = (schema: { [key: string]: IProperty }) => {
+    Object.keys(schema)
+      .forEach((key) => {
+        const { mode } = schema[key]
+        if (mode.includes(PropertyMode.OUTPUT) || mode.length < 1) {
+          outputSchema[key] = schema[key]
+        }
+        if (mode.includes(PropertyMode.INPUT) || mode.length < 1) {
+          inputFilterSchema[key] = schema[key]
+          inputCreateSchema[key] = schema[key]
+          inputUpdateSchema[key] = schema[key]
+        }
+      })
   }
 
-  // Inject transient fields in schema
-  Object.keys(sanitized.computed.fields)
-    .forEach((key : string) => {
-      (sanitized.schema.of as PropertySchema)[key] = sanitized.computed.fields[key].type
-    })
+  // Add _id to filter and create schemas
+  inputFilterSchema._id = Types.ID
+  inputCreateSchema._id = Types.ID
 
-  return sanitized
+  // Add _id.required to update schema and output schema
+  outputSchema._id = model.external ? Types.ID.required.external : Types.ID.required
+  inputUpdateSchema._id = Types.ID.required
+
+  // Populate using main schema
+  extract(model.schemas.main.of)
+  // Populate using compute schema, computed overrides main
+  extract(model.schemas.computed.of)
+
+  // Create _operators before adding _and/_or/_nor
+  const ops = createOperatorType({ schema: sanitizeSchema({ schema: inputFilterSchema, name: '' }) })
+
+  // Add _and, _or, _nor to inputFilterSchema
+  inputFilterSchema._and = Types.Array.of(
+    PropertyFactory({ type: 'raw', of: `${extractModelType(model.name)}FilterInput`, name: '' }),
+  )
+  inputFilterSchema._or = Types.Array.of(
+    PropertyFactory({ type: 'raw', of: `${extractModelType(model.name)}FilterInput`, name: '' }),
+  )
+  inputFilterSchema._nor = Types.Array.of(
+    PropertyFactory({ type: 'raw', of: `${extractModelType(model.name)}FilterInput`, name: '' }),
+  )
+
+  // Add _operators to inputFilterSchema
+  inputFilterSchema._operators = ops
+
+  const inputs = model.external ? '' : `
+# Filter Schema
+${sanitizeSchema({ schema: inputFilterSchema, name: `${model.name}Filter` }).graphqlInputSchema}  
+
+# Create Schema
+${sanitizeSchema({ schema: inputCreateSchema, name: `${model.name}Create` }).graphqlInputSchema}  
+
+# Update Schema
+${sanitizeSchema({ schema: inputUpdateSchema, name: `${model.name}Update` }).graphqlInputSchema}`
+
+  return `
+${inputs}
+
+# Output Schema
+${
+  sanitizeSchema({ schema: outputSchema, name: model.name }).graphqlSchema.replace(
+    `type ${extractModelType(model.name)} {`,
+    model.external
+      ? `extend type ${extractModelType(model.name)} @key(fields: "_id") {`
+      : `type ${extractModelType(model.name)} @key(fields: "_id") {`,
+  )
+}
+
+# Queries & Mutations
+${
+  model.schemas.queries.graphqlSchema.replace(
+    `type ${extractModelType(model.name)}`,
+    'extend type Query',
+  )
+}
+${
+  model.schemas.mutations.graphqlSchema.replace(
+    `type ${extractModelType(model.name)}`,
+    'extend type Mutation',
+  )
+}
+`.replace(/\n\n/g, '\n')
 }

@@ -9,22 +9,11 @@ export default ({
 
     numberOfDone: {
       type: Types.Number,
-      args: {
-        isDone: Types.Boolean,
-        nestedArgs: {
-          someInt: Types.Number,
-          someString: Types.String,
-          someNested: {
-            nestedBoolean: Types.Boolean,
-          },
-        },
-      },
       resolve: async ({ source, resolvers: { Task } }) => Task.count({ filter: { list: source._id, done: true } }),
     },
 
     tasks: {
-      type: [Types.Reference.of('task')],
-      resolve: async ({ source, resolvers: { Task } }) => Task.list({ filter: { list: source._id } }),
+      type: [Types.ReversedReference.of('task').on('list')],
     },
   },
 

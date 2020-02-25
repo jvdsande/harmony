@@ -7,13 +7,13 @@
   "@pika/pack": {
     "pipeline": [
       [
-        "@pika/plugin-standard-pkg"
+        "@pika/plugin-ts-standard-pkg"
+      ],
+      [
+        "@harmonyjs/pika-plugin-ts-resolve-imports"
       ],
       [
         "@pika/plugin-build-node"
-      ],
-      [
-        "@pika/plugin-build-types"
       ]
     ]
   },
@@ -35,6 +35,7 @@
   "license": "ISC",
   "gitHead": "a896e4656e71ab6dc197b1b0f88ac1635582a459",
   "devDependencies": {
+    "eslint": "^6.8.0",
     "typescript": "^3.7.5"
   }
 }

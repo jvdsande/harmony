@@ -12,10 +12,10 @@
         "@pika/plugin-ts-standard-pkg"
       ],
       [
-        "@pika/plugin-build-node"
+        "@harmonyjs/pika-plugin-ts-resolve-imports"
       ],
       [
-        "@pika/plugin-build-web"
+        "@pika/plugin-build-node"
       ]
     ]
   },

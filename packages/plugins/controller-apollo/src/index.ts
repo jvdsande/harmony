@@ -1,89 +1,83 @@
-// Require ApolloGraphql
-import { ApolloServer, gql, Config } from 'apollo-server-hapi'
-import { buildFederatedSchema } from '@apollo/federation'
+import { ApolloServer, gql, Config } from '@harmonyjs/apollo-fastify'
+import { RouteOptions } from 'fastify'
 
-import { RouteOptions } from 'hapi'
+import { buildFederatedSchema } from '@apollo/federation'
 
 import { Controller } from '@harmonyjs/types-server'
 
 /*
  * The Apollo Controller exposes a GraphQL endpoint through an Apollo Server
  */
-export default class ControllerApollo extends Controller {
-  name = 'ControllerApollo'
+const ControllerApollo : Controller<{
+  path: string,
+  enablePlayground?: boolean,
+  mock?: boolean,
 
-  config : {
-    path: string,
-    enablePlayground?: boolean,
-    mock?: boolean,
+  schema: string,
+  resolvers: {
+    [key: string]: any
+  },
 
-    schema: string,
-    resolvers: {
-      [key: string]: any
-    },
+  context?: {
+    [key: string]: any
+  },
 
-    context?: {
-      [key: string]: any
-    },
+  apolloConfig?: Omit<Config, 'schema'|'playground'|'introspection'|'mocks'|'mockEntireSchema'|'context'>
+  routeConfig?: Omit<RouteOptions, 'auth'>
+}> = function ControllerApollo(config) {
+  return ({
+    name: 'ControllerApollo',
+    async initialize({ server, logger }) {
+      const {
+        path,
+        enablePlayground,
 
-    apolloConfig?: Omit<Config, 'schema'|'playground'|'introspection'|'mocks'|'mockEntireSchema'|'context'>
-    routeConfig?: Omit<RouteOptions, 'auth'>
-  }
+        schema,
+        resolvers,
+        mock,
 
-  constructor(config) { // eslint-disable-line
-    super(config)
-  }
+        context,
 
-  async initialize({ server, logger }) {
-    const {
-      path,
-      enablePlayground,
+        apolloConfig,
+        routeConfig,
+      } = config
 
-      schema,
-      resolvers,
-      mock,
+      logger.info('Registering GraphQL endpoint...')
 
-      context,
+      const typeDefs = gql(schema)
 
-      apolloConfig,
-      routeConfig,
-    } = this.config
+      const apolloServer = new ApolloServer({
+        ...(apolloConfig || {}),
+        schema: buildFederatedSchema([{ typeDefs, resolvers }]),
+        playground: !!enablePlayground,
+        introspection: !!enablePlayground,
+        mocks: mock,
+        mockEntireSchema: mock,
+        context: (request) => ({
+          ...(context || {}),
+          authentication: request.authentication,
+        }),
+      })
 
-    logger.info('Registering GraphQL endpoint...')
-
-    const typeDefs = gql(schema)
-
-    const apolloServer = new ApolloServer({
-      ...(apolloConfig || {}),
-      schema: buildFederatedSchema([{ typeDefs, resolvers }]),
-      playground: !!enablePlayground,
-      introspection: !!enablePlayground,
-      mocks: mock,
-      mockEntireSchema: mock,
-      context: ({ request }) => ({
-        ...context,
-        authentication: request.authentication,
-      }),
-    })
-
-    await apolloServer.applyMiddleware({
-      app: server,
-      path,
-      route: {
-        auth: {
-          strategy: 'jwt',
-          mode: 'try',
-        },
+      await server.register(apolloServer.createHandler({
+        path,
         cors: true,
-        ...(routeConfig || {}),
-      },
-    })
+        routeOptions:
+          {
+            ...(routeConfig || {}),
+            // @ts-ignore
+            preValidation: [server.authenticate.try],
+          },
+      }))
 
-    await apolloServer.installSubscriptionHandlers(server.listener)
+      await apolloServer.installSubscriptionHandlers(server.server)
 
-    logger.info(`GraphQL endpoint at ${path}`)
-    if (enablePlayground) {
-      logger.info(`GraphQL playground at ${path}`)
-    }
-  }
+      logger.info(`GraphQL endpoint at ${path}`)
+      if (enablePlayground) {
+        logger.info(`GraphQL playground at ${path}`)
+      }
+    },
+  })
 }
+
+export default ControllerApollo

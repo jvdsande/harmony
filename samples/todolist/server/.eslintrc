@@ -1,0 +1,52 @@
+{
+  "parser": "babel-eslint",
+  "parserOptions": {
+    "sourceType": "module",
+    "allowImportExportEverywhere": true
+  },
+  "globals": {
+    "window": true,
+    "document": true,
+    "React": true,
+    "React.Fragment": true,
+    "PropTypes": true,
+    "RouterPropTypes": true,
+    "bind": true
+  },
+  "extends": [
+    "airbnb"
+  ],
+  "rules": {
+    "max-len": [
+      "error",
+      120
+    ],
+    "semi": [
+      "error",
+      "never"
+    ],
+    "no-underscore-dangle": "off",
+    "react/prefer-stateless-function": "off",
+    "react/no-multi-comp": "off"
+  },
+  "plugins": [
+    "import"
+  ],
+  "settings": {
+    "import/resolver": {
+      "alias": [
+        [
+          "persistence",
+          "./persistence"
+        ],
+        [
+          "views",
+          "./views"
+        ]
+      ]
+    },
+    "polyfills": [
+      "promises"
+    ]
+  }
+}

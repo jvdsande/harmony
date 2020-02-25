@@ -12,10 +12,10 @@
         "@pika/plugin-ts-standard-pkg"
       ],
       [
-        "@pika/plugin-build-node"
+        "@harmonyjs/pika-plugin-ts-resolve-imports"
       ],
       [
-        "@pika/plugin-build-web"
+        "@pika/plugin-build-node"
       ]
     ]
   },
@@ -39,9 +39,12 @@
   "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",
   "license": "ISC",
   "devDependencies": {
+    "@types/http-proxy": "^1.17.3",
     "typescript": "^3.7.5"
   },
   "dependencies": {
+    "fastify-http-proxy": "^3.0.0",
+    "fastify-static": "^2.6.0",
     "hapi-react-views": "^10.1.1",
     "http-proxy": "^1.18.0",
     "react": "^16.12.0",

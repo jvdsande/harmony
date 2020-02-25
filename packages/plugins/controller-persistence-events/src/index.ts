@@ -3,30 +3,30 @@ import { Controller } from '@harmonyjs/types-server'
 /*
  * The Persistence Events Controller transfers Persistence Events to SocketIO layer
  */
-export default class ControllerPersistenceEvents extends Controller {
-  name = 'ControllerPersistenceEvents'
+const ControllerPersistenceEvents : Controller<{ events: any }> = function ControllerPersistenceEvents(config) {
+  return ({
+    name: 'ControllerPersistenceEvents',
+    async initialize({ logger, socket }) {
+      const { events } = config
 
-  constructor(config) { // eslint-disable-line
-    super(config)
-  }
+      events.on('updated', ({ model, document }) => {
+        socket.to('persistence-events').emit(`${model.name.toLowerCase()}-updated`, document)
+        socket.to('persistence-events').emit(`${model.name.toLowerCase()}-saved`, document)
+      })
 
-  async initialize({ server, logger }) {
-    const { events } = this.config
+      events.on('removed', ({ model, document }) => {
+        socket.to('persistence-events').emit(`${model.name.toLowerCase()}-updated`, document)
+        socket.to('persistence-events').emit(`${model.name.toLowerCase()}-removed`, document)
+      })
 
-    events.on('updated', ({ model, document }) => {
-      server.io.to('persistence-events').emit(`${model.name.toLowerCase()}-updated`, document)
-      server.io.to('persistence-events').emit(`${model.name.toLowerCase()}-saved`, document)
-    })
+      socket.on('connection', (s) => {
+        s.join('persistence-events')
+      })
 
-    events.on('removed', ({ model, document }) => {
-      server.io.to('persistence-events').emit(`${model.name.toLowerCase()}-updated`, document)
-      server.io.to('persistence-events').emit(`${model.name.toLowerCase()}-removed`, document)
-    })
-
-    server.io.on('connection', (socket) => {
-      socket.join('persistence-events')
-    })
-
-    logger.info('Persistence events are forwarded to Socket.IO')
-  }
+      logger.info('Persistence events are forwarded to Socket.IO')
+    },
+  })
 }
+
+
+export default ControllerPersistenceEvents

@@ -1,7 +1,7 @@
 import Persistence, { Types } from '@harmonyjs/persistence'
 import Server from '@harmonyjs/server'
 
-import AccessorMongoose from '@harmonyjs/accessor-mongoose'
+import AdapterMongoose from '@harmonyjs/adapter-mongoose'
 
 const UserModel = {
   name: 'user',
@@ -12,28 +12,31 @@ const UserModel = {
 }
 
 const persistence = new Persistence()
-
-persistence.init({
-  models: [UserModel],
-  accessors: {
-    mongo: new AccessorMongoose({
-      host: 'mongodb://mongo:27017/',
-      database: 'federated',
-    }),
-  },
-})
-
 const server = new Server()
 
-server.init({
-  endpoint: {
-    host: 'localhost',
-    port: '4001',
-  },
-  controllers: [
-    new persistence.controllers.ControllerGraphQL({
-      path: '/',
-      enablePlayground: true,
-    }),
-  ],
-})
+async function run() {
+  await persistence.initialize({
+    models: [UserModel],
+    adapters: {
+      mongo: AdapterMongoose({
+        host: 'mongodb://localhost:27017/',
+        database: 'federated',
+      }),
+    },
+  })
+
+  await server.initialize({
+    endpoint: {
+      host: 'localhost',
+      port: '4001',
+    },
+    controllers: [
+      persistence.controllers.ControllerGraphQL({
+        path: '/',
+        enablePlayground: true,
+      }),
+    ],
+  })
+}
+
+run()
