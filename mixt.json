@@ -1,9 +1,13 @@
 {
   "sources": [
-    "packages/types",
-    "packages/utils",
     "packages/external",
+    "packages/utils",
+    "packages/types",
     "packages/plugins",
     "packages/core"
+  ],
+  "buildOrder": [
+    "pika-ts-resolve-imports",
+    "types-server"
   ]
 }
