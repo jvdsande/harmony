@@ -1,6 +1,6 @@
 {
   "name": "@harmonyjs/persistence",
-  "version": "2.0.0-rc2.1",
+  "version": "2.0.0-rc2.2",
   "publishConfig": {
     "access": "public"
   },
@@ -35,9 +35,10 @@
   "license": "ISC",
   "gitHead": "a896e4656e71ab6dc197b1b0f88ac1635582a459",
   "dependencies": {
-    "@harmonyjs/types-persistence": "*"
+    "@harmonyjs/types-persistence": "^1.0.0-rc2.1"
   },
   "devDependencies": {
     "typescript": "^3.7.5"
-  }
+  },
+  "peerDependencies": {}
 }
