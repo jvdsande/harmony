@@ -21,7 +21,7 @@ export default function Persistence() {
     events: EventsHandler(),
   }
 
-  instance.initialize = async (configuration: PersistenceConfig) => {
+  instance.initialize = async (configuration: Partial<PersistenceConfig>) => {
     instance.configuration = configurePersistence({ config: configuration })
     instance.logger = Logger({ name: 'Persistence', configuration: instance.configuration.log })
 

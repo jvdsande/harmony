@@ -31,5 +31,5 @@ export type PersistenceInstance = {
   },
   resolvers: Record<string, ModelResolver>, // TODO create "Resolver" type
 
-  initialize: (configuration: PersistenceConfig) => Promise<void>,
+  initialize: (configuration: Partial<PersistenceConfig>) => Promise<void>,
 }

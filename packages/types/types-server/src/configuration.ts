@@ -31,6 +31,5 @@ export type ServerInstance = {
   server: FastifyInstance,
   socket: SocketIO,
 
-  initialize: (configuration: Partial<ServerConfig>) => Promise<void>,
-  init: (config?: Partial<ServerConfig>) => Promise<void>,
+  initialize: (configuration: Partial<ServerConfig>) => Promise<void>
 }
