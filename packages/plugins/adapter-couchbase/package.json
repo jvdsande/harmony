@@ -42,6 +42,5 @@
   "dependencies": {
     "couchbase": "^2.6.10",
     "uuid": "^3.4.0"
-  },
-  "peerDependencies": {}
+  }
 }
