@@ -1,6 +1,6 @@
 {
   "name": "@harmonyjs/query",
-  "version": "2.0.0-rc.17",
+  "version": "2.0.0-rc2.0",
   "publishConfig": {
     "access": "public"
   },
@@ -42,5 +42,6 @@
   },
   "dependencies": {
     "@babel/runtime-corejs2": "^7.8.4"
-  }
+  },
+  "peerDependencies": {}
 }

@@ -1,6 +1,6 @@
 {
   "name": "@harmonyjs/controller-apollo",
-  "version": "1.0.0-rc.4",
+  "version": "1.0.0-rc2.0",
   "description": "Apollo controller for Harmony",
   "main": "index.js",
   "publishConfig": {
@@ -41,5 +41,7 @@
   "license": "ISC",
   "devDependencies": {
     "typescript": "^3.7.5"
-  }
+  },
+  "dependencies": {},
+  "peerDependencies": {}
 }

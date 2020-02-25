@@ -1,6 +1,6 @@
 {
   "name": "@harmonyjs/controller-spa",
-  "version": "1.0.0-rc.3",
+  "version": "1.0.0-rc2.0",
   "description": "Single Page Application controller for Harmony",
   "main": "index.js",
   "publishConfig": {
@@ -49,5 +49,6 @@
     "http-proxy": "^1.18.0",
     "react": "^16.12.0",
     "react-dom": "^16.12.0"
-  }
+  },
+  "peerDependencies": {}
 }
