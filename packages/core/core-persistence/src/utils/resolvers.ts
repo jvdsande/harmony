@@ -327,11 +327,6 @@ function makeReferenceResolver({
           const element = source && source[fieldName]
           const _id = (element && element._id) ? element._id : element
 
-          console.log({
-            __typename: model.schemas.main.graphqlName,
-            _id,
-          })
-
           return ({
             __typename: model.schemas.main.graphqlName,
             _id,

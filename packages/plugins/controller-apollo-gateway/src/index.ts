@@ -4,6 +4,27 @@ import { RouteOptions } from 'fastify'
 
 import { Controller } from '@harmonyjs/types-server'
 
+type ApolloGatewayExperimental = {
+  experimental_pollInterval?: number
+  experimental_didUpdateComposition?: (newServices : any[], oldServices: any[]) => void
+  logger: {
+    disableAll(arg: boolean): void
+  }
+  startPollingServices(): void
+}
+
+let gatewayReference : ApolloGateway|ApolloGatewayExperimental|null = null
+let firstComposition = true
+
+function didUpdateComposition(callback : () => void, serviceNumber : number) {
+  return function(services : any) {
+    if(services.serviceDefinitions.length === serviceNumber && !firstComposition) {
+      callback()
+    }
+    firstComposition = false
+  }
+}
+
 /*
  * The Apollo Controller exposes a GraphQL endpoint through an Apollo Server
  */
@@ -15,6 +36,8 @@ const ControllerApolloGateway : Controller<{
   gatewayConfig?: Omit<GatewayConfig, 'serviceList'|'buildService'>
   apolloConfig?: Omit<Config, 'gateway'|'playground'|'introspection'|'context'|'subscriptions'>
   routeConfig?: Omit<RouteOptions, 'auth'>
+
+  servicePoller?: () => void
 }> = function(config) {
   return ({
     name: 'ControllerApolloGateway',
@@ -32,7 +55,7 @@ const ControllerApolloGateway : Controller<{
 
       logger.info('Registering GraphQL Federation endpoint...')
 
-      const gateway = new ApolloGateway({
+      const gateway = gatewayReference as ApolloGateway || new ApolloGateway({
         ...(gatewayConfig || {}),
         serviceList: services,
         buildService({ url }) {
@@ -47,6 +70,24 @@ const ControllerApolloGateway : Controller<{
           })
         },
       })
+
+      if(config.servicePoller) {
+        if(!gatewayReference) {
+          logger.warn('Service polling enabled')
+          logger.warn('This is a development feature only. Do not use in production!')
+        }
+
+        firstComposition = true
+        gatewayReference = gateway as any as ApolloGatewayExperimental
+
+        gatewayReference.experimental_pollInterval = 1000
+        gatewayReference.logger.disableAll(true)
+        gatewayReference.startPollingServices()
+        gatewayReference.experimental_didUpdateComposition = didUpdateComposition(
+          config.servicePoller,
+          config.services.length,
+        )
+      }
 
       const apolloServer = new ApolloServer({
         ...(apolloConfig || {}),
