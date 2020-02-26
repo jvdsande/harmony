@@ -35,7 +35,11 @@
   "license": "ISC",
   "gitHead": "a896e4656e71ab6dc197b1b0f88ac1635582a459",
   "devDependencies": {
-    "typescript": "^3.7.5"
+    "typescript": "^3.7.5",
+    "@types/hapi__hapi": "^19.0.1",
+    "@hapi/hapi": "^19.1.0",
+    "@hapi/accept": "^5.0.1",
+    "@hapi/boom": "^9.0.0"
   },
   "dependencies": {
     "@apollographql/graphql-playground-html": "^1.6.24",
@@ -44,6 +48,8 @@
   },
   "peerDependencies": {
     "@hapi/hapi": "^19.1.0",
+    "@hapi/accept": "^5.0.1",
+    "@hapi/boom": "^9.0.0",
     "graphql": "^0.12.0 || ^0.13.0 || ^14.0.0"
   }
 }

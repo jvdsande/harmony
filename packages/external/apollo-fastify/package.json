@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@apollographql/graphql-playground-html": "^1.6.24",
-    "accept": "^3.1.3",
+    "accepts": "^1.3.7",
     "fast-json-stringify": "^1.16.4",
     "fastify-accepts": "^1.0.0",
     "fastify-cors": "^3.0.1",
