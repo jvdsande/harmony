@@ -1,5 +1,6 @@
 import { ApolloGateway, GatewayConfig, RemoteGraphQLDataSource, ServiceEndpointDefinition } from '@apollo/gateway'
 import { ApolloServer, Config } from '@harmonyjs/apollo-fastify'
+import { GraphQLRequest } from 'apollo-server-types'
 import { RouteOptions } from 'fastify'
 
 import { Controller } from '@harmonyjs/types-server'
@@ -61,11 +62,12 @@ const ControllerApolloGateway : Controller<{
         buildService({ url }) {
           return new RemoteGraphQLDataSource({
             url,
-            willSendRequest({ request, context }) {
-              // pass the user's id from the context to underlying services
-              // as a header called `user-id`
-              // @ts-ignore
-              // request.http.headers.set('authentication', context.authentication.get())
+            willSendRequest({ request, context } : { request: GraphQLRequest, context: Record<string, any>}) {
+              if(context.headers) {
+                Object.keys(context.headers).forEach(header => {
+                  request.http!.headers.set(header, context.headers[header])
+                })
+              }
             },
           })
         },
@@ -96,7 +98,7 @@ const ControllerApolloGateway : Controller<{
         introspection: !!enablePlayground,
         context: (request) => {
           return ({
-            authentication: request.authentication,
+            headers: request.headers,
           })
         },
         subscriptions: false,
