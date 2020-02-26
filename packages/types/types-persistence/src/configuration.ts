@@ -26,8 +26,8 @@ export type PersistenceInstance = {
 
   schema: string,
   controllers: {
-    ControllerGraphQL?: Controller<{ path: string, enablePlayground: boolean }>,
-    ControllerEvents?: Controller<void>,
+    ControllerGraphQL: Controller<{ path: string, enablePlayground: boolean }>,
+    ControllerEvents: Controller<void>,
   },
   resolvers: Record<string, ModelResolver>, // TODO create "Resolver" type
 
