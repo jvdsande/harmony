@@ -1,6 +1,6 @@
 {
   "name": "@harmonyjs/controller-apollo-gateway",
-  "version": "1.0.0-rc2.3",
+  "version": "1.0.0-rc2.4",
   "description": "Apollo Gateway controller for Harmony",
   "main": "index.js",
   "publishConfig": {
