@@ -57,7 +57,7 @@ export function createSocket({ logger, config, server } : CreateSocketArgs) {
     // @ts-ignore
     redisAdapter.prototype.on('error', (err) => {
       if (lastRedisError !== err.message) {
-        logger.info(err.message)
+        logger.error(err.message)
       }
       lastRedisError = err.message
     })
