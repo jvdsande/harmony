@@ -18,6 +18,9 @@ export type PersistenceConfig = {
 }
 
 export type ContextProvider = (request: FastifyRequest) => any
+export type PersistenceContext = {
+  [key: string]: any|ContextProvider,
+}
 
 export type PersistenceInstance = {
   configuration: PersistenceConfig,
@@ -25,9 +28,7 @@ export type PersistenceInstance = {
 
   models: SanitizedModel[],
   events: IEvents,
-  context: {
-    [key: string]: any|ContextProvider,
-  },
+  context: PersistenceContext,
 
   schema: string,
   controllers: {
