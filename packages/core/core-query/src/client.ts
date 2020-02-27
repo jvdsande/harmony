@@ -96,6 +96,7 @@ function ClientMaker() : IClient {
         })
     },
   }
+  const socketSubscriptions : {[key: string]: Function[]} = {}
 
   const instance : IClient = ({
     configure(config: ClientConfiguration) {
@@ -130,6 +131,14 @@ function ClientMaker() : IClient {
       }
 
       local.socket = SocketIO(socketUri, { path: socketPath })
+
+      // Restore subscriptions
+      Object.keys(socketSubscriptions)
+        .forEach((event) => {
+          socketSubscriptions[event].forEach((callback) => {
+            local.socket.on(event, callback)
+          })
+        })
 
       if (local.client) {
         if (clientsLifecycle.ongoingQueries[clientsLifecycle.current]) {
@@ -169,16 +178,20 @@ function ClientMaker() : IClient {
     },
 
     subscribe(event, callback) {
-      if (!local.socket) {
-        throw new Error('You must initialize the client before subscribing to anything. Use Client::configure')
+      if (local.socket) {
+        local.socket.on(event, callback)
       }
-      local.socket.on(event, callback)
+      socketSubscriptions[event] = socketSubscriptions[event] || []
+      socketSubscriptions[event].push(callback)
+      socketSubscriptions[event].filter((c, i, a) => a.indexOf(c) === i)
       return instance
     },
     unsubscribe(event, callback) {
-      if (!local.socket) {
-        throw new Error('You must initialize the client before subscribing to anything. Use Client::configure')
+      if (local.socket) {
+        local.socket.off(event, callback)
       }
+      socketSubscriptions[event] = socketSubscriptions[event] || []
+      socketSubscriptions[event].splice(socketSubscriptions[event].indexOf(callback), 1)
       local.socket.off(event, callback)
       return instance
     },
