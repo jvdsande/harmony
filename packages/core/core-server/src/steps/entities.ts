@@ -52,7 +52,16 @@ export function createSocket({ logger, config, server } : CreateSocketArgs) {
     }
 
     logger.info('Initializing Socket.IO Redis Adapter')
-    socket.adapter(IORedis(redis))
+    const redisAdapter = IORedis(redis)
+    let lastRedisError : string|null = null
+    // @ts-ignore
+    redisAdapter.prototype.on('error', (err) => {
+      if (lastRedisError !== err.message) {
+        logger.info(err.message)
+      }
+      lastRedisError = err.message
+    })
+    socket.adapter(redisAdapter)
   }
 
   return socket
