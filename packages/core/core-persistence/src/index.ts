@@ -40,6 +40,7 @@ export default function Persistence() {
     })
 
     // Finish preparing instance
+    instance.context = {}
     instance.schema = await defineSchema({ models: instance.models })
     instance.resolvers = await defineResolvers({
       models: instance.models,

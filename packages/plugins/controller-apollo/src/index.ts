@@ -53,10 +53,23 @@ const ControllerApollo : Controller<{
         introspection: !!enablePlayground,
         mocks: mock,
         mockEntireSchema: mock,
-        context: (request) => ({
-          ...(context || {}),
-          authentication: request.authentication,
-        }),
+        context: (request) => {
+          const reqContext : Record<string, any> = {
+            authentication: request.authentication
+          }
+
+          const objContext = context || {}
+
+          Object.keys(objContext).forEach(key => {
+            if(typeof objContext[key] === 'function') {
+              reqContext[key] = objContext[key](request)
+            } else {
+              reqContext[key] = objContext[key]
+            }
+          })
+
+          return reqContext
+        },
       })
 
       await server.register(apolloServer.createHandler({
