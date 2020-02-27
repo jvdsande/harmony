@@ -124,6 +124,11 @@ function ClientMaker() : IClient {
       const socketUri = hostPath + portPath
 
       local.fetchPolicy = fetchPolicy || 'network-only'
+
+      if (local.socket) {
+        local.socket.close()
+      }
+
       local.socket = SocketIO(socketUri, { path: socketPath })
 
       if (local.client) {
@@ -146,22 +151,34 @@ function ClientMaker() : IClient {
     },
 
     query(query) {
+      if (!local.client) {
+        throw new Error('You must initialize the client before accessing the server. Use Client::configure')
+      }
       return clientsLifecycle.run(local.client.query({
         query: Graphql((`{ ${transformJSQ(query)} }`)),
         fetchPolicy: local.fetchPolicy,
       }))
     },
     mutation(mutation) {
+      if (!local.client) {
+        throw new Error('You must initialize the client before accessing the server. Use Client::configure')
+      }
       return clientsLifecycle.run(local.client.mutate({
         mutation: Graphql((`mutation { ${transformJSQ(mutation)} }`)),
       }))
     },
 
     subscribe(event, callback) {
+      if (!local.socket) {
+        throw new Error('You must initialize the client before subscribing to anything. Use Client::configure')
+      }
       local.socket.on(event, callback)
       return instance
     },
     unsubscribe(event, callback) {
+      if (!local.socket) {
+        throw new Error('You must initialize the client before subscribing to anything. Use Client::configure')
+      }
       local.socket.off(event, callback)
       return instance
     },
@@ -170,8 +187,6 @@ function ClientMaker() : IClient {
       return Builder()
     },
   })
-
-  instance.configure({})
 
   return instance
 }
