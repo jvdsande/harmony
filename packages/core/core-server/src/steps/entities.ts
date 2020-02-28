@@ -61,6 +61,11 @@ export function createSocket({ logger, config, server } : CreateSocketArgs) {
       }
       lastRedisError = err.message
     })
+    redisAdapter.subClient.on('ready', () => {
+      logger.info('Socket.IO Redis Adapter connected')
+
+      lastRedisError = null
+    })
     socket.adapter(redisAdapter)
   }
 

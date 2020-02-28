@@ -60,5 +60,20 @@ export default function Server() : ServerInstance {
     }
   }
 
+  instance.close = async () => {
+    const inst = (instance as ServerInstance)
+    if (inst.configuration.cluster && inst.configuration.cluster.redis) {
+      // Close redis connection
+      inst.socket.adapter().pubClient.quit()
+      inst.socket.adapter().subClient.quit()
+    }
+
+    // Close Socket.IO connection
+    inst.socket.close()
+
+    // Close Fastify server
+    return inst.server.close()
+  }
+
   return instance as ServerInstance
 }
