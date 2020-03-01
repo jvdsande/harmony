@@ -1,8 +1,7 @@
 import { ILogger } from '@harmonyjs/logger'
 
-import {
-  ResolverContext, ResolverInfo, ResolverSource, SanitizedModel,
-} from 'model'
+import { ResolverContext, ResolverInfo, ResolverSource } from 'resolvers'
+import { SanitizedModel } from 'model'
 import { IEvents } from './events'
 
 

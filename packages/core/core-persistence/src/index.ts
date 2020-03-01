@@ -12,7 +12,8 @@ import EventsHandler from 'utils/events'
 // Export utility types and classes
 export { default as Types } from 'utils/types'
 export {
-  PropertyMode, Model, Computed, Scopes, Schema,
+  PersistenceConfig, PersistenceInstance, Adapter, IAdapter,
+  Model, Schema, Computed, Scopes, PropertyMode,
 } from '@harmonyjs/types-persistence'
 
 export default function Persistence() {

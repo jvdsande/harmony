@@ -1,7 +1,7 @@
 import {
   ClassicResolverFunction, IAdapter, IProperty, IPropertySchema, ModelResolver, ReferenceResolverFunction, Resolver,
   ResolverArgs, ResolverContext, ResolverEnum, ResolverFunction, ResolverInfo, ResolverResolvers, ResolverSource,
-  SanitizedModel,
+  SanitizedModel, Scope,
 } from '@harmonyjs/types-persistence'
 
 import { extractModelType } from 'utils/property/utils'
@@ -270,13 +270,13 @@ export function getResolvers({
 function makeResolver({
   adapter, model, type, scope,
 } : {
-  adapter?: IAdapter, model: SanitizedModel, type: ResolverEnum, scope?: Function
+  adapter?: IAdapter, model: SanitizedModel, type: ResolverEnum, scope?: Scope,
 }) : ClassicResolverFunction {
   if (!adapter) {
     return () => null
   }
 
-  return ({
+  return async ({
     source, args, context, info,
   } : {
     source?: ResolverSource,
@@ -290,7 +290,7 @@ function makeResolver({
 
     return adapter[type]({
       source,
-      args: ((scope && scope(args)) || args) as any,
+      args: ((scope && (await scope({ args, context }))) || args) as any,
       context,
       info: info || {} as ResolverInfo,
       model,

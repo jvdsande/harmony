@@ -1,13 +1,13 @@
 /* eslint-disable no-use-before-define */
 import {
   IProperty, IPropertyArray, IPropertySchema,
-  Schema, SchemaLike, SchemaLikeValue,
+  Schema, SchemaDescription, SchemaField,
 } from '@harmonyjs/types-persistence'
 
 import PropertyFactory from 'utils/property/factory'
 
-// Get a Schema-like value, turn it into a proper Property
-export function sanitizeSchemaLikeValue({ schema, name } : { schema: SchemaLikeValue, name: string }) : IProperty {
+// Get a Schema compatible field, turn it into a proper Property
+export function sanitizeSchemaField({ schema, name } : { schema: SchemaField, name: string }) : IProperty {
   // Here, we can have as value :
   // - another array, which needs to be sanitized to an IPropertyArray
   // - an object, which needs to be sanitized to an IPropertySchema
@@ -21,7 +21,7 @@ export function sanitizeSchemaLikeValue({ schema, name } : { schema: SchemaLikeV
   // Check if we are dealing with an object
   if (!schema.type || (typeof schema.type !== 'string')) {
     // If the "type" does not exist or is not a string, then this is a plain object that needs sanitizing
-    return sanitizeSchema({ schema: schema as SchemaLike, name })
+    return sanitizeSchema({ schema: schema as SchemaDescription, name })
   }
 
   // Else we are dealing with a correct IProperty, so we keep it as-is
@@ -29,8 +29,8 @@ export function sanitizeSchemaLikeValue({ schema, name } : { schema: SchemaLikeV
 }
 
 // Get a SchemaLikeValue, turn it into a proper Property and wrap it in an Array
-export function sanitizeArray({ name, of } : { name: string, of: SchemaLikeValue }) {
-  const sanitizedOf : IProperty = sanitizeSchemaLikeValue({ schema: of, name: '' })
+export function sanitizeArray({ name, of } : { name: string, of: SchemaField }) {
+  const sanitizedOf : IProperty = sanitizeSchemaField({ schema: of, name: '' })
   const sanitizedArray : IPropertyArray = PropertyFactory({ type: 'array', name, of: sanitizedOf })
 
   sanitizedOf.name = ''
@@ -56,10 +56,10 @@ export function sanitizeSchema({ schema, name } : { schema: Schema, name: string
   const sanitized : {[key: string]: IProperty} = {}
   const sanitizedProperty = PropertyFactory({ type: 'schema', name, of: sanitized })
 
-  const fields : SchemaLike = schema as SchemaLike
+  const fields : SchemaDescription = schema as SchemaDescription
 
   Object.keys(fields).forEach((key) => {
-    sanitized[key] = sanitizeSchemaLikeValue({ schema: fields[key], name: key })
+    sanitized[key] = sanitizeSchemaField({ schema: fields[key], name: key })
   })
 
   return sanitizeSchema({ schema: sanitizedProperty, name })

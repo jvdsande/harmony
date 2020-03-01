@@ -14,6 +14,10 @@ import {
   logBanner, registerControllers, separateUpgradeListeners, startListening,
 } from 'steps/launch'
 
+export {
+  ServerConfig, ServerInstance, Controller, IController,
+} from '@harmonyjs/types-server'
+
 export default function Server() : ServerInstance {
   // Create an instance
   const instance : Partial<ServerInstance> = {}

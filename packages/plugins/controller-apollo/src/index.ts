@@ -1,4 +1,5 @@
 import { ApolloServer, gql, Config } from '@harmonyjs/apollo-fastify'
+import { PersistenceContext } from '@harmonyjs/types-persistence'
 import { RouteOptions } from 'fastify'
 
 import { buildFederatedSchema } from '@apollo/federation'
@@ -18,9 +19,7 @@ const ControllerApollo : Controller<{
     [key: string]: any
   },
 
-  context?: {
-    [key: string]: any
-  },
+  context?: PersistenceContext,
 
   apolloConfig?: Omit<Config, 'schema'|'playground'|'introspection'|'mocks'|'mockEntireSchema'|'context'>
   routeConfig?: Omit<RouteOptions, 'auth'>
@@ -62,7 +61,7 @@ const ControllerApollo : Controller<{
 
           Object.keys(objContext).forEach(key => {
             if(typeof objContext[key] === 'function') {
-              reqContext[key] = objContext[key](request)
+              reqContext[key] = (objContext[key] as Function)(request)
             } else {
               reqContext[key] = objContext[key]
             }

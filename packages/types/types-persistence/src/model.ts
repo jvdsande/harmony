@@ -1,33 +1,16 @@
-import { GraphQLResolveInfo } from 'graphql'
 import { IProperty, IPropertySchema, PropertyMode } from 'property'
+import { Resolver, ResolverEnum } from 'resolvers'
 
-export type SchemaLikeValue = IProperty | SchemaLike | SchemaLikeValue[]
-export type SchemaLike = { [key: string]: SchemaLikeValue }
-export type Schema = SchemaLike | IPropertySchema
-
-export type ResolverEnum = 'read'|'readMany'|'count'|'create'|'createMany'|'update'|'updateMany'|'delete'|'deleteMany'
-export type AliasedResolverEnum = ResolverEnum|'get'|'list'|'edit'
-
-export type ResolverArgs = Record<string, any>
-export type ResolverSource = Record<string, any>
-export type ResolverResolvers = Record<string, Record<ResolverEnum, (arg: any) => Promise<any>>>
-export type ResolverContext = Record<string, any>
-export type ResolverInfo = GraphQLResolveInfo
-
-export type Resolver = (arg: {
-  args: ResolverArgs,
-  source: ResolverSource,
-  resolvers: ResolverResolvers,
-  context: ResolverContext,
-  info: ResolverInfo
-}) => Promise<any>
+export type SchemaField = IProperty | SchemaDescription | [SchemaField]
+export type SchemaDescription = { [key: string]: SchemaField }
+export type Schema = SchemaDescription | IPropertySchema
 
 type FieldBase = {
   resolve?: Resolver
 }
 
 export type Field = FieldBase & {
-  type: SchemaLikeValue,
+  type: SchemaField,
   args?: Schema,
   mode?: PropertyMode | PropertyMode[]
 }
@@ -48,13 +31,13 @@ export type Fields = Record<string, Field>
 export type ExtendableFields = Record<string, ExtendableField>
 export type Resolvers = Record<string, Resolver>
 
-type Scope = (arg: ScopeParams) => Record<string, any>|undefined
-export type Scopes = Record<ResolverEnum, Scope>
-
 type ScopeParams = {
-  args: Record<string, any>
-  context: Record<string, any>
+  args?: Record<string, any>
+  context?: Record<string, any>
 }
+export type Scope = (arg: ScopeParams) => Promise<Record<string, any>|undefined>
+export type Scopes = Partial<Record<ResolverEnum, Scope>>
+
 
 export type Computed = {
   fields?: Fields,

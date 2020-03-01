@@ -10,7 +10,7 @@ import Types from 'utils/types'
 
 import PropertyFactory from 'utils/property/factory'
 import { extractModelType, wrap } from 'utils/property/utils'
-import { sanitizeSchemaLikeValue, sanitizeSchema } from 'utils/property/sanitation'
+import { sanitizeSchemaField, sanitizeSchema } from 'utils/property/sanitation'
 
 function extendField(field: ExtendableField, modelName: string): IProperty|undefined {
   switch (field.extends) {
@@ -157,7 +157,7 @@ function extractRootSchema({
         schema[queryName] = extended
       }
     } else {
-      const property = sanitizeSchemaLikeValue({ schema: field.type, name: queryName })
+      const property = sanitizeSchemaField({ schema: field.type, name: queryName })
 
       property.mode = wrap(field.mode)
       if (field.args) {

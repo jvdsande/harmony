@@ -6,44 +6,17 @@ menu: API
 
 # HarmonyJS Server
 
-`@harmonyjs/server` handles the creation and runtime of a Node webserver. Under the hood, it uses HapiJS, but there is no
-need to know HapiJS in order to start using HarmonyJS.
+`@harmonyjs/server` handles the creation and runtime of a Node webserver. Under the hood, it uses Fastify, but there is no
+need to know Fastify in order to start using HarmonyJS.
 
-_**Note:** [HapiJS](https://hapi.dev/) knowledge is necessary to write your own [Controller Plugins](/plugins/controllers)_
+_**Note:** [Fastify](https://www.fastify.io/docs/latest/Getting-Started/) knowledge is necessary to write your own [Controller Plugins](/plugins/controllers)_
 
-## `Server`
 
-`@harmonyjs/server` only exports one element, its default export: the `Server` constructor.
+## Default export
 
-This constructor allows us to create a `Server` instance, which can be configured to expose our application's webserver.
-A `Server` instance only has two publicly available methods: the constructor itself, and a `start` function.
+`@harmonyjs/server` only exports one JavaScript element, its default export: the `Server() : ServerInstance` factory.
 
-### `Server::new(`[`ServerConfig`](#serverconfig)`: config): Server`
-
-Constructor to create a new `Server` instance. It takes a [`ServerConfig`](#serverconfig) object as parameter
-to configure the instance.
-
-No further initialization steps are executed. To launch the server, use the `Server::start` method.
-
-<b style={{display: "block", marginBottom: "-1.5rem" }}>Sample usage</b>
-
-```js
-import Server from '@harmonyjs/server'
-
-// Initialize a new Server instance
-const server = new Server({
-    endpoint: {
-        host: '0.0.0.0',
-        port: 80,
-    },
-})
-```
-
-### `Server::start(): Promise<boolean>`
-
-Initialization function launching the webserver.
-
-This function returns a `Promise` which resolves when the server is done loading.
+This factory allows us to create a [`ServerInstance`](#serverinstance) object, which can be configured to expose our application's webserver.
 
 <b style={{display: "block", marginBottom: "-1.5rem" }}>Sample usage</b>
 
@@ -51,19 +24,19 @@ This function returns a `Promise` which resolves when the server is done loading
 import Server from '@harmonyjs/server'
 
 async function run() {
-    // Initialize a new Server instance
-    const server = new Server({
-        endpoint: {
-            host: '0.0.0.0',
-            port: 80,
-        },
-    })
+    // Create a new Server instance
+    const server = Server()
 
     console.log('Launching the server...')
 
     // Start our server
     try {
-        await server.start()
+        await server.initialize({
+            endpoint: {
+                host: '0.0.0.0',
+                port: 80,
+            },
+        })
 
         console.log('Server launched!')
     }
@@ -76,76 +49,67 @@ async function run() {
 run()
 ```
 
-## `ServerConfig`
+## Exported types
+
+Here is the list of all types exported by the `@harmonyjs/server` package, related to the server instance itself.
+
+`@harmonyjs/server` also export types related to [Controllers](/plugins/controllers), but those are described in the Controllers documentation.
+
+### `ServerConfig`
 
 The `ServerConfig` object allows us to configure the server before running it. Here are the available options:
-
 ```ts
 type ServerConfig = {
-  endpoint?: {
-    host: string,
-    port: number,
-  },
+  endpoint: {
+    host: string
+    port: number
+  }
   authentication?: {
-    secret: string,
-    validate?: (any) => Promise<boolean>,
-  },
+    secret: string
+  }
   cluster?: {
-    forks?: {
-      size?: number,
-      header?: string,
-      proxy?: boolean,
-    },
-    redis: boolean | {
-      key?: string,
-      host?: string,
-      port?: number,
-    },
-  },
-  controllers?: Controller[],
-  log?: LogConfig,
+    redis: {
+      key?: string
+      host?: string
+      port?: number
+    }
+  }
+  controllers: IController[]
+  log: LoggerConfig
 }
 ```
+> Jump to:
+[IController](/plugins/controllers#icontroller),
+[LoggerConfig](/api/utils#loggerconfig)
 
-### `ServerConfig::endpoint`
+#### `ServerConfig::endpoint`
 
-The optional endpoint field allows us to choose the host and port to run or server on. Omitting this field will launch
+The endpoint field allows to choose the host and port to run the server on. Omitting this field will launch
 a server on `localhost:3000` by default.
 
 This field takes two subfields, `endpoint.host` and `endpoint.port`
 
-### `ServerConfig::authentication`
+To expose the server to the outside world, for instance when running inside Docker, `endpoint.host` should be set
+to `'0.0.0.0'`
 
-This optional field handles the built-in JWT-authentication scheme. It has two subfields: `authentication.secret`, the
-secret to use to sign the JWT tokens emitted from the application, and `authentication.validate`, an optional function
-which receives the decoded token before each requests and returns a `Promise` resolving to `true` or `false` to indicate
-whether the token is considered valid or not.
+#### `ServerConfig::authentication`
 
-_**Note:** the `validate` function is the responsibility of the application and arrives_ after _the signature check_
+This optional field handles the built-in JWT-authentication scheme. It allows to set the `secret`, which is used
+to sign the JWT tokens emitted from the application.
 
-### `ServerConfig::cluster`
+#### `ServerConfig::cluster`
 
-The cluster configuration define how the app should handle replication, either locally using Node's forking system, or
-across multiple machines such as in a Kubernetes environment.
+The cluster configuration define how the app should handle replication, such as in a Kubernetes environment.
 
-#### `ServerConfig::cluster::forks`
+The main point configured is the replication of Socket.IO connections used by the framework. The `cluster` configuration entry
+allows to configure the adapter to use for replication. As of now, only a Redis adapter has been implemented, so the only
+available field is `cluster.redis`
 
-The `cluster.forks` subfield allows to configure how our application should split across multiple forks.
+##### `ServerConfig::cluster::redis`
 
-Under the hood, HarmonyJS uses Socket.IO for client->server communication. Forks parameters allow to insure a socket connection
-is always forwarded to the correct server.
+Configure the Redis adapter used for handling replication.
 
-It takes three optional parameters:
-
-- `size`: the number of instances to run. If lower than 2, then no forks are created. Defaults to `1`.
-- `header`: the header containing the real user IP address. Useful if used behind a proxy. Defaults to `'x-forwarded-for'`.
-- `proxy`: tells if the application is running behind a proxy. Defaults to `false`.
-
-#### `ServerConfig::cluster::redis`
-
-The `cluster.redis` subfield allows to configure our application for working on a clustered environment, such as Kubernetes.
-
-Under the hood, HarmonyJS uses Socket.IO for client->server communication. Redis parameters allow to insure that messages
+Under the hood, HarmonyJS uses Socket.IO for client->server communication. The Redis adapter allows to insure that messages
 are spread to all clients, whichever the emitting server, and vice-versa.
 
 It takes three optional parameters:
@@ -155,13 +119,70 @@ Use this key if you intend to run multiple HarmonyJS applications on the same cl
 - `host`: the hostname on which to access the Redis server. Defaults to `'localhost'`.
 - `port`: the port on which the Redis server is running. Defaults to `6379`.
 
-### `ServerConfig::controllers`
+#### `ServerConfig::controllers`
 
 The controllers array contains a list of Controllers. Controllers are HarmonyJS plugins allowing to describe how to handle
 specific routes, such as serving a static directory, routing to an SPA or exposing a GraphQL endpoint.
 
 To find more information about Controllers, refer to [their documentation](/plugins/controllers).
 
-### `ServerConfig::log`
+#### `ServerConfig::log`
 
-Configuration of the way the server instance logs its actions. Refer to the [Log util documentation](/api/utils#logconfig)
+Configuration of the way the server instance logs its actions. Refer to the [Log util documentation](/api/utils#loggerconfig)
+
+
+### `ServerInstance`
+
+The `ServerInstance` type represents the object returned when instantiating an `@harmonyjs/server`. It mostly exposes
+lifecycle functions, as well as underlying elements such as the Fastify server for advanced customization.
+
+```ts
+type ServerInstance = {
+  configuration: ServerConfig
+  logger: ILogger
+
+  server: FastifyInstance
+  socket: SocketIO.Server
+
+  initialize(configuration: Partial<ServerConfig>): Promise<void>
+  close(): Promise<void>
+}
+```
+> Jump to:
+[ServerConfig](#serverconfig),
+[ILogger](/api/utils#ilooger),
+[FastifyInstance](https://www.fastify.io/docs/latest/Server/#server-methods),
+[SocketIO.Server](https://socket.io/docs/server-api/)
+
+#### `ServerInstance::configuration`
+
+Expose the currently applied configuration, which is the result of a merge between the configuration passed during initialization,
+and the default configuration.
+
+#### `ServerInstance::logger`
+
+Expose the underlying logger, in order to be able to add custom logs using the Server namespace.
+
+#### `ServerInstance::server`
+
+Expose the underlying Fastify instance, of needed for advanced customization.
+
+#### `ServerInstance::socket`
+
+Expose the underlying Scoket.IO instance, of needed for advanced customization.
+
+#### `ServerInstance::initialize`
+
+Function accepting a ServerConfig object and launching the server instance with the given configuration.
+
+The function actually takes a Partial representation of a ServerConfig object, meaning that each field is optional.
+Non-provided mandatory fields will be filled with sensible default values.
+
+Returns a Promise resolving once everything has finished booting.
+
+#### `ServerInstance::close`
+
+Function for cleanly closing all the components of the server instance.
+
+Returns a Promise resolving once everything has finished closing.
+

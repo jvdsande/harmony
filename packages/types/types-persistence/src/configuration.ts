@@ -17,9 +17,11 @@ export type PersistenceConfig = {
   strict: boolean,
 }
 
-export type ContextProvider = (request: FastifyRequest) => any
+type PersistenceContextValue =
+  string | number | boolean | null | { [key: string]: PersistenceContextValue } | PersistenceContextValue[]
+
 export type PersistenceContext = {
-  [key: string]: any|ContextProvider,
+  [key: string]: PersistenceContextValue | ((request: FastifyRequest) => any),
 }
 
 export type PersistenceInstance = {

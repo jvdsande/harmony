@@ -1,5 +1,5 @@
 /* Factories for building Properties, externally called "Types" */
-import { Model, Schema, SchemaLikeValue } from '@harmonyjs/types-persistence'
+import { Model, Schema, SchemaField } from '@harmonyjs/types-persistence'
 
 import PropertyFactory from 'utils/property/factory'
 import { sanitizeSchema, sanitizeArray } from 'utils/property/sanitation'
@@ -59,7 +59,7 @@ const Types = {
   },
   get Array() {
     return {
-      of: (schema: SchemaLikeValue) => sanitizeArray({ name: '', of: schema }),
+      of: (schema: SchemaField) => sanitizeArray({ name: '', of: schema }),
     }
   },
 }
