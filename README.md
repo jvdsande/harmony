@@ -2,4 +2,4 @@
 
 WIP.
 
-A preliminary documentation can be found at https://harmonyjs.surge.sh
+A preliminary documentation can be found at https://harmonyjs.io/
