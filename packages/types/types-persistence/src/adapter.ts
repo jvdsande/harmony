@@ -81,4 +81,4 @@ export interface IAdapter {
   deleteMany(args : DeleteManyResolverArgs) : Promise<Entity[]>,
 }
 
-export type Adapter<T = void> = ((args: T) => IAdapter)
+export type Adapter<T = void, U = {}> = ((args: T) => IAdapter & U)

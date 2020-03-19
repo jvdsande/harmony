@@ -15,20 +15,23 @@ Mongoose.Promise = global.Promise
 
 type LocalVariables = {
   logger: ILogger,
-  models: Record<string, Mongoose.Model<any>>,
   schemas: Record<string, IPropertySchema>,
   externals: Record<string, boolean>
 }
 
-const AdapterMongoose : Adapter<AdapterMongooseConfiguration> = function AdapterMongoose(config) {
+type ExposedVariables = {
+  models: Record<string, Mongoose.Model<any>>
+}
+
+const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> = function AdapterMongoose(config) {
   const local : LocalVariables = {
-    models: {},
     schemas: {},
     externals: {},
   } as LocalVariables
 
-  const instance : IAdapter = ({
+  const instance : IAdapter & ExposedVariables = ({
     name: 'AdapterMongoose',
+    models: {},
 
     async initialize({ models, events, logger } : {
       models: SanitizedModel[],
@@ -89,7 +92,7 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration> = function Adapter
 
       // Convert Mongoose Schemas to Mongoose models
       models.forEach((model) => {
-        local.models[model.name] = Mongoose.model(model.name, schemas[model.name])
+        instance.models[model.name] = Mongoose.model(model.name, schemas[model.name])
       })
 
       const connectToMongo = () => {
@@ -151,7 +154,7 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration> = function Adapter
         return source[fieldName]
       }
 
-      const mongooseModel = local.models[model.name]
+      const mongooseModel = instance.models[model.name]
       return mongooseModel.findOne({ [foreignFieldName]: source[fieldName] }).lean()
     },
 
@@ -174,7 +177,7 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration> = function Adapter
         }
       }
 
-      const mongooseModel = local.models[model.name]
+      const mongooseModel = instance.models[model.name]
       return mongooseModel.find({ [foreignFieldName]: { $in: source[fieldName] } }).lean()
     },
 
@@ -183,7 +186,7 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration> = function Adapter
     async read({
       args, info, model,
     }) {
-      const mongooseModel = local.models[model.name]
+      const mongooseModel = instance.models[model.name]
       const harmonyModel = local.schemas[model.name]
 
       // TODO add sort support
@@ -201,7 +204,7 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration> = function Adapter
     async readMany({
       args, info, model,
     }) {
-      const mongooseModel = local.models[model.name]
+      const mongooseModel = instance.models[model.name]
       const harmonyModel = local.schemas[model.name]
 
       // TODO add sort support
@@ -220,7 +223,7 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration> = function Adapter
     async count({
       args, model,
     }) {
-      const mongooseModel = local.models[model.name]
+      const mongooseModel = instance.models[model.name]
 
       return mongooseModel.countDocuments(sanitizeFilter(args.filter))
     },
@@ -230,7 +233,7 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration> = function Adapter
     async create({
       args, info, model,
     }) {
-      const mongooseModel = local.models[model.name]
+      const mongooseModel = instance.models[model.name]
       const harmonyModel = local.schemas[model.name]
 
       return buildPopulatedQuery({
@@ -264,7 +267,7 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration> = function Adapter
     async update({
       args, info, model,
     }) {
-      const mongooseModel = local.models[model.name]
+      const mongooseModel = instance.models[model.name]
       const harmonyModel = local.schemas[model.name]
 
       return buildPopulatedQuery({
@@ -302,7 +305,7 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration> = function Adapter
     async delete({
       args, info, model,
     }) {
-      const mongooseModel = local.models[model.name]
+      const mongooseModel = instance.models[model.name]
       const harmonyModel = local.schemas[model.name]
 
       return buildPopulatedQuery({
