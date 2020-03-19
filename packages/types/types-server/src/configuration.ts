@@ -11,8 +11,11 @@ export type ServerConfig = {
     port: number,
   },
   controllers: IController[],
-  authentication?: {
+  authentication: {
     secret: string,
+  },
+  socket: {
+    path: string,
   },
   cluster?: {
     redis: {

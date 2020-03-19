@@ -7,6 +7,7 @@ export type QueryArgs = {
 }
 
 export type QueryField = {
+  alias?: string,
   args?: QueryArgs,
   select?: QuerySelect,
 }

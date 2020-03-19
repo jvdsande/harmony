@@ -64,9 +64,12 @@ type ServerConfig = {
     host: string
     port: number
   }
-  authentication?: {
+  authentication: {
     secret: string
   }
+  socket: {
+    path: string
+  },
   cluster?: {
     redis: {
       key?: string
@@ -80,7 +83,7 @@ type ServerConfig = {
 ```
 > Jump to:
 [IController](/plugins/controllers#icontroller),
-[LoggerConfig](/api/utils#loggerconfig)
+[LoggerConfig](/api/logger#loggerconfig)
 
 #### `ServerConfig::endpoint`
 
@@ -96,6 +99,10 @@ to `'0.0.0.0'`
 
 This optional field handles the built-in JWT-authentication scheme. It allows to set the `secret`, which is used
 to sign the JWT tokens emitted from the application.
+
+#### `ServerConfig::socket`
+
+Field configuring the Socket.IO instance. The only available parameter is the `path` on which Socket.IO will connect. Defaults to `'/harmonyjs-socket'`
 
 #### `ServerConfig::cluster`
 
@@ -128,7 +135,7 @@ To find more information about Controllers, refer to [their documentation](/plug
 
 #### `ServerConfig::log`
 
-Configuration of the way the server instance logs its actions. Refer to the [Log util documentation](/api/utils#loggerconfig)
+Configuration of the way the server instance logs its actions. Refer to the [Log util documentation](/api/logger#loggerconfig)
 
 
 ### `ServerInstance`
@@ -150,7 +157,7 @@ type ServerInstance = {
 ```
 > Jump to:
 [ServerConfig](#serverconfig),
-[ILogger](/api/utils#ilooger),
+[ILogger](/api/logger#ilogger),
 [FastifyInstance](https://www.fastify.io/docs/latest/Server/#server-methods),
 [SocketIO.Server](https://socket.io/docs/server-api/)
 

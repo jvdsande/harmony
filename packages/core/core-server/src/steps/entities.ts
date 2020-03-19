@@ -38,8 +38,9 @@ export function createSocket({ logger, config, server } : CreateSocketArgs) {
   const socket = IO(
     server.server,
     {
-      path: '/harmonyjs-socket',
+      path: config.socket.path,
       serveClient: false,
+      cookie: false,
     },
   )
 

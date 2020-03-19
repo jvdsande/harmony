@@ -62,6 +62,11 @@ const Types = {
       of: (schema: SchemaField) => sanitizeArray({ name: '', of: schema }),
     }
   },
+  get Raw() {
+    return {
+      of: (type: string) => PropertyFactory({ type: 'raw', name: type, of: type }),
+    }
+  },
 }
 
 export default Types

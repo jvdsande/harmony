@@ -18,7 +18,7 @@ const transformJSQ = (q: QueryDefinition, noWrap: boolean = false) => {
     .forEach(([name, content]) => {
       if (
         typeof content === 'boolean'
-        || Object.keys(content).filter((k) => !['args', 'select'].includes(k)).length
+        || Object.keys(content).filter((k) => !['args', 'select', 'alias'].includes(k)).length
         || Object.keys(content).includes('__args')
       ) {
         query[name] = content
@@ -26,31 +26,38 @@ const transformJSQ = (q: QueryDefinition, noWrap: boolean = false) => {
         query[name] = content
       } else if (content.select && typeof content.select !== 'object') {
         query[name] = content
+      } else if (content.alias && typeof content.alias !== 'object') {
+        query[name] = content
       } else {
-        query[name] = {}
+        const aliased = content.alias || name
+        query[aliased] = {}
+
+        if (content.alias) {
+          query[aliased].__aliasFor = name
+        }
 
         if (content.args) {
-          query[name].__args = content.args
-          Object.keys(query[name].__args)
+          query[aliased].__args = content.args
+          Object.keys(query[aliased].__args)
             .forEach((key) => {
-              if (query[name].__args[key] === undefined) {
-                delete query[name].__args[key]
+              if (query[aliased].__args[key] === undefined) {
+                delete query[aliased].__args[key]
               }
             })
 
-          if (Object.keys(query[name].__args).length < 1) {
-            delete query[name].__args
+          if (Object.keys(query[aliased].__args).length < 1) {
+            delete query[aliased].__args
           }
         }
 
         if (content.select) {
           Object.keys(content.select)
             .forEach((key) => {
-              query[name][key] = transformJSQ(content.select![key] as QueryDefinition, true)
-              Object.keys(query[name][key])
+              query[aliased][key] = transformJSQ(content.select![key] as QueryDefinition, true)
+              Object.keys(query[aliased][key])
                 .forEach((k) => {
-                  if (query[name][key][k] === undefined) {
-                    delete query[name][key][k]
+                  if (query[aliased][key][k] === undefined) {
+                    delete query[aliased][key][k]
                   }
                 })
             })
@@ -99,7 +106,7 @@ function ClientMaker() : IClient {
   const socketSubscriptions : {[key: string]: Function[]} = {}
 
   const instance : IClient = ({
-    configure(config: ClientConfiguration) {
+    configure(config?: ClientConfiguration) {
       const {
         endpoint, path, token, fetchPolicy,
       } = config || {}
@@ -181,23 +188,33 @@ function ClientMaker() : IClient {
       if (local.socket) {
         local.socket.on(event, callback)
       }
+
       socketSubscriptions[event] = socketSubscriptions[event] || []
-      socketSubscriptions[event].push(callback)
-      socketSubscriptions[event].filter((c, i, a) => a.indexOf(c) === i)
+      if (!socketSubscriptions[event].includes(callback)) {
+        socketSubscriptions[event].push(callback)
+      }
+
       return instance
     },
     unsubscribe(event, callback) {
       if (local.socket) {
         local.socket.off(event, callback)
       }
+
       socketSubscriptions[event] = socketSubscriptions[event] || []
-      socketSubscriptions[event].splice(socketSubscriptions[event].indexOf(callback), 1)
-      local.socket.off(event, callback)
+      if (socketSubscriptions[event].includes(callback)) {
+        socketSubscriptions[event].splice(socketSubscriptions[event].indexOf(callback), 1)
+      }
+
       return instance
     },
 
     get builder() {
-      return Builder()
+      return Builder(instance)
+    },
+
+    get fork() {
+      return ClientMaker()
     },
   })
 

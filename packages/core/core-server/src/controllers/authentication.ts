@@ -24,7 +24,12 @@ const ControllerAuthentication : Controller<AuthenticationConfig> = (configurati
     server,
     logger,
   }) {
-    const secret = configuration ? configuration.secret : 'harmony'
+    const { secret } = configuration
+
+    if (secret === 'harmony') {
+      logger.warn('Please avoid using the default secret for authentication.')
+      logger.warn('Provide your own secret through ServerConfig::authentication::secret')
+    }
 
     await server.register(FastifyJWT, {
       secret,

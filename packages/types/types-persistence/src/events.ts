@@ -1,12 +1,11 @@
 import { SanitizedModel } from 'model'
 
 export interface IEvents {
-  subscriptions : {
-    updated: ((args: { document: any, model: SanitizedModel }) => void)[]
-    removed: ((args: { document: any, model: SanitizedModel }) => void)[]
-  }
+  on(event : string, callback : (args: { document: any, model: SanitizedModel }) => void): void
 
-  on(event : 'updated'|'removed', callback : (args: { document: any, model: SanitizedModel }) => void): void
+  off(event : string, callback : (args: { document: any, model: SanitizedModel }) => void): void
+
+  emit({ event, payload } : { event: string, payload: any }): void
 
   updated({ document, model } : { document: any, model: SanitizedModel }): void
 

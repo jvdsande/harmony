@@ -23,4 +23,5 @@ export interface IClient {
   unsubscribe(event: string, callback: Function): this
 
   builder: IQueryBuilder
+  fork: IClient
 }

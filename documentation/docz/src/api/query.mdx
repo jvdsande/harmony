@@ -1,0 +1,272 @@
+---
+name: "@harmonyjs/query"
+route: /api/query
+menu: API
+---
+
+# HarmonyJS Query
+
+`@harmonyjs/query` is a helper for building frontend backed by an HarmonyJS server. It handles creating and running
+GraphQL queries through simple-to-use builders, as well as subscribing to Socket.IO events for reactivity.
+
+## Default export
+
+The default export from `@harmonyjs/query` is a ready-to-use instance of [`IClient`](#iclient). This instance exposes functions
+to build low-level GraphQL queries and Socket.IO subscriptions, as well as builders for simpler queries and mutations.
+
+It is also possible to fork the instance through the [`IClient::instance`](#iclientinstance) getter, in order to handle multiple
+backend connections at the same time
+
+<b style={{display: "block", marginBottom: "-1.5rem" }}>Sample usage</b>
+
+```js
+import Client from '@harmonyjs/query'
+
+// Connect the shared instance
+Client.configure({
+    token: `user-jwt-token`,
+    endpoint: {
+        host: 'localhost',
+        port: 3000,
+    },
+    path: {
+        graphql: '/graphql',
+        socket: '/harmonyjs-socket',
+    }
+})
+
+// Run a low-level GraphQL query
+Client.query({
+    modelList: {
+        args: {},
+        select: { _id: true },
+    }
+})
+    .then((result) => {
+        // As this was a classic GraphQL query, the result is nested in `modelList`. We could have launched multiple queries in the same request.
+        console.log(result.modelList)
+    })
+
+// Use a builder for more readable syntax
+Client.builder
+    .withName('modelList')
+    .withArgs({})
+    .withSelection({
+        _id: true,
+    })
+    .asQuery()
+    .then((result) => {
+        // Using IQueryBuilder::asQuery, the unique query is automatically unwrapped and passed as result, no need to access nested field
+        console.log(result)
+    })
+```
+
+## Other exports
+
+`@harmonyjs/query` also exports another helper, even higher-level than `IClient::builder`: the `Accessor(): IAccessor` factory.
+
+### `Accessor`
+
+`Accessor` allows the creation of a high-level builder dedicated to building CRUD operations on a specific model. It also allows
+subscriptions for the built queries, directly connected to Socket.IO model-update events.
+
+Checkout the [`IAccessor`](#iaccessor) type definition for a full list of available builders.
+
+<b style={{display: "block", marginBottom: "-1.5rem" }}>Sample usage</b>
+
+```js
+import { Accessor } from '@harmonyjs/query'
+
+// Using the default Client exported by `@harmonyjs/query`
+const ModelAccessor = Accessor('model')
+
+ModelAccessor.query
+    .list
+    .select({
+        _id: true
+    })
+    .then((result) => {
+        // As with IClient::builder, results are automatically unwrapped
+        console.log(result)
+    })
+
+// Using a custom IClient instance
+const ModelAccessorCustomClient = Accessor('model', customClient)
+```
+
+
+## Referenced types
+
+### `IClient`
+
+The `IClient` type is the type of the default `@harmonyjs/query` export as well as instances forked through the `IClient::instance`
+function.
+
+```ts
+interface IClient {
+  configure(configuration: ClientConfiguration): this
+
+  query(query: QueryDefinition): Promise<Record<string, any>>
+  mutation(mutation: QueryDefinition): Promise<Record<string, any>>
+
+  subscribe(event: string, callback: Function): this
+  unsubscribe(event: string, callback: Function): this
+
+  builder: IQueryBuilder
+  fork: IClient
+}
+```
+> Jump to:
+[ClientConfiguration](#clientconfiguration),
+[QueryDefinition](#querydefinition),
+[IQueryBuilder](#iquerybuilder)
+
+#### `IClient::configure`
+
+Function initializing the client instance. This must be called at least once before trying to run a query. It can be called multiple times, for
+updating the instance's configuration. See [`ClientConfiguration`](#clientconfiguration) for options available.
+
+#### `IClient::query`
+
+Lowest-level query function, executes the given GraphQL query. GraphQL queries are constructed in JS using the [`QueryDefinition`](#querydefinition)
+interface.
+
+This function returns a Promise that resolves with the query's result.
+
+#### `IClient::mutation`
+
+Lowest-level mutation function, executes the given GraphQL mutation. GraphQL mutations are constructed in JS using the [`QueryDefinition`](#querydefinition)
+interface.
+
+This function returns a Promise that resolves with the mutation's result.
+
+#### `IClient::subscribe`
+
+Register an event listener for the specified Persistence event. See [`IEvents`](/api/persistence/#ievents) for more info about events.
+
+#### `IClient::unsubscribe`
+
+Removes a previously registered listener for the specified Persistence event. The passed callback is checked by reference.
+
+#### `IClient::builder`
+
+Getter returning a new [builder](#iquerybuilder) each time it is called. The created builder is initialized to use the `IClient`
+that created it. See [`IQueryBuilder`](#iquerybuilder) for more information.
+
+#### `IClient::fork`
+
+Getter returning a new [client](#iclient) each time it is called. The primary aim is to fork the main client when multiple, specific clients
+are needed.
+
+### `ClientConfiguration`
+
+Configuration object used to setup a [`IClient`](#iclient) through the `IClient::configure` function.
+
+```ts
+type ClientConfiguration = {
+  token?: string | null
+  endpoint?: {
+    port?: string
+    host: string
+  }
+  path?: {
+    graphql?: string
+    socket?: string
+  }
+  fetchPolicy?: 'network-only' | 'cache-first'
+}
+```
+
+#### `ClientConfiguration::token`
+
+### `QueryDefinition`
+```ts
+type QuerySelect = {
+  [key: string]: boolean | QuerySelect
+}
+
+type QueryArgs = {
+  [key: string]: any
+}
+
+type QueryField = {
+  alias?: string,
+  args?: QueryArgs,
+  select?: QuerySelect,
+}
+
+type QueryDefinition = {
+  [key: string]: QueryField | boolean
+}
+```
+
+### `IQueryBuilder`
+```ts
+interface IQueryBuilder {
+  withName(name?: string): this
+  withAlias(name?: string): this
+  withArgs(args?: QueryArgs): this
+  withSelection(selection?: QuerySelect): this
+  build(): QueryDefinition
+
+  asQuery(): Promise<Record<string, any>>
+  asMutation(): Promise<Record<string, any>>
+
+  combineQueries(queries: IQueryBuilder[]): Promise<Record<string, any>[]>
+  combineMutations(mutations: IQueryBuilder[]): Promise<Record<string, any>[]>
+}
+```
+> Jump to:
+[QueryArgs](#querydefinition),
+[QuerySelect](#querydefinition),
+[QueryDefinition](#querydefinition)
+
+### `IAccessor`
+```ts
+interface IAccessor {
+  query: ModelQueryBuilders
+  mutate: ModelMutationBuilders
+}
+```
+> Jump to:
+[ModelQueryBuilders](#modelquerybuilders),
+[ModelMutationBuilders](#modelmutationbuilders)
+
+### `ModelQueryBuilders`
+```ts
+type ModelQueryBuilders = {
+  get: IAccessorReadBuilder
+  find: IAccessorReadBuilder
+  read: IAccessorReadBuilder
+
+  list: IAccessorManyReadBuilder
+  readMany: IAccessorManyReadBuilder
+
+  count: IAccessorCountBuilder
+}
+```
+> Jump to:
+[IAccessorReadBuilder](#iaccessorreadbuilder),
+[IAccessorManyReadBuilder](#iaccessormanyreadbuilder),
+[IAccessorCountBuilder](#iaccessorcountbuilder)
+
+### `ModelMutationBuilders`
+```ts
+type ModelMutationBuilders = {
+  create: IAccessorCreationBuilder
+  createMany: IAccessorManyCreationBuilder
+
+  update: IAccessorUpdateBuilder
+  updateMany: IAccessorManyUpdateBuilder
+
+  delete: IAccessorDeletionBuilder
+  deleteMany: IAccessorManyDeletionBuilder
+}
+```
+> Jump to:
+[IAccessorCreationBuilder](#iaccessorcreationbuilder),
+[IAccessorManyCreationBuilder](#iaccessormanycreationbuilder),
+[IAccessorUpdateBuilder](#iaccessorupdatebuilder),
+[IAccessorManyUpdateBuilder](#iaccessormanyupdatebuilder),
+[IAccessorDeletionBuilder](#iaccessordeletionbuilder),
+[IAccessorManyDeletionBuilder](#iaccessormanydeletionbuilder),

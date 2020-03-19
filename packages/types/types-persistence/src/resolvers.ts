@@ -1,7 +1,7 @@
 import { GraphQLResolveInfo } from 'graphql'
 
 export type ResolverEnum = 'read'|'readMany'|'count'|'create'|'createMany'|'update'|'updateMany'|'delete'|'deleteMany'
-export type AliasedResolverEnum = ResolverEnum|'get'|'list'|'edit'
+export type AliasedResolverEnum = ResolverEnum|'get'|'list'|'edit'|'editMany'
 
 export type ResolverArgs = Record<string, any>
 export type ResolverSource = Record<string, any>

@@ -3,11 +3,12 @@ import {
   IAccessorCountBuilder, IAccessorReadBuilder, IAccessorManyReadBuilder,
   IAccessorCreationBuilder, IAccessorDeletionBuilder, IAccessorManyCreationBuilder, IAccessorManyDeletionBuilder,
   IAccessorManyUpdateBuilder, IAccessorUpdateBuilder,
-  IAccessorUndiscriminatedQueryBuilder, IAccessorUndiscriminatedMutationBuilder, QuerySelect, QueryDefinition,
+  IAccessorUndiscriminatedQueryBuilder, IAccessorUndiscriminatedMutationBuilder, QuerySelect, IClient,
 } from '@harmonyjs/types-query'
-import Builder from 'builder'
 
 import Voca from 'voca'
+
+import Builder from 'builder'
 import Client from 'client'
 
 export function extractModelType(name: string): string {
@@ -26,13 +27,14 @@ const suffix = {
   deleteMany: 'DeleteMany',
 }
 
-function AccessorQueryBuilder(type: 'count', name: string, model: string): IAccessorCountBuilder
-function AccessorQueryBuilder(type: 'read', name: string, model: string): IAccessorReadBuilder
-function AccessorQueryBuilder(type: 'readMany', name: string, model: string): IAccessorManyReadBuilder
+function AccessorQueryBuilder(type: 'count', name: string, model: string, client: IClient): IAccessorCountBuilder
+function AccessorQueryBuilder(type: 'read', name: string, model: string, client: IClient): IAccessorReadBuilder
+function AccessorQueryBuilder(type: 'readMany', name: string, model: string, client: IClient): IAccessorManyReadBuilder
 function AccessorQueryBuilder(
   type: 'count'|'read'|'readMany',
   name: string,
   model: string,
+  client: IClient,
 ) : IAccessorQueryBuilder {
   const local : {
     filter?: Record<string, any>
@@ -58,7 +60,7 @@ function AccessorQueryBuilder(
   }
 
   function promise() : Promise<Record<string, any>> {
-    return Builder()
+    return Builder(client)
       .withName(name + suffix[type])
       .withSelection(local.selection || { _id: true })
       .withArgs({
@@ -84,11 +86,11 @@ function AccessorQueryBuilder(
   function updateSubscription(unsubscribe ?: boolean) {
     if (unsubscribe || !local.subscription.active) {
       local.subscription.models.forEach((m) => {
-        Client.unsubscribe(`${m.toLowerCase()}-updated`, subscription)
+        client.unsubscribe(`${m.toLowerCase()}-updated`, subscription)
       })
     } else {
       local.subscription.models.forEach((m) => {
-        Client.subscribe(`${m.toLowerCase()}-updated`, subscription)
+        client.subscribe(`${m.toLowerCase()}-updated`, subscription)
       })
     }
 
@@ -166,15 +168,16 @@ function AccessorQueryBuilder(
 
   return instance
 }
-function AccessorMutationBuilder(type: 'create', name: string): IAccessorCreationBuilder
-function AccessorMutationBuilder(type: 'createMany', name: string): IAccessorManyCreationBuilder
-function AccessorMutationBuilder(type: 'update', name: string): IAccessorUpdateBuilder
-function AccessorMutationBuilder(type: 'updateMany', name: string): IAccessorManyUpdateBuilder
-function AccessorMutationBuilder(type: 'delete', name: string): IAccessorDeletionBuilder
-function AccessorMutationBuilder(type: 'deleteMany', name: string): IAccessorManyDeletionBuilder
+function AccessorMutationBuilder(type: 'create', name: string, client: IClient): IAccessorCreationBuilder
+function AccessorMutationBuilder(type: 'createMany', name: string, client: IClient): IAccessorManyCreationBuilder
+function AccessorMutationBuilder(type: 'update', name: string, client: IClient): IAccessorUpdateBuilder
+function AccessorMutationBuilder(type: 'updateMany', name: string, client: IClient): IAccessorManyUpdateBuilder
+function AccessorMutationBuilder(type: 'delete', name: string, client: IClient): IAccessorDeletionBuilder
+function AccessorMutationBuilder(type: 'deleteMany', name: string, client: IClient): IAccessorManyDeletionBuilder
 function AccessorMutationBuilder(
   type: 'create'|'createMany'|'update'|'updateMany'|'delete'|'deleteMany',
   name: string,
+  client: IClient,
 ) : IAccessorMutationBuilder {
   const local : {
     id?: string
@@ -205,7 +208,7 @@ function AccessorMutationBuilder(
       throw new Error('You need ids to call deleteMany. Use withIds(ids)')
     }
 
-    return Builder()
+    return Builder(client)
       .withName(name + suffix[type])
       .withSelection(local.selection || { _id: true })
       .withArgs({
@@ -272,13 +275,13 @@ function AccessorMutationBuilder(
   return instance
 }
 
-export function Accessor(model: string) : IAccessor {
+export function Accessor(model: string, client?: IClient) : IAccessor {
   const name = extractModelType(model)
 
   const instance : IAccessor = {
     query: {
       get read() {
-        return AccessorQueryBuilder('read', name, model)
+        return AccessorQueryBuilder('read', name, model, client || Client)
       },
       get find() {
         return instance.query.read
@@ -288,35 +291,35 @@ export function Accessor(model: string) : IAccessor {
       },
 
       get readMany() {
-        return AccessorQueryBuilder('readMany', name, model)
+        return AccessorQueryBuilder('readMany', name, model, client || Client)
       },
       get list() {
         return instance.query.readMany
       },
 
       get count() {
-        return AccessorQueryBuilder('count', name, model)
+        return AccessorQueryBuilder('count', name, model, client || Client)
       },
     },
 
     mutate: {
       get create() {
-        return AccessorMutationBuilder('create', name)
+        return AccessorMutationBuilder('create', name, client || Client)
       },
       get createMany() {
-        return AccessorMutationBuilder('createMany', name)
+        return AccessorMutationBuilder('createMany', name, client || Client)
       },
       get update() {
-        return AccessorMutationBuilder('update', name)
+        return AccessorMutationBuilder('update', name, client || Client)
       },
       get updateMany() {
-        return AccessorMutationBuilder('updateMany', name)
+        return AccessorMutationBuilder('updateMany', name, client || Client)
       },
       get delete() {
-        return AccessorMutationBuilder('delete', name)
+        return AccessorMutationBuilder('delete', name, client || Client)
       },
       get deleteMany() {
-        return AccessorMutationBuilder('deleteMany', name)
+        return AccessorMutationBuilder('deleteMany', name, client || Client)
       },
     },
   }

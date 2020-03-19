@@ -131,9 +131,15 @@ function extractComputedSchema({ fields, name }: { fields?: Fields, name: string
 }
 
 function extractRootSchema({
-  fields, name, base, external, strict, scopes,
+  fields, name, baseName, base, external, strict, scopes,
 } : {
-  fields: ExtendableFields, name: string, base: ResolverDefinition[], external: boolean, strict: boolean, scopes: Scopes
+  fields: ExtendableFields,
+  name: string,
+  baseName: string,
+  base: ResolverDefinition[],
+  external: boolean,
+  strict: boolean,
+  scopes: Scopes
 }) {
   const schema : Schema = {}
 
@@ -168,7 +174,7 @@ function extractRootSchema({
     }
   })
 
-  return extractMainSchema({ schema, name })
+  return extractMainSchema({ schema, name: baseName })
 }
 
 function extractResolvers({ fields }: { fields: ExtendableFields|Fields }): Resolvers {
@@ -198,6 +204,7 @@ export function sanitizeModel({ model, strict }: { model: Model, strict: boolean
       queries: extractRootSchema({
         fields: model.computed?.queries || {},
         name: model.name,
+        baseName: 'Query',
         base: queryResolvers,
         external: !!model.external,
         strict,
@@ -206,6 +213,7 @@ export function sanitizeModel({ model, strict }: { model: Model, strict: boolean
       mutations: extractRootSchema({
         fields: model.computed?.mutations || {},
         name: model.name,
+        baseName: 'Mutation',
         base: mutationResolvers,
         external: !!model.external,
         strict,
@@ -301,14 +309,14 @@ ${
 # Queries & Mutations
 ${
   model.schemas.queries.graphqlSchema.replace(
-    `type ${extractModelType(model.name)}`,
-    'extend type Query',
+    'type Query {',
+    'extend type Query {',
   )
 }
 ${
   model.schemas.mutations.graphqlSchema.replace(
-    `type ${extractModelType(model.name)}`,
-    'extend type Mutation',
+    'type Mutation {',
+    'extend type Mutation {',
   )
 }
 `.replace(/\n\n/g, '\n')

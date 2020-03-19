@@ -44,7 +44,7 @@ export default function Server() : ServerInstance {
 
       // Register Authentication Controller
       const controllers : IController[] = [
-        ControllerAuthentication(config.authentication || { secret: 'harmony' }),
+        ControllerAuthentication(config.authentication),
         ...(config.controllers || []),
       ]
 

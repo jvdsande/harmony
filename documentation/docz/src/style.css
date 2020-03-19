@@ -1,6 +1,6 @@
 code {
-  padding: 4px 8px;
-  background-color: rgb(246, 248, 250);
+  padding: 3px 5px;
+  background-color: rgba(210, 220, 228, 0.2);
   border-radius: 4px;
   font-size: 0.9em;
   text-decoration: initial;
@@ -15,4 +15,8 @@ h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
 
 h2, h3, h4 {
   margin-top: 2em;
+}
+
+main > div[data-testid="main-container"] {
+  padding-bottom: 10rem;
 }

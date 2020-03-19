@@ -6,7 +6,7 @@ export default {
   ],
   menu: [
     'Introduction',
-    { name: 'API', menu: ['About', '@harmonyjs/server', '@harmonyjs/persistence', '@harmonyjs/query', 'Utils'] },
+    { name: 'API', menu: ['About', '@harmonyjs/server', '@harmonyjs/persistence', '@harmonyjs/query', '@harmonyjs/logger'] },
     'Guides',
     'Plugins',
     'Contributing',
@@ -14,6 +14,9 @@ export default {
   themeConfig: {
     fonts: {
       monospace: 'Source Code Pro',
+    },
+    header: {
+      bg: '#C12C18'
     },
     prism: {
       light: {

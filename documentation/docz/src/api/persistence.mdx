@@ -110,7 +110,7 @@ type PersistenceConfig = {
 > Jump to:
 [Model](#model),
 [IAdapter](/plugins/adapters#iadapter),
-[LoggerConfig](/api/utils#loggerconfig)
+[LoggerConfig](/api/logger#loggerconfig)
 
 #### `PersistenceConfig::models`
 
@@ -133,7 +133,7 @@ if a `Scope` has been provided. See [`Scope`](#scope) for more details.
 
 #### `PersistenceConfig::log`
 
-Configuration of the way the persistence instance logs its actions. Refer to the [Log util documentation](/api/utils#loggerconfig)
+Configuration of the way the persistence instance logs its actions. Refer to the [Log util documentation](/api/logger#loggerconfig)
 
 ### `PersistenceInstance`
 
@@ -161,7 +161,7 @@ type PersistenceInstance = {
 ```
 > Jump to:
 [PersistenceConfig](#persistenceconfig),
-[ILogger](/api/utils#ilooger),
+[ILogger](/api/logger#ilogger),
 [SanitizedModel](#sanitizedmodel),
 [IEvents](#ievents),
 [PersistenceContext](#persistencecontext),
@@ -411,12 +411,11 @@ export enum PropertyMode {
 
 ```ts
 interface IEvents {
-  subscriptions : {
-    updated: ((args: { document: any, model: SanitizedModel }) => void)[]
-    removed: ((args: { document: any, model: SanitizedModel }) => void)[]
-  }
+  on(event : string, callback : (args: { document: any, model: SanitizedModel }) => void): void
 
-  on(event : 'updated'|'removed', callback : (args: { document: any, model: SanitizedModel }) => void): void
+  off(event : string, callback : (args: { document: any, model: SanitizedModel }) => void): void
+
+  emit({ event, payload } : { event: string, payload: any }): void
 
   updated({ document, model } : { document: any, model: SanitizedModel }): void
 
@@ -424,7 +423,29 @@ interface IEvents {
 }
 ```
 
-TODO: Describe
+This interface is implemented by the `PersistenceInstance::events` field. It is a management interface used either by [`Adapters`](/plugins/adapters)
+as a way to signal the update or removal of a document, or by [`Controllers`](/plugins/controllers) to subscribe to those changes.
+
+#### `IEvents::on`
+
+Register a callback for the selected event.
+
+#### `IEvents::off`
+
+Unregister a callback for the selected event.
+
+#### `IEvents::emit`
+
+Emit an event, calling all the registered callbacks by passing them the given payload.
+
+#### `IEvents::updated`
+
+Helper used for emitting the `'updated'` event with a payload made of `{ document, model }`
+
+#### `IEvents::removed`
+
+Helper used for emitting the `'removed'` event with a payload made of `{ document, model }`
+
 
 ### `ModelResolver`
 
@@ -441,10 +462,15 @@ type ModelResolver =
   Record<'reference'|'references', ReferenceResolverFunction>
 ```
 > Jump to:
-[GraphQLResolveInfo](https://graphql.org/graphql-js/type/)
+[GraphQLResolveInfo](https://graphql.org/graphql-js/type/),
 [AliasedResolverEnum](#resolverenum)
 
-TODO: Describe
+Exposed as a map in the `PersistenceInstance::resolvers` field, as well as passed as an argument to the [`Resolver`](#resolver) functions,
+a `ModelResolver` is a map of default CRUD resolvers (see [`Resolver`](#resolver) for CRUD names).
+
+Those resolvers are implemented in each [`Adapters`](/plugins/adapters) and can be used to retrieve and update documents in databases.
+
+The special reference resolvers are mostly there for internal use, as they are only a specific implementation of the `read` resolver.
 
 ### `PersistenceContext`
 
@@ -497,7 +523,9 @@ type SanitizedModel = {
 [Resolver](#resolver),
 [Scopes](#scopes)
 
-TODO: Describe
+The `SanitizedModel` type is the result of importing raw [`Models`](#model) when calling `PersistenceInstance::initialize`.
+
+It is exposed to the outside world as a convenience, for advanced customization.
 
 ### `Resolver`
 
@@ -515,13 +543,32 @@ export type Resolver = (arg: {
 [ResolverEnum](#resolverenum),
 [GraphQLResolveInfo](https://graphql.org/graphql-js/type/)
 
-TODO: Describe
+The `Resolver` function type describe the `resolve` fields of `Field` and `ExtendableField` elements found in a [`Computed`](#computed) object.
+
+It is an asynchronous function charged with retrieving the value of a given field inside a type.
+
+#### Resolver::arg::source
+
+The source argument contains the parent object containing the field to resolve, as currently resolved by the GraphQL engine.
+In the case of a `Field`, it is the raw document retrieved from the database. For an `ExtendableField` it will be `null` as those are
+used to describe root queries. Finally in a `custom` resolver it can be any arbitrary object.
 
 ### `ResolverEnum`
 
 ```ts
 type ResolverEnum = 'read'|'readMany'|'count'|'create'|'createMany'|'update'|'updateMany'|'delete'|'deleteMany'
-type AliasedResolverEnum = ResolverEnum|'get'|'list'|'edit'
+type AliasedResolverEnum = ResolverEnum|'get'|'list'|'edit'|'editMany'
 ```
 
-TODO: Describe
+`ResolverEnum` contains the list of all default CRUD resolvers exposed by HarmonyJS. `AliasedResolverEnum` is the same list
+extended with a few aliases for some CRUD actions.
+
+- `read` (aliased `get`): retrieve one document based on a given filter, with optional skip parameter
+- `readMany` (aliased `list`): retrieve an array of document based on a given filter, with optional pagination and sorting
+- `count`: count documents based on a given filter
+- `create`: create a new document entry
+- `createMany`: create a bunch of documents in one query
+- `update` (aliased `edit`): update a document based on its ID
+- `updateMany` (aliased `editMany`): update an array of documents based on their IDs
+- `delete`: delete a document based on its ID
+- `deleteMany`: delete an array of documents based on their IDs

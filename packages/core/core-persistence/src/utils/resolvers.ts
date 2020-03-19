@@ -1,4 +1,5 @@
 import {
+  AliasedResolverEnum,
   ClassicResolverFunction, IAdapter, IProperty, IPropertySchema, ModelResolver, ReferenceResolverFunction, Resolver,
   ResolverArgs, ResolverContext, ResolverEnum, ResolverFunction, ResolverInfo, ResolverResolvers, ResolverSource,
   SanitizedModel, Scope,
@@ -9,7 +10,7 @@ import { extractModelType } from 'utils/property/utils'
 export type ResolverDefinition = {
   type: ResolverEnum,
   suffix: string,
-  alias?: string[],
+  alias?: AliasedResolverEnum[],
 }
 
 // Query
@@ -43,6 +44,7 @@ export const mutationResolvers: ResolverDefinition[] = [
   }, {
     type: 'updateMany',
     suffix: 'UpdateMany',
+    alias: ['editMany'],
   }, {
     type: 'delete',
     suffix: 'Delete',
