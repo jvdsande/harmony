@@ -1,7 +1,7 @@
 import { IProperty, IPropertySchema, PropertyMode } from 'property'
 import { Resolver, ResolverEnum } from 'resolvers'
 
-export type SchemaField = IProperty | SchemaDescription | [SchemaField]
+export type SchemaField = IProperty | SchemaDescription | SchemaField[]
 export type SchemaDescription = { [key: string]: SchemaField }
 export type Schema = SchemaDescription | IPropertySchema
 
