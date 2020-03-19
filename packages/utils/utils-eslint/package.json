@@ -6,9 +6,6 @@
   },
   "description": "ESLint config for Harmony projects",
   "main": "index.js",
-  "mixt": {
-    "dist": "./pkg"
-  },
   "scripts": {
     "mixt:release": "npm publish"
   },
