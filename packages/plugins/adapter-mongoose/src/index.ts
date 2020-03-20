@@ -1,4 +1,4 @@
-import Mongoose, { connection, Connection } from 'mongoose'
+import Mongoose, { Connection } from 'mongoose'
 
 import { ILogger } from '@harmonyjs/logger'
 import {
@@ -145,6 +145,9 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
 
     async close() {
       if (local.connection) {
+        local.connection.removeAllListeners('connected')
+        local.connection.removeAllListeners('disconnected')
+        local.connection.removeAllListeners('error')
         await local.connection.close()
       }
     },

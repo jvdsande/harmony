@@ -77,6 +77,8 @@ export default function Server() : ServerInstance {
 
     // Close Fastify server
     return inst.server.close()
+      .then(() => {})
+      .catch(() => {})
   }
 
   return instance as ServerInstance
