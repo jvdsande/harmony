@@ -148,14 +148,7 @@ function ClientMaker() : IClient {
         })
 
       if (local.client) {
-        if (clientsLifecycle.ongoingQueries[clientsLifecycle.current]) {
-          clientsLifecycle.scheduledForStop[clientsLifecycle.current] = local.client
-        } else {
-          local.client.stop()
-        }
-        clientsLifecycle.current += 1
-        clientsLifecycle.ongoingQueries[clientsLifecycle.current] = 0
-        delete clientsLifecycle.scheduledForStop[clientsLifecycle.current]
+        instance.close()
       }
 
       local.client = new ApolloBoost({
@@ -164,6 +157,16 @@ function ClientMaker() : IClient {
       })
 
       return instance
+    },
+    async close() {
+      if (clientsLifecycle.ongoingQueries[clientsLifecycle.current]) {
+        clientsLifecycle.scheduledForStop[clientsLifecycle.current] = local.client
+      } else {
+        local.client.stop()
+      }
+      clientsLifecycle.current += 1
+      clientsLifecycle.ongoingQueries[clientsLifecycle.current] = 0
+      delete clientsLifecycle.scheduledForStop[clientsLifecycle.current]
     },
 
     query(query) {

@@ -16,6 +16,8 @@ export type ClientConfiguration = {
 
 export interface IClient {
   configure(configuration: ClientConfiguration): this
+  close(): Promise<void>
+
   query(query: QueryDefinition): Promise<Record<string, any>>
   mutation(mutation: QueryDefinition): Promise<Record<string, any>>
 
