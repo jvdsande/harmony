@@ -91,12 +91,12 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
 
       logger.info('Creating Mongoose models')
 
+      local.connection = Mongoose.createConnection()
+
       // Convert Mongoose Schemas to Mongoose models
       models.forEach((model) => {
-        instance.models[model.name] = Mongoose.model(model.name, schemas[model.name])
+        instance.models[model.name] = local.connection.model(model.name, schemas[model.name])
       })
-
-      local.connection = Mongoose.createConnection()
 
       const connectToMongo = () => {
         logger.info('Connecting to MongoDB')

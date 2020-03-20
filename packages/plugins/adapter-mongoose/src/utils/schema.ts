@@ -1,40 +1,40 @@
-import Mongoose, { SchemaDefinition, SchemaTypeOpts } from 'mongoose'
+import {
+  SchemaTypes, SchemaType, SchemaDefinition, SchemaTypeOpts,
+} from 'mongoose'
 
 import {
   IProperty, IPropertyArray, IPropertySchema, SanitizedModel,
 } from '@harmonyjs/types-persistence'
 
-const { SchemaTypes: Types } = Mongoose
-
-const MongooseTypeMap : Record<string, typeof Mongoose.SchemaType> = {
-  boolean: Types.Boolean,
-  date: Types.Date,
-  float: Types.Number,
-  id: Types.ObjectId,
-  json: Types.Mixed,
-  number: Types.Number,
-  string: Types.String,
+const MongooseTypeMap : Record<string, typeof SchemaType> = {
+  boolean: SchemaTypes.Boolean,
+  date: SchemaTypes.Date,
+  float: SchemaTypes.Number,
+  id: SchemaTypes.ObjectId,
+  json: SchemaTypes.Mixed,
+  number: SchemaTypes.Number,
+  string: SchemaTypes.String,
 }
 
-function toMongooseType(prop : IProperty, models : SanitizedModel[]) : Mongoose.SchemaType | SchemaDefinition {
+function toMongooseType(prop : IProperty, models : SanitizedModel[]) : SchemaType | SchemaDefinition {
   if (['nested', 'array', 'map'].includes(prop.type)) {
     return toMongooseSchema(prop, models) // eslint-disable-line
   }
 
   if (prop.type === 'reference') {
     return {
-      type: models.find((m) => m.name === prop.of as string) ? Types.ObjectId : Types.String,
+      type: models.find((m) => m.name === prop.of as string) ? SchemaTypes.ObjectId : SchemaTypes.String,
       ref: prop.of as string,
       index: prop.isIndexed,
       unique: prop.isUnique,
-    } as SchemaTypeOpts<typeof Types.ObjectId>
+    } as SchemaTypeOpts<typeof SchemaTypes.ObjectId>
   }
 
   return {
-    type: MongooseTypeMap[prop.type as string] || Types.Mixed,
+    type: MongooseTypeMap[prop.type as string] || SchemaTypes.Mixed,
     unique: prop.isUnique,
     index: prop.isIndexed,
-  } as SchemaTypeOpts<typeof Types.Mixed>
+  } as SchemaTypeOpts<typeof SchemaTypes.Mixed>
 }
 
 // eslint-disable-next-line import/prefer-default-export
