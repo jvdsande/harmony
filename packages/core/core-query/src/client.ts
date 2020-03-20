@@ -133,9 +133,7 @@ function ClientMaker() : IClient {
 
       local.fetchPolicy = fetchPolicy || 'network-only'
 
-      if (local.socket) {
-        local.socket.close()
-      }
+      instance.close()
 
       local.socket = SocketIO(socketUri, { path: socketPath })
 
@@ -147,10 +145,6 @@ function ClientMaker() : IClient {
           })
         })
 
-      if (local.client) {
-        instance.close()
-      }
-
       local.client = new ApolloBoost({
         uri: clientUri,
         headers,
@@ -159,14 +153,19 @@ function ClientMaker() : IClient {
       return instance
     },
     async close() {
-      if (clientsLifecycle.ongoingQueries[clientsLifecycle.current]) {
-        clientsLifecycle.scheduledForStop[clientsLifecycle.current] = local.client
-      } else {
-        local.client.stop()
+      if (local.socket) {
+        local.socket.close()
       }
-      clientsLifecycle.current += 1
-      clientsLifecycle.ongoingQueries[clientsLifecycle.current] = 0
-      delete clientsLifecycle.scheduledForStop[clientsLifecycle.current]
+      if (local.client) {
+        if (clientsLifecycle.ongoingQueries[clientsLifecycle.current]) {
+          clientsLifecycle.scheduledForStop[clientsLifecycle.current] = local.client
+        } else {
+          local.client.stop()
+        }
+        clientsLifecycle.current += 1
+        clientsLifecycle.ongoingQueries[clientsLifecycle.current] = 0
+        delete clientsLifecycle.scheduledForStop[clientsLifecycle.current]
+      }
     },
 
     query(query) {
