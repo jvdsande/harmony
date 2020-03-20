@@ -1,4 +1,4 @@
-import Mongoose from 'mongoose'
+import Mongoose, { connection, Connection } from 'mongoose'
 
 import { ILogger } from '@harmonyjs/logger'
 import {
@@ -14,9 +14,10 @@ import { sanitizeFilter, buildPopulatedQuery } from 'utils/sanitize'
 Mongoose.Promise = global.Promise
 
 type LocalVariables = {
-  logger: ILogger,
-  schemas: Record<string, IPropertySchema>,
+  logger: ILogger
+  schemas: Record<string, IPropertySchema>
   externals: Record<string, boolean>
+  connection: Connection
 }
 
 type ExposedVariables = {
@@ -95,10 +96,12 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
         instance.models[model.name] = Mongoose.model(model.name, schemas[model.name])
       })
 
+      local.connection = Mongoose.createConnection()
+
       const connectToMongo = () => {
         logger.info('Connecting to MongoDB')
 
-        return Mongoose.connect(
+        local.connection.openUri(
           config.host,
           {
             useNewUrlParser: true,
@@ -126,20 +129,25 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
 
       connectToMongo()
 
-      Mongoose.connection.on('error', () => {
+      local.connection.on('error', () => {
         logger.error('An error occurred with MongoDB connection')
         setTimeout(connectToMongo, config.connectionRetryTimeout || 5000)
       })
 
-      Mongoose.connection.on('disconnected', () => {
+      local.connection.on('disconnected', () => {
         logger.error('Mongo connection lost')
       })
 
-      Mongoose.connection.on('connected', () => {
+      local.connection.on('connected', () => {
         logger.info('Mongo connected')
       })
     },
 
+    async close() {
+      if (local.connection) {
+        await local.connection.close()
+      }
+    },
 
     // References
     async resolveRef({

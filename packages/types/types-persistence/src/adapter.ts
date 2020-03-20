@@ -60,25 +60,26 @@ type DeleteManyResolverArgs = ResolverArgs & {
 }
 
 export interface IAdapter {
-  name: string,
-  initialize(args : InitArgs) : Promise<void>,
+  name: string
+  initialize(args : InitArgs) : Promise<void>
+  close() : Promise<void>
 
   // References
-  resolveRef(args : ResolverArgs & { fieldName: string, foreignFieldName: string }) : Promise<Entity>,
-  resolveRefs(args : ResolverArgs & { fieldName: string, foreignFieldName: string }) : Promise<Entity[]>,
+  resolveRef(args : ResolverArgs & { fieldName: string, foreignFieldName: string }) : Promise<Entity>
+  resolveRefs(args : ResolverArgs & { fieldName: string, foreignFieldName: string }) : Promise<Entity[]>
 
   // Queries
-  read(args : QueryResolverArgs) : Promise<Entity>,
-  readMany(args : QueryResolverArgs) : Promise<Entity[]>,
-  count(args : QueryResolverArgs) : Promise<number>,
+  read(args : QueryResolverArgs) : Promise<Entity>
+  readMany(args : QueryResolverArgs) : Promise<Entity[]>
+  count(args : QueryResolverArgs) : Promise<number>
 
   // Mutations
-  create(args : CreateResolverArgs) : Promise<Entity>,
-  createMany(args : CreateManyResolverArgs) : Promise<Entity[]>,
-  update(args : UpdateResolverArgs) : Promise<Entity>,
-  updateMany(args : UpdateManyResolverArgs) : Promise<Entity[]>,
-  delete(args : DeleteResolverArgs) : Promise<Entity>,
-  deleteMany(args : DeleteManyResolverArgs) : Promise<Entity[]>,
+  create(args : CreateResolverArgs) : Promise<Entity>
+  createMany(args : CreateManyResolverArgs) : Promise<Entity[]>
+  update(args : UpdateResolverArgs) : Promise<Entity>
+  updateMany(args : UpdateManyResolverArgs) : Promise<Entity[]>
+  delete(args : DeleteResolverArgs) : Promise<Entity>
+  deleteMany(args : DeleteManyResolverArgs) : Promise<Entity[]>
 }
 
 export type Adapter<T = void, U = {}> = ((args: T) => IAdapter & U)

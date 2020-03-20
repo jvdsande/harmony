@@ -9,6 +9,10 @@ const AdapterMemory : Adapter<{ store: Record<string, any>}> = function AdapterM
       logger.info('Initializing Memory Adapter with store', store)
     },
 
+    async close() {
+      // Nothing to close
+    },
+
     // Reference
     async resolveRef({
       source, model, fieldName,

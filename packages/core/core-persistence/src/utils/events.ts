@@ -1,6 +1,6 @@
 import { IEvents } from '@harmonyjs/types-persistence'
 
-export default function Events() : IEvents {
+export default function Events() : IEvents & { close(): Promise<void> } {
   const subscriptions : {[key: string]: Function[]} = {
     updated: [],
     removed: [],
@@ -32,5 +32,12 @@ export default function Events() : IEvents {
     },
   })
 
-  return instance
+  return {
+    ...instance,
+    async close() {
+      Object.keys(subscriptions).forEach((event) => {
+        subscriptions[event].length = 0
+      })
+    },
+  }
 }

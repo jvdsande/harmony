@@ -1,6 +1,6 @@
 import Logger from '@harmonyjs/logger'
 // Import helpers and types
-import { PersistenceConfig, PersistenceInstance } from '@harmonyjs/types-persistence'
+import { IAdapter, PersistenceConfig, PersistenceInstance } from '@harmonyjs/types-persistence'
 
 import { configurePersistence } from 'steps/configuration'
 import { importModels, initializeAdapters } from 'steps/entities'
@@ -18,8 +18,15 @@ export {
 
 export default function Persistence() {
   // Create an instance
+  const events = EventsHandler()
   const instance : Partial<PersistenceInstance> = {
-    events: EventsHandler(),
+    events,
+  }
+
+  const local : {
+    adapters : Record<string, IAdapter>
+  } = {
+    adapters: {},
   }
 
   instance.initialize = async (configuration: Partial<PersistenceConfig>) => {
@@ -37,8 +44,9 @@ export default function Persistence() {
 
     // Initialize adapters
     await initializeAdapters({
-      config, adapters, logger, models: instance.models, events: instance.events!,
+      config, adapters, logger, models: instance.models, events,
     })
+    local.adapters = adapters
 
     // Finish preparing instance
     instance.context = {}
@@ -49,6 +57,13 @@ export default function Persistence() {
       defaultAdapterName: configuration.defaultAdapter,
     })
     instance.controllers = await defineControllers({ instance: instance as PersistenceInstance })
+  }
+
+  instance.close = async () => {
+    await events.close()
+    await Promise.all(Object.values(local.adapters).map(async (adapter) => {
+      await adapter.close()
+    }))
   }
 
   return instance as PersistenceInstance

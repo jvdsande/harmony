@@ -31,12 +31,32 @@ const AdapterCouchbase : Adapter<AdapterCouchbaseConfiguration> = function Adapt
       if (config.credentials) {
         cluster.authenticate(config.credentials.login, config.credentials.password)
       }
-      local.bucket = cluster.openBucket(config.bucket)
-      local.bucket.manager().createPrimaryIndex(() => {
-        logger.info('Couchbase Adapter successfully initialized')
-      })
+
+      const connectCouchbase = () => {
+        local.bucket = cluster.openBucket(config.bucket)
+
+        local.bucket.on('connect', () => {
+          local.bucket.manager().createPrimaryIndex(() => {
+            logger.info('Couchbase Adapter successfully initialized')
+          })
+        })
+
+        local.bucket.on('error', (error) => {
+          logger.error('An error occurred with Couchbase\'s bucket connection')
+          logger.error(error.message)
+          local.bucket.removeAllListeners('connect')
+          local.bucket.removeAllListeners('error')
+          connectCouchbase()
+        })
+      }
+
+      connectCouchbase()
 
       local.builders = createN1QLBuilders({ config })
+    },
+
+    async close() {
+      await local.bucket.disconnect()
     },
 
     // References

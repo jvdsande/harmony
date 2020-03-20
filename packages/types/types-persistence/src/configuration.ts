@@ -10,34 +10,35 @@ import {
 } from './index'
 
 export type PersistenceConfig = {
-  models: Model[],
-  adapters: {[key: string]: IAdapter},
-  defaultAdapter?: string,
-  log: LoggerConfig,
-  strict: boolean,
+  models: Model[]
+  adapters: {[key: string]: IAdapter}
+  defaultAdapter?: string
+  log: LoggerConfig
+  strict: boolean
 }
 
 type PersistenceContextValue =
-  string | number | boolean | null | { [key: string]: PersistenceContextValue } | PersistenceContextValue[]
+  string | number | boolean | null | { [key: string]: any } | any[]
 
 export type PersistenceContext = {
-  [key: string]: PersistenceContextValue | ((request: FastifyRequest) => any),
+  [key: string]: PersistenceContextValue | ((request: FastifyRequest) => any)
 }
 
 export type PersistenceInstance = {
-  configuration: PersistenceConfig,
-  logger: ILogger,
+  configuration: PersistenceConfig
+  logger: ILogger
 
-  models: SanitizedModel[],
-  events: IEvents,
-  context: PersistenceContext,
+  models: SanitizedModel[]
+  events: IEvents
+  context: PersistenceContext
 
-  schema: string,
+  schema: string
   controllers: {
-    ControllerGraphQL: Controller<{ path: string, enablePlayground: boolean }>,
-    ControllerEvents: Controller<void>,
-  },
-  resolvers: Record<string, ModelResolver>,
+    ControllerGraphQL: Controller<{ path: string, enablePlayground: boolean }>
+    ControllerEvents: Controller<void>
+  }
+  resolvers: Record<string, ModelResolver>
 
-  initialize(configuration: Partial<PersistenceConfig>): Promise<void>,
+  initialize(configuration: Partial<PersistenceConfig>): Promise<void>
+  close(): Promise<void>
 }
