@@ -1,6 +1,6 @@
 {
   "name": "@harmonyjs/types-query",
-  "version": "1.0.0-rc2.1",
+  "version": "1.0.0-rc2.2",
   "publishConfig": {
     "access": "public"
   },
