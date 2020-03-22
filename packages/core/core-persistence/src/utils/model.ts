@@ -191,43 +191,48 @@ function extractResolvers({ fields }: { fields: ExtendableFields|Fields }): Reso
 
 // eslint-disable-next-line import/prefer-default-export
 export function sanitizeModel({ model, strict }: { model: Model, strict: boolean }): SanitizedModel {
+  const {
+    name, adapter, schema, computed, external, scopes, ...otherProps
+  } = model
+
   return ({
-    name: model.name,
-    adapter: model.adapter,
+    ...otherProps,
+    name,
+    adapter,
     schemas: {
       main: extractMainSchema({
-        schema: model.schema, name: model.name,
+        schema, name,
       }),
       computed: extractComputedSchema({
-        fields: model.computed?.fields, name: model.name,
+        fields: computed?.fields, name,
       }),
       queries: extractRootSchema({
-        fields: model.computed?.queries || {},
-        name: model.name,
+        fields: computed?.queries || {},
+        name,
         baseName: 'Query',
         base: queryResolvers,
-        external: !!model.external,
+        external: !!external,
         strict,
-        scopes: model.scopes || {} as any,
+        scopes: scopes || {} as any,
       }),
       mutations: extractRootSchema({
-        fields: model.computed?.mutations || {},
-        name: model.name,
+        fields: computed?.mutations || {},
+        name,
         baseName: 'Mutation',
         base: mutationResolvers,
-        external: !!model.external,
+        external: !!external,
         strict,
-        scopes: model.scopes || {} as any,
+        scopes: scopes || {} as any,
       }),
     },
     resolvers: {
-      queries: extractResolvers({ fields: model.computed?.queries || {} }),
-      mutations: extractResolvers({ fields: model.computed?.mutations || {} }),
-      computed: extractResolvers({ fields: model.computed?.fields || {} }),
-      custom: model.computed?.custom || {},
+      queries: extractResolvers({ fields: computed?.queries || {} }),
+      mutations: extractResolvers({ fields: computed?.mutations || {} }),
+      computed: extractResolvers({ fields: computed?.fields || {} }),
+      custom: computed?.custom || {},
     },
-    scopes: model.scopes || {} as any,
-    external: !!model.external,
+    scopes: scopes || {} as any,
+    external: !!external,
   })
 }
 
