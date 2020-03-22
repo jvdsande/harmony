@@ -8,6 +8,7 @@ type Filter = Record<string, any>
 
 const operatorMap : Record<string, string> = {
   not: '$not',
+  nor: '$nor',
   eq: '$eq',
   neq: '$ne',
   exists: '$exists',
@@ -38,7 +39,7 @@ function sanitizeOperators(operators : Record<string, any>) {
 
       // Array Operator: some. In this case, the params are operators and need to be sanitized
       if (operator === 'some') {
-        sanitized[operatorMap[operator]] = sanitizeOperators(params.of)
+        sanitized[operatorMap[operator]] = sanitizeOperators(params)
       }
       // Array Operator: all. In this case, the params are operators again, and we need to invert twice the some case
       if (operator === 'all') {
@@ -46,7 +47,7 @@ function sanitizeOperators(operators : Record<string, any>) {
 
         sanitized[operatorMap.not] = {
           [operatorMap.some]: {
-            [operatorMap.not]: sanitizeOperators(params.of),
+            [operatorMap.nor]: [sanitizeOperators(params)],
           },
         }
       }
