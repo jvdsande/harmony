@@ -5,7 +5,13 @@ export type AliasedResolverEnum = ResolverEnum|'get'|'list'|'edit'|'editMany'
 
 export type ResolverArgs = Record<string, any>
 export type ResolverSource = Record<string, any>
-export type ResolverResolvers = Record<string, Record<AliasedResolverEnum, (arg: any) => Promise<any>>>
+export type ResolverResolvers = Record<
+  string,
+  Record<
+    AliasedResolverEnum,
+    ((arg: any) => Promise<any>) & { unscoped: ((arg: any) => Promise<any>) }
+  >
+>
 export type ResolverContext = Record<string, any>
 export type ResolverInfo = GraphQLResolveInfo
 

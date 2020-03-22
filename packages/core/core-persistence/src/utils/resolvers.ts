@@ -73,14 +73,24 @@ function computeFieldResolver({
 
         Object.keys(modelResolver)
           .forEach((res) => {
+            const alias = res as AliasedResolverEnum
+
             wrappedResolvers[mod] = wrappedResolvers[mod] || {}
-            // @ts-ignore
-            wrappedResolvers[mod][res] = (nArgs : ResolverArgs) => modelResolver[res]({
+
+            const wrappedResolver = (nArgs : ResolverArgs) => modelResolver[alias]({
               args: nArgs,
               source,
               info,
               context,
             })
+            wrappedResolver.unscoped = (nArgs : ResolverArgs) => modelResolver[alias].unscoped({
+              args: nArgs,
+              source,
+              info,
+              context,
+            })
+
+            wrappedResolvers[mod][alias] = wrappedResolver
           })
       })
 
