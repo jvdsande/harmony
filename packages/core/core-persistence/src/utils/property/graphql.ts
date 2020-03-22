@@ -1,9 +1,9 @@
 import {
   IProperty, IPropertySchema, PropertyMode, PropertyType,
 } from '@harmonyjs/types-persistence'
+import { PropertyConfiguration } from 'utils/property/type'
 
 import { extractModelType } from 'utils/property/utils'
-import { PropertyConfiguration } from 'utils/property/type'
 
 // Get the GraphQL type name of a Property
 export function computeGraphQLName({
@@ -89,6 +89,7 @@ export function computeGraphQLSchema({
 
   const mainSchema = Object.keys(schema).length > 0 ? `type ${name} {
 ${Object.keys(schema)
+    .filter((k) => schema[k].mode.includes(PropertyMode.OUTPUT) || schema[k].mode.length < 1)
     .map((k) => `  ${k}${schema[k].graphqlArgs}: ${schema[k].graphqlType}${schema[k].graphqlAnnotations}`)
     .join('\n')
 }
@@ -113,7 +114,9 @@ export function computeGraphQLInputSchema({
     .map((k) => `${schema[k].graphqlArgsSchema}`).join('\n')
 
   const mainSchema = Object.keys(schema).length > 0 ? `input ${name}Input {
-${Object.keys(schema).map((k) => `  ${k}${schema[k].graphqlArgs}: ${schema[k].graphqlInputType}`).join('\n')}
+${Object.keys(schema)
+    .filter((k) => schema[k].mode.includes(PropertyMode.INPUT) || schema[k].mode.length < 1)
+    .map((k) => `  ${k}: ${schema[k].graphqlInputType}`).join('\n')}
 }`.replace(/\n+/g, '\n') : ''
 
   const schemas = name ? [keySchemas, argsSchemas, mainSchema] : [keySchemas, mainSchema]
