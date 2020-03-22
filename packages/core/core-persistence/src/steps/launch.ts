@@ -2,7 +2,7 @@ import ControllerApollo from '@harmonyjs/controller-apollo'
 import ControllerPersistenceEvents from '@harmonyjs/controller-persistence-events'
 
 import {
-  SanitizedModel, PersistenceInstance, IAdapter,
+  SanitizedModel, PersistenceInstance, IAdapter, ModelResolver,
 } from '@harmonyjs/types-persistence'
 
 import { printSchema } from 'utils/model'
@@ -25,7 +25,7 @@ export async function defineResolvers({
 } : {
   models: SanitizedModel[], adapters: {[key:string]: IAdapter}, defaultAdapterName?: string
 }) {
-  const resolvers: Record<string, Record<string, any>> = {}
+  const resolvers: Record<string, ModelResolver> = {}
 
   const defaultAdapter = adapters ? adapters[defaultAdapterName || 'mock'] : undefined
 

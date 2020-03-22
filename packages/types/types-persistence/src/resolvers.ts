@@ -27,5 +27,5 @@ export type ReferenceResolverFunction = (arg: {
 export type ResolverFunction = ClassicResolverFunction|ReferenceResolverFunction
 
 export type ModelResolver =
-  Record<AliasedResolverEnum, ClassicResolverFunction> &
+  Record<AliasedResolverEnum, ClassicResolverFunction & { unscoped: ClassicResolverFunction }> &
   Record<'reference'|'references', ReferenceResolverFunction>
