@@ -87,7 +87,7 @@ function ClientMaker() : IClient {
     purge(client) {
       if (clientsLifecycle.scheduledForStop[client] && !clientsLifecycle.ongoingQueries[client]) {
         clientsLifecycle.scheduledForStop[client].stop()
-        delete clientsLifecycle.scheduledForStop
+        delete clientsLifecycle.scheduledForStop[client]
       }
     },
     run(query) {
@@ -163,9 +163,9 @@ function ClientMaker() : IClient {
           local.client.stop()
         }
         clientsLifecycle.current += 1
-        clientsLifecycle.ongoingQueries[clientsLifecycle.current] = 0
-        delete clientsLifecycle.scheduledForStop[clientsLifecycle.current]
       }
+      clientsLifecycle.ongoingQueries[clientsLifecycle.current] = 0
+      delete clientsLifecycle.scheduledForStop[clientsLifecycle.current]
     },
 
     query(query) {
