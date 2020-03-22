@@ -55,6 +55,8 @@ export type Model = {
 
   external?: boolean
   adapter?: string
+
+  [key: string]: any
 }
 
 export type SanitizedModel = {
@@ -78,4 +80,6 @@ export type SanitizedModel = {
 
   adapter?: string
   external: boolean
+
+  [key: string]: any
 }
