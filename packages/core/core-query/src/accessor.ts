@@ -147,7 +147,7 @@ function AccessorQueryBuilder(
 
       return instance
     },
-    listen(models) {
+    listen(...models) {
       updateSubscription(true)
       local.subscription.models = [...models, model]
       updateSubscription()
