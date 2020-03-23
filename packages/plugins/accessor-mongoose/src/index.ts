@@ -195,6 +195,9 @@ function buildPopulatedQuery({
   info,
   query,
 }) {
+  return query.lean ? query.lean() : query
+
+  /*
   const populatePaths = extractPopulatePaths({ model: harmonyModel, info })
 
   return populatePaths
@@ -202,6 +205,7 @@ function buildPopulatedQuery({
       path: field,
       options: { lean: true },
     }), query.lean ? query.lean() : query)
+ */
 }
 
 export default class AccessorMongoose extends Accessor {
