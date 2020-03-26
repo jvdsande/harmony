@@ -1,0 +1,8 @@
+{
+  "name": "packages",
+  "version": "1.0.0",
+  "description": "Peer dependencies for development",
+  "devDependencies": {
+    "mongoose": "^5.9.6"
+  }
+}
