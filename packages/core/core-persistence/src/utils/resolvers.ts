@@ -5,6 +5,10 @@ import {
   SanitizedModel, Scope,
 } from '@harmonyjs/types-persistence'
 
+import GraphQLLong from 'graphql-type-long'
+import GraphQLJson from 'graphql-type-json'
+import GraphQLDate from 'graphql-date'
+
 import { extractModelType } from 'utils/property/utils'
 
 export type ResolverDefinition = {
@@ -275,6 +279,10 @@ export function getResolvers({
       )
     }
   })
+
+  resolvers.JSON = GraphQLJson
+  resolvers.Date = GraphQLDate
+  resolvers.Number = GraphQLLong
 
   return resolvers
 }
