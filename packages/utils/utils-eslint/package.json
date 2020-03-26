@@ -1,6 +1,6 @@
 {
   "name": "@harmonyjs/eslint-config",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "publishConfig": {
     "access": "public"
   },
@@ -17,5 +17,6 @@
   "license": "ISC",
   "peerDependencies": {
     "eslint": "^5.16.0"
-  }
+  },
+  "dependencies": {}
 }
