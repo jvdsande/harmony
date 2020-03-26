@@ -36,7 +36,7 @@
   "gitHead": "a896e4656e71ab6dc197b1b0f88ac1635582a459",
   "devDependencies": {
     "@types/couchbase": "^2.4.1",
-    "@types/uuid": "^3.4.7",
+    "@types/uuid": "^3.4.8",
     "typescript": "^3.7.5"
   },
   "dependencies": {

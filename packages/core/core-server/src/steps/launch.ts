@@ -49,7 +49,7 @@ type RegisterControllersArgs = {
 export async function registerControllers({
   server, socket, controllers, logger, config,
 } : RegisterControllersArgs) {
-  await chainedPromises(controllers.map((controller) => async () => {
+  controllers.map((controller) => {
     const pluginRegistration = async (instance: FastifyInstance, options: any, done: Function) => {
       try {
         const controllerLogger = Logger({ name: controller.name, configuration: config.log })
@@ -69,21 +69,32 @@ export async function registerControllers({
 
     const plugin = controller.global ? fp(pluginRegistration) : pluginRegistration
 
+    server.register(plugin)
+  })
 
-    await server.register(plugin)
-  }))
+  await server.ready()
 }
 
 type SeparateUpgradeListenersArgs = {
   server: FastifyInstance,
+  config: ServerConfig,
 }
-export async function separateUpgradeListeners({ server } : SeparateUpgradeListenersArgs) {
+export async function separateUpgradeListeners({ server, config } : SeparateUpgradeListenersArgs) {
   const listeners = server.server.listeners('upgrade')
   const harmonyListener = listeners.shift()
 
+
+  let harmonySocketPath = config.socket.path
+  if (!harmonySocketPath.startsWith('/')) {
+    harmonySocketPath = `/${harmonySocketPath}`
+  }
+  if (!harmonySocketPath.endsWith('/')) {
+    harmonySocketPath = `${harmonySocketPath}/`
+  }
+
   server.server.removeAllListeners('upgrade')
   server.server.on('upgrade', (req, socket, head) => {
-    if (req.url.startsWith('/harmonyjs-socket/') && harmonyListener) {
+    if (req.url.startsWith(harmonySocketPath) && harmonyListener) {
       // If the path starts with /harmonyjs-socket, forward it to the
       // harmony socket-io listener
       harmonyListener(req, socket, head)

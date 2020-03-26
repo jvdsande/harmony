@@ -35,9 +35,8 @@
   "license": "ISC",
   "gitHead": "a896e4656e71ab6dc197b1b0f88ac1635582a459",
   "devDependencies": {
-    "@types/mongoose": "^5.7.1",
-    "typescript": "^3.7.5",
-    "mongoose": "^5.9.0"
+    "@types/mongoose": "^5.7.7",
+    "typescript": "^3.7.5"
   },
   "peerDependencies": {
     "mongoose": "^5.9.0"

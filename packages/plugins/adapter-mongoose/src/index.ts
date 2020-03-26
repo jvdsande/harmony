@@ -207,7 +207,7 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
         external: model.external,
         info,
         query: mongooseModel
-          .findOne(sanitizeFilter(args.filter))
+          .findOne(sanitizeFilter(args.filter)!)
           .skip(args.skip || 0),
       })
     },
@@ -225,7 +225,7 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
         external: model.external,
         info,
         query: mongooseModel
-          .find(sanitizeFilter(args.filter))
+          .find(sanitizeFilter(args.filter)!)
           .limit(args.limit || 0)
           .skip(args.skip || 0),
       })
@@ -236,7 +236,7 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
     }) {
       const mongooseModel = instance.models[model.name]
 
-      return mongooseModel.countDocuments(sanitizeFilter(args.filter))
+      return mongooseModel.countDocuments(sanitizeFilter(args.filter)!)
     },
 
 

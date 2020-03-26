@@ -54,7 +54,7 @@ export default function Server() : ServerInstance {
       })
 
       // Separate upgrade listeners
-      await separateUpgradeListeners({ server })
+      await separateUpgradeListeners({ server, config })
 
       // Start listening
       await startListening({ server, logger, config })
