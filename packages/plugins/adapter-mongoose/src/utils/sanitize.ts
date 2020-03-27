@@ -163,6 +163,9 @@ export function buildPopulatedQuery({
     return query.lean ? query.lean() : query
   }
 
+  return query.lean ? query.lean() : query
+
+  /*
   const populatePaths = extractPopulatePaths({ model: harmonyModel, info })
     .filter((field) => !harmonyExternals[field.of])
 
@@ -171,4 +174,5 @@ export function buildPopulatedQuery({
       path: field.path,
       options: { lean: true },
     }), query.lean ? query.lean() : query)
+   */
 }

@@ -2,7 +2,7 @@ import {
   AliasedResolverEnum,
   ClassicResolverFunction, IAdapter, IProperty, IPropertySchema, ModelResolver, ReferenceResolverFunction, Resolver,
   ResolverArgs, ResolverContext, ResolverEnum, ResolverFunction, ResolverInfo, ResolverResolvers, ResolverSource,
-  SanitizedModel, Scope,
+  SanitizedModel, Scope, Transform,
 } from '@harmonyjs/types-persistence'
 
 import GraphQLLong from 'graphql-type-long'
@@ -288,9 +288,9 @@ export function getResolvers({
 }
 
 function makeResolver({
-  adapter, model, type, scope,
+  adapter, model, type, scope, transform,
 } : {
-  adapter?: IAdapter, model: SanitizedModel, type: ResolverEnum, scope?: Scope,
+  adapter?: IAdapter, model: SanitizedModel, type: ResolverEnum, scope?: Scope, transform?: Transform,
 }) : ClassicResolverFunction {
   if (!adapter) {
     return () => null
@@ -308,13 +308,32 @@ function makeResolver({
       return () => null
     }
 
-    return adapter[type]({
+    const scopedArgs = ((scope && (await scope({
+      args,
+      context,
       source,
-      args: ((scope && (await scope({ args, context }))) || args) as any,
+      info,
+    }))) || args) as any
+
+    const value = await adapter[type]({
+      source,
+      args: scopedArgs,
       context,
       info: info || {} as ResolverInfo,
       model,
     })
+
+    if (transform) {
+      return transform({
+        source,
+        args: scopedArgs,
+        context,
+        info: info || {} as ResolverInfo,
+        value,
+      })
+    }
+
+    return value
   }
 }
 
@@ -392,6 +411,7 @@ export function makeResolvers({ adapter, model } : { adapter?: IAdapter, model: 
       adapter,
       model,
       scope: model.scopes[res.type],
+      transform: model.transforms[res.type],
     })
 
     resolvers[res.type].unscoped = makeResolver({
@@ -400,9 +420,11 @@ export function makeResolvers({ adapter, model } : { adapter?: IAdapter, model: 
       model,
     })
 
-    res.alias?.forEach((alias) => {
-      resolvers[alias] = resolvers[res.type]
-    })
+    if (res.alias) {
+      res.alias.forEach((alias) => {
+        resolvers[alias] = resolvers[res.type]
+      })
+    }
   })
 
   resolvers.reference = makeReferenceResolver({

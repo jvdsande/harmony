@@ -15,13 +15,16 @@ export type ResolverResolvers = Record<
 export type ResolverContext = Record<string, any>
 export type ResolverInfo = GraphQLResolveInfo
 
-export type Resolver = (arg: {
-  args: ResolverArgs,
-  source: ResolverSource,
+export type BaseResolverParams = {
+  args?: ResolverArgs,
+  source?: ResolverSource,
+  context?: ResolverContext,
+  info?: ResolverInfo
+}
+type ResolverParams = BaseResolverParams & {
   resolvers: ResolverResolvers,
-  context: ResolverContext,
-  info: ResolverInfo
-}) => Promise<any>
+}
+export type Resolver = (arg: ResolverParams) => Promise<any>
 
 export type ClassicResolverFunction = (arg: {
   source?: ResolverSource, args?: ResolverArgs, context?: ResolverContext, info?: ResolverInfo,

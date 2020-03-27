@@ -12,76 +12,94 @@ import PropertyFactory from 'utils/property/factory'
 import { extractModelType, wrap } from 'utils/property/utils'
 import { sanitizeSchemaField, sanitizeSchema } from 'utils/property/sanitation'
 
-function extendField(field: ExtendableField, modelName: string): IProperty|undefined {
+function extendField(field: ExtendableField, modelName: string): { type?: IProperty, args?: Schema } {
   switch (field.extends) {
     case 'read': {
-      return PropertyFactory({ type: 'raw', of: modelName, name: modelName })
-        .withArgs({
+      return {
+        type: PropertyFactory({ type: 'raw', of: modelName, name: modelName }),
+        args: {
           filter: PropertyFactory({ type: 'raw', of: `${modelName}FilterInput`, name: `${modelName}Filter` }),
           skip: Types.Number,
           sort: Types.Number,
-        })
+        },
+      }
     }
     case 'readMany': {
-      return Types.Array.of(PropertyFactory({ type: 'raw', of: modelName, name: '' }))
-        .withArgs({
+      return {
+        type: Types.Array.of(PropertyFactory({ type: 'raw', of: modelName, name: '' })),
+        args: {
           filter: PropertyFactory({ type: 'raw', of: `${modelName}FilterInput`, name: `${modelName}Filter` }),
           skip: Types.Number,
           limit: Types.Number,
           sort: Types.Number,
-        })
+        },
+      }
     }
     case 'count': {
-      return Types.Number
-        .withArgs({
+      return {
+        type: Types.Number,
+        args: {
           filter: PropertyFactory({ type: 'raw', of: `${modelName}FilterInput`, name: `${modelName}Filter` }),
-        })
+        },
+      }
     }
     case 'create': {
-      return PropertyFactory({ type: 'raw', of: modelName, name: '' })
-        .withArgs({
+      return {
+        type: PropertyFactory({ type: 'raw', of: modelName, name: '' }),
+        args: {
           record: PropertyFactory({ type: 'raw', of: `${modelName}CreateInput`, name: `${modelName}Create` }).required,
-        })
+        },
+      }
     }
     case 'createMany': {
-      return Types.Array.of(PropertyFactory({ type: 'raw', of: modelName, name: '' }))
-        .withArgs({
+      return {
+        type: Types.Array.of(PropertyFactory({ type: 'raw', of: modelName, name: '' })),
+        args: {
           records: Types.Array.of(
             PropertyFactory({ type: 'raw', of: `${modelName}CreateInput`, name: `${modelName}Create` }).required,
           ).required,
-        })
+        },
+      }
     }
     case 'update': {
-      return PropertyFactory({ type: 'raw', of: modelName, name: '' })
-        .withArgs({
+      return {
+        type: PropertyFactory({ type: 'raw', of: modelName, name: '' }),
+        args: {
           record: PropertyFactory({ type: 'raw', of: `${modelName}UpdateInput`, name: `${modelName}Update` }).required,
-        })
+        },
+      }
     }
     case 'updateMany': {
-      return Types.Array.of(PropertyFactory({ type: 'raw', of: modelName, name: '' }))
-        .withArgs({
+      return {
+        type: Types.Array.of(PropertyFactory({ type: 'raw', of: modelName, name: '' })),
+        args: {
           records: Types.Array.of(
             PropertyFactory({ type: 'raw', of: `${modelName}UpdateInput`, name: `${modelName}Update` }).required,
           ).required,
-        })
+        },
+      }
     }
     case 'delete': {
-      return PropertyFactory({ type: 'raw', of: modelName, name: '' })
-        .withArgs({
+      return {
+        type: PropertyFactory({ type: 'raw', of: modelName, name: '' }),
+        args: {
           _id: Types.ID.required,
-        })
+        },
+      }
     }
     case 'deleteMany': {
-      return Types.Array.of(PropertyFactory({ type: 'raw', of: modelName, name: '' }))
-        .withArgs({
+      return {
+        type: Types.Array.of(PropertyFactory({ type: 'raw', of: modelName, name: '' })),
+        args: {
           _ids: Types.Array.of(Types.ID.required).required,
-        })
+        },
+      }
     }
     default:
       break
   }
 
-  return undefined
+  return {}
 }
 
 function extractMainSchema({ schema, name }: { schema: Schema, name: string }) {
@@ -146,10 +164,16 @@ function extractRootSchema({
   // Fill schema with default queries
   base.forEach((res) => {
     if (!external && (!strict || scopes[res.type])) {
-      schema[extractModelType(name, false) + res.suffix] = extendField(
+      const { type, args } = extendField(
         { extends: res.type, resolve: null as any },
         extractModelType(name),
-      )!
+      )
+
+      schema[extractModelType(name, false) + res.suffix] = sanitizeSchemaField({
+        schema: type!,
+        name: '',
+      })
+        .withArgs(args!)
     }
   })
 
@@ -157,21 +181,20 @@ function extractRootSchema({
   Object.keys(fields).forEach((queryName) => {
     const field : ExtendableField = fields[queryName]
 
-    if (field.extends) {
-      const extended = extendField(field, extractModelType(name))
-      if (extended) {
-        schema[queryName] = extended
-      }
-    } else {
-      const property = sanitizeSchemaField({ schema: field.type, name: queryName })
+    const { type, args } = field.extends ? extendField(field, extractModelType(name)) : field
 
-      property.mode = wrap(field.mode)
-      if (field.args) {
-        property.withArgs(field.args)
-      }
+    const property = sanitizeSchemaField({
+      schema: type || field.type || {},
+      name: queryName,
+    })
 
-      schema[queryName] = property
+    if (args || field.args) {
+      property.withArgs(args || field.args || {})
     }
+
+    property.mode = wrap(field.mode)
+
+    schema[queryName] = property
   })
 
   return extractMainSchema({ schema, name: baseName })
@@ -180,9 +203,41 @@ function extractRootSchema({
 function extractResolvers({ fields }: { fields: ExtendableFields|Fields }): Resolvers {
   const resolvers: Resolvers = {}
 
+
   Object.keys(fields).forEach((field) => {
     if (fields[field].resolve) {
-      resolvers[field] = fields[field].resolve!
+      const resolve = fields[field].resolve!
+      const { scopes, transforms } = fields[field]
+
+      if (!scopes && !transforms) {
+        resolvers[field] = resolve
+      } else {
+        resolvers[field] = async (params) => {
+          let { args } = params
+
+          // Chain all scopes function to get the final args
+          if (scopes) {
+            // eslint-disable-next-line no-restricted-syntax
+            for (const scope of scopes) {
+              // eslint-disable-next-line no-await-in-loop
+              args = (await scope({ ...params, args })) || args
+            }
+          }
+
+          // Run main resolver function
+          let value = await resolve({ ...params, args })
+
+          if (transforms) {
+            // eslint-disable-next-line no-restricted-syntax
+            for (const transform of transforms) {
+              // eslint-disable-next-line no-await-in-loop
+              value = (await transform({ ...params, args, value })) || value
+            }
+          }
+
+          return value
+        }
+      }
     }
   })
 
@@ -192,7 +247,7 @@ function extractResolvers({ fields }: { fields: ExtendableFields|Fields }): Reso
 // eslint-disable-next-line import/prefer-default-export
 export function sanitizeModel({ model, strict }: { model: Model, strict: boolean }): SanitizedModel {
   const {
-    name, adapter, schema, computed, external, scopes, ...otherProps
+    name, adapter, schema, computed, external, scopes, transforms, ...otherProps
   } = model
 
   return ({
@@ -204,10 +259,10 @@ export function sanitizeModel({ model, strict }: { model: Model, strict: boolean
         schema, name,
       }),
       computed: extractComputedSchema({
-        fields: computed?.fields, name,
+        fields: computed && computed.fields, name,
       }),
       queries: extractRootSchema({
-        fields: computed?.queries || {},
+        fields: (computed && computed.queries) || {},
         name,
         baseName: 'Query',
         base: queryResolvers,
@@ -216,7 +271,7 @@ export function sanitizeModel({ model, strict }: { model: Model, strict: boolean
         scopes: scopes || {} as any,
       }),
       mutations: extractRootSchema({
-        fields: computed?.mutations || {},
+        fields: (computed && computed.mutations) || {},
         name,
         baseName: 'Mutation',
         base: mutationResolvers,
@@ -226,12 +281,13 @@ export function sanitizeModel({ model, strict }: { model: Model, strict: boolean
       }),
     },
     resolvers: {
-      queries: extractResolvers({ fields: computed?.queries || {} }),
-      mutations: extractResolvers({ fields: computed?.mutations || {} }),
-      computed: extractResolvers({ fields: computed?.fields || {} }),
-      custom: computed?.custom || {},
+      queries: extractResolvers({ fields: (computed && computed.queries) || {} }),
+      mutations: extractResolvers({ fields: (computed && computed.mutations) || {} }),
+      computed: extractResolvers({ fields: (computed && computed.fields) || {} }),
+      custom: (computed && computed.custom) || {},
     },
-    scopes: scopes || {} as any,
+    scopes: scopes || {},
+    transforms: transforms || {},
     external: !!external,
   })
 }
