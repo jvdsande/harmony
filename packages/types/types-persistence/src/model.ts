@@ -21,6 +21,13 @@ export type Field = FieldBase & {
   extends?: never
 }
 
+export type FieldArgsType = FieldBase & {
+  resolve: QueryResolver
+  type: SchemaField
+  args?: Schema
+  extends?: never
+}
+
 export type FieldExtendsType = FieldBase & {
   resolve: QueryResolver
   extends: ResolverEnum
@@ -35,7 +42,7 @@ export type FieldExtendsArgs = FieldBase & {
   args?: never
 }
 
-export type ExtendableField = Field | FieldExtendsType | FieldExtendsArgs
+export type ExtendableField = FieldArgsType | FieldExtendsType | FieldExtendsArgs
 
 export type Fields = Record<string, Field>
 export type ExtendableFields = Record<string, ExtendableField>
