@@ -1,6 +1,6 @@
 import { IProperty, IPropertySchema, PropertyMode } from 'property'
 import {
-  Resolver, ResolverArgs, ResolverEnum, BaseResolverParams,
+  QueryResolver, FieldResolver, ResolverArgs, ResolverEnum, BaseResolverParams,
 } from 'resolvers'
 
 export type SchemaField = IProperty | SchemaDescription | SchemaField[]
@@ -8,7 +8,6 @@ export type SchemaDescription = { [key: string]: SchemaField }
 export type Schema = SchemaDescription | IPropertySchema
 
 type FieldBase = {
-  resolve?: Resolver
   mode?: PropertyMode | PropertyMode[]
 
   scopes?: Scope[]
@@ -16,18 +15,21 @@ type FieldBase = {
 }
 
 export type Field = FieldBase & {
+  resolve: FieldResolver
   type: SchemaField
   args?: Schema
   extends?: never
 }
 
 export type FieldExtendsType = FieldBase & {
+  resolve: QueryResolver
   extends: ResolverEnum
   args?: Schema
   type?: never
 }
 
 export type FieldExtendsArgs = FieldBase & {
+  resolve: QueryResolver
   extends: ResolverEnum
   type?: SchemaField
   args?: never
@@ -37,7 +39,7 @@ export type ExtendableField = Field | FieldExtendsType | FieldExtendsArgs
 
 export type Fields = Record<string, Field>
 export type ExtendableFields = Record<string, ExtendableField>
-export type Resolvers = Record<string, Resolver>
+export type Resolvers = Record<string, QueryResolver|FieldResolver>
 
 type ScopeParams = BaseResolverParams
 export type Scope = (arg: ScopeParams) => ResolverArgs|undefined|void

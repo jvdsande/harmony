@@ -21,10 +21,18 @@ export type BaseResolverParams = {
   context?: ResolverContext,
   info?: ResolverInfo
 }
-type ResolverParams = BaseResolverParams & {
+export type FieldResolverParams = {
   resolvers: ResolverResolvers,
+  source: ResolverSource,
+  context: ResolverContext,
+  info: ResolverInfo
 }
-export type Resolver = (arg: ResolverParams) => Promise<any>
+export type QueryResolverParams = FieldResolverParams & {
+  args?: ResolverArgs
+}
+
+export type FieldResolver = (arg: FieldResolverParams) => Promise<any>
+export type QueryResolver = (arg: QueryResolverParams) => Promise<any>
 
 export type ClassicResolverFunction = (arg: {
   source?: ResolverSource, args?: ResolverArgs, context?: ResolverContext, info?: ResolverInfo,

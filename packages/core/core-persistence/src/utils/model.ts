@@ -2,6 +2,7 @@ import {
   Fields, ExtendableFields, Resolvers, Scopes,
   IProperty, PropertyMode,
   Model, SanitizedModel, Schema, ExtendableField,
+  QueryResolverParams,
 } from '@harmonyjs/types-persistence'
 import { createOperatorType } from 'utils/property/operators'
 import { queryResolvers, ResolverDefinition, mutationResolvers } from 'utils/resolvers'
@@ -212,7 +213,7 @@ function extractResolvers({ fields }: { fields: ExtendableFields|Fields }): Reso
       if (!scopes && !transforms) {
         resolvers[field] = resolve
       } else {
-        resolvers[field] = async (params) => {
+        resolvers[field] = async (params: QueryResolverParams) => {
           let { args } = params
 
           // Chain all scopes function to get the final args

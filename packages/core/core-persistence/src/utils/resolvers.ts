@@ -1,6 +1,7 @@
 import {
   AliasedResolverEnum,
-  ClassicResolverFunction, IAdapter, IProperty, IPropertySchema, ModelResolver, ReferenceResolverFunction, Resolver,
+  ClassicResolverFunction, IAdapter, IProperty, IPropertySchema, ModelResolver, ReferenceResolverFunction,
+  FieldResolver, QueryResolver,
   ResolverArgs, ResolverContext, ResolverEnum, ResolverFunction, ResolverInfo, ResolverResolvers, ResolverSource,
   SanitizedModel, Scope, Transform,
 } from '@harmonyjs/types-persistence'
@@ -61,7 +62,7 @@ export const mutationResolvers: ResolverDefinition[] = [
 function computeFieldResolver({
   resolver, modelResolvers,
 } : {
-  resolver: Resolver, modelResolvers: Record<string, ModelResolver>
+  resolver: FieldResolver|QueryResolver, modelResolvers: Record<string, ModelResolver>
 }) {
   return (
     source: ResolverSource,
