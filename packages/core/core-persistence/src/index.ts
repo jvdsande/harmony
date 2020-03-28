@@ -13,7 +13,8 @@ import EventsHandler from 'utils/events'
 export { default as Types } from 'utils/types'
 export {
   PersistenceConfig, PersistenceInstance, Adapter, IAdapter,
-  Model, Schema, Computed, Scopes, PropertyMode,
+  Model, Schema, Computed, Scopes, Transforms, PropertyMode,
+  Scope, Transform,
 } from '@harmonyjs/types-persistence'
 
 export default function Persistence() {
