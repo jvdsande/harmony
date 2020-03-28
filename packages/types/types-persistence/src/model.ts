@@ -11,8 +11,8 @@ type FieldBase = {
   resolve?: Resolver
   mode?: PropertyMode | PropertyMode[]
 
-  scopes?: [Scope]
-  transforms?: [Transform]
+  scopes?: Scope[]
+  transforms?: Transform[]
 }
 
 export type Field = FieldBase & {
