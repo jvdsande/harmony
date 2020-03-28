@@ -28,7 +28,7 @@ export type FieldResolverParams = {
   info: ResolverInfo
 }
 export type QueryResolverParams = FieldResolverParams & {
-  args?: ResolverArgs
+  args: ResolverArgs
 }
 
 export type FieldResolver = (arg: FieldResolverParams) => Promise<any>
