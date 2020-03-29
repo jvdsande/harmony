@@ -1,6 +1,7 @@
 import { IProperty, IPropertySchema, PropertyMode } from 'property'
 import {
-  QueryResolver, FieldResolver, ResolverArgs, ResolverEnum, BaseResolverParams,
+  QueryResolver, FieldResolver, ResolverArgs, ResolverEnum, BaseResolverParams, QueryResolverParams,
+  FieldResolverParams,
 } from 'resolvers'
 
 export type SchemaField = IProperty | SchemaDescription | SchemaField[]
@@ -9,52 +10,57 @@ export type Schema = SchemaDescription | IPropertySchema
 
 type FieldBase = {
   mode?: PropertyMode | PropertyMode[]
-
-  scopes?: Scope[]
-  transforms?: Transform[]
 }
 
 export type Field = FieldBase & {
   resolve: FieldResolver
+
+  type: SchemaField
+  args?: Schema
+  extends?: never
+
+  scopes?: Scope<FieldResolverParams>[]
+  transforms?: Transform<FieldResolverParams>[]
+}
+
+export type ExtendableFieldBase = FieldBase & {
+  resolve: QueryResolver
+
+  scopes?: Scope<QueryResolverParams>[]
+  transforms?: Transform<QueryResolverParams>[]
+}
+
+export type FieldArgsType = {
   type: SchemaField
   args?: Schema
   extends?: never
 }
 
-export type FieldArgsType = FieldBase & {
-  resolve: QueryResolver
-  type: SchemaField
-  args?: Schema
-  extends?: never
-}
-
-export type FieldExtendsType = FieldBase & {
-  resolve: QueryResolver
+export type FieldExtendsType = {
   extends: ResolverEnum
   args?: Schema
   type?: never
 }
 
-export type FieldExtendsArgs = FieldBase & {
-  resolve: QueryResolver
+export type FieldExtendsArgs = {
   extends: ResolverEnum
   type?: SchemaField
   args?: never
 }
 
-export type ExtendableField = FieldArgsType | FieldExtendsType | FieldExtendsArgs
+export type ExtendableField = ExtendableFieldBase & (FieldArgsType | FieldExtendsType | FieldExtendsArgs)
 
 export type Fields = Record<string, Field>
 export type ExtendableFields = Record<string, ExtendableField>
 export type Resolvers = Record<string, QueryResolver|FieldResolver>
 
-type ScopeParams = BaseResolverParams
-export type Scope = (arg: ScopeParams) => ResolverArgs|undefined|void
-export type Scopes = Partial<Record<ResolverEnum, Scope>>
+type ScopeParams<T = BaseResolverParams> = T
+export type Scope<T = BaseResolverParams> = (arg: ScopeParams<T>) => ResolverArgs|undefined|void
+export type Scopes = Partial<Record<ResolverEnum, Scope<QueryResolverParams>>>
 
-type TransformParams = BaseResolverParams & { value?: any }
-export type Transform = (arg: TransformParams) => any|undefined|void
-export type Transforms = Partial<Record<ResolverEnum, Transform>>
+type TransformParams<T = BaseResolverParams> = T & { value?: any }
+export type Transform<T = BaseResolverParams> = (arg: TransformParams<T>) => any|undefined|void
+export type Transforms = Partial<Record<ResolverEnum, Transform<QueryResolverParams>>>
 
 export type Computed = {
   fields?: Fields,

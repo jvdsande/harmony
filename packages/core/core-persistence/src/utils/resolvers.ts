@@ -411,8 +411,8 @@ export function makeResolvers({ adapter, model } : { adapter?: IAdapter, model: 
       type: res.type,
       adapter,
       model,
-      scope: model.scopes[res.type],
-      transform: model.transforms[res.type],
+      scope: model.scopes[res.type] as Scope,
+      transform: model.transforms[res.type] as Transform,
     })
 
     resolvers[res.type].unscoped = makeResolver({
