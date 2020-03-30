@@ -213,7 +213,7 @@ function extractResolvers({ fields }: { fields: ExtendableFields|Fields }): Reso
       if (!scopes && !transforms) {
         resolvers[field] = resolve
       } else {
-        resolvers[field] = async (params: QueryResolverParams) => {
+        resolvers[field] = async (params: Omit<QueryResolverParams, 'field'>) => {
           let { args } = params
 
           // Chain all scopes function to get the final args
@@ -221,18 +221,24 @@ function extractResolvers({ fields }: { fields: ExtendableFields|Fields }): Reso
             // eslint-disable-next-line no-restricted-syntax
             for (const scope of scopes) {
               // eslint-disable-next-line no-await-in-loop
-              args = (await scope({ ...params, args })) || args
+              args = (await scope({
+                ...params, args, field,
+              })) || args
             }
           }
 
           // Run main resolver function
-          let value = await resolve({ ...params, args })
+          let value = await resolve({
+            ...params, args, field,
+          })
 
           if (transforms) {
             // eslint-disable-next-line no-restricted-syntax
             for (const transform of transforms) {
               // eslint-disable-next-line no-await-in-loop
-              value = (await transform({ ...params, args, value })) || value
+              value = (await transform({
+                ...params, args, value, field,
+              })) || value
             }
           }
 

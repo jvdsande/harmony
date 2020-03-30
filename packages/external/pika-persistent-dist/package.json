@@ -1,0 +1,41 @@
+{
+  "name": "@harmonyjs/pika-plugin-persistent-dist",
+  "version": "0.1.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "mixt": {
+    "dist": "./pkg"
+  },
+  "@pika/pack": {
+    "pipeline": [
+      [
+        "@pika/plugin-ts-standard-pkg"
+      ],
+      [
+        "@pika/plugin-build-node"
+      ]
+    ]
+  },
+  "description": "Pika plugin for building into a folder that does not get nuked at each build, but gets replaced instead",
+  "main": "dist/index.js",
+  "scripts": {
+    "mixt:build": "pika build",
+    "mixt:watch": "nodemon -e ts,js,tsx,jsx,json,yml --watch src --exec \"npm run mixt:build\"",
+    "mixt:release": "cd ./pkg && npm publish"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jvdsande/harmonyjs.git"
+  },
+  "author": "Jérémie VAN DER SANDE <jeremie.vandersande@gmail.com>",
+  "license": "ISC",
+  "gitHead": "a896e4656e71ab6dc197b1b0f88ac1635582a459",
+  "devDependencies": {
+    "@types/ncp": "^2.0.3",
+    "typescript": "^3.7.5"
+  },
+  "dependencies": {
+    "ncp": "^2.0.0"
+  }
+}

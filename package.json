@@ -61,6 +61,7 @@
     "@harmonyjs/eslint-config": "file:packages/utils/utils-eslint",
     "@harmonyjs/logger": "file:packages/utils/utils-logger/pkg",
     "@harmonyjs/persistence": "file:packages/core/core-persistence/pkg",
+    "@harmonyjs/pika-plugin-persistent-dist": "file:packages/external/pika-persistent-dist/pkg",
     "@harmonyjs/pika-plugin-ts-resolve-imports": "file:packages/external/pika-ts-resolve-imports/pkg",
     "@harmonyjs/query": "file:packages/core/core-query/pkg",
     "@harmonyjs/server": "file:packages/core/core-server/pkg",

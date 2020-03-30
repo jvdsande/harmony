@@ -54,11 +54,11 @@ export type Fields = Record<string, Field>
 export type ExtendableFields = Record<string, ExtendableField>
 export type Resolvers = Record<string, QueryResolver|FieldResolver>
 
-type ScopeParams<T = BaseResolverParams> = T
+type ScopeParams<T = BaseResolverParams> = T & { field: string }
 export type Scope<T = BaseResolverParams> = (arg: ScopeParams<T>) => ResolverArgs|undefined|void
 export type Scopes = Partial<Record<ResolverEnum, Scope<QueryResolverParams>>>
 
-type TransformParams<T = BaseResolverParams> = T & { value?: any }
+type TransformParams<T = BaseResolverParams> = T & { value?: any, field: string }
 export type Transform<T = BaseResolverParams> = (arg: TransformParams<T>) => any|undefined|void
 export type Transforms = Partial<Record<ResolverEnum, Transform<QueryResolverParams>>>
 

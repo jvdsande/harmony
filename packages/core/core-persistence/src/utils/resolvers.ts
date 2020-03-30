@@ -60,9 +60,9 @@ export const mutationResolvers: ResolverDefinition[] = [
 ]
 
 function computeFieldResolver({
-  resolver, modelResolvers,
+  field, resolver, modelResolvers,
 } : {
-  resolver: FieldResolver|QueryResolver, modelResolvers: Record<string, ModelResolver>
+  field: string, resolver: FieldResolver|QueryResolver, modelResolvers: Record<string, ModelResolver>
 }) {
   return (
     source: ResolverSource,
@@ -105,6 +105,7 @@ function computeFieldResolver({
       context,
       info,
       resolvers: wrappedResolvers,
+      field,
     })
   }
 }
@@ -232,6 +233,7 @@ export function getResolvers({
         resolvers[baseName][field] = computeFieldResolver({
           resolver: model.resolvers.computed[field],
           modelResolvers,
+          field,
         })
       })
 
@@ -241,6 +243,7 @@ export function getResolvers({
         resolvers.Query[field] = computeFieldResolver({
           resolver: model.resolvers.queries[field],
           modelResolvers,
+          field,
         })
       })
 
@@ -250,6 +253,7 @@ export function getResolvers({
         resolvers.Mutation[field] = computeFieldResolver({
           resolver: model.resolvers.mutations[field],
           modelResolvers,
+          field,
         })
       })
 
@@ -262,6 +266,7 @@ export function getResolvers({
             resolvers[baseName][field] = computeFieldResolver({
               resolver: model.resolvers.custom[baseName][field],
               modelResolvers,
+              field,
             })
           })
       })
@@ -289,9 +294,9 @@ export function getResolvers({
 }
 
 function makeResolver({
-  adapter, model, type, scope, transform,
+  field, adapter, model, type, scope, transform,
 } : {
-  adapter?: IAdapter, model: SanitizedModel, type: ResolverEnum, scope?: Scope, transform?: Transform,
+  field: string, adapter?: IAdapter, model: SanitizedModel, type: ResolverEnum, scope?: Scope, transform?: Transform,
 }) : ClassicResolverFunction {
   if (!adapter) {
     return () => null
@@ -314,6 +319,7 @@ function makeResolver({
       context,
       source,
       info,
+      field,
     }))) || args) as any
 
     const value = await adapter[type]({
@@ -326,6 +332,7 @@ function makeResolver({
 
     if (transform) {
       return transform({
+        field,
         source,
         args: scopedArgs,
         context,
@@ -413,12 +420,14 @@ export function makeResolvers({ adapter, model } : { adapter?: IAdapter, model: 
       model,
       scope: model.scopes[res.type] as Scope,
       transform: model.transforms[res.type] as Transform,
+      field: extractModelType(model.name) + res.suffix,
     })
 
     resolvers[res.type].unscoped = makeResolver({
       type: res.type,
       adapter,
       model,
+      field: extractModelType(model.name) + res.suffix,
     })
 
     if (res.alias) {

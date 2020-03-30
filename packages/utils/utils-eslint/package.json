@@ -15,6 +15,15 @@
   },
   "author": "Jérémie VAN DER SANDE <jeremie.vandersande@gmail.com>",
   "license": "ISC",
+  "dependencies": {
+    "eslint-config-airbnb": "^18.0.0",
+    "eslint-import-resolver-typescript": "^1.1.1",
+    "eslint-plugin-compat": "^3.5.1",
+    "eslint-plugin-import": "^2.20.1",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-react": "^7.14.3",
+    "eslint-plugin-react-hooks": "^1.7.0"
+  },
   "peerDependencies": {
     "eslint": "^5.16.0"
   }
