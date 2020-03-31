@@ -38,6 +38,9 @@
     "@harmonyjs/types-server": "*"
   },
   "devDependencies": {
+    "@types/http-errors": "^1.6.3",
+    "@types/socket.io": "^2.1.4",
+    "@types/redis": "^2.8.16",
     "eslint": "^6.8.0",
     "typescript": "^3.7.5"
   }

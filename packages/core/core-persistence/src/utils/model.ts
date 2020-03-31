@@ -216,30 +216,47 @@ function extractResolvers({ fields }: { fields: ExtendableFields|Fields }): Reso
         resolvers[field] = async (params: Omit<QueryResolverParams, 'field'>) => {
           let { args } = params
 
-          // Chain all scopes function to get the final args
-          if (scopes) {
-            // eslint-disable-next-line no-restricted-syntax
-            for (const scope of scopes) {
-              // eslint-disable-next-line no-await-in-loop
-              args = (await scope({
-                ...params, args, field,
-              })) || args
+          let error = null
+          let value = null
+
+          try {
+            // Chain all scopes function to get the final args
+            if (scopes) {
+              // eslint-disable-next-line no-restricted-syntax
+              for (const scope of scopes) {
+                // eslint-disable-next-line no-await-in-loop
+                args = (await scope({
+                  ...params, args, field,
+                })) || args
+              }
             }
+
+            // Run main resolver function
+            value = await resolve({
+              ...params, args, field,
+            })
+          } catch (err) {
+            // Throwing in a scope stops the subsequent scopes and the resolver from running
+            error = err
           }
 
-          // Run main resolver function
-          let value = await resolve({
-            ...params, args, field,
-          })
-
-          if (transforms) {
-            // eslint-disable-next-line no-restricted-syntax
-            for (const transform of transforms) {
-              // eslint-disable-next-line no-await-in-loop
-              value = (await transform({
-                ...params, args, value, field,
-              })) || value
+          try {
+            if (transforms) {
+              // eslint-disable-next-line no-restricted-syntax
+              for (const transform of transforms) {
+                // eslint-disable-next-line no-await-in-loop
+                value = (await transform({
+                  ...params, args, value, error, field,
+                })) || value
+              }
             }
+          } catch (err) {
+            // Throwing in a transform stops the subsequent transforms from running
+            error = err
+          }
+
+          if (error) {
+            throw error
           }
 
           return value

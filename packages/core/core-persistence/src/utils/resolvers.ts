@@ -314,31 +314,48 @@ function makeResolver({
       return () => null
     }
 
-    const scopedArgs = ((scope && (await scope({
-      args,
-      context,
-      source,
-      info,
-      field,
-    }))) || args) as any
+    let error
+    let value
+    let scopedArgs
 
-    const value = await adapter[type]({
-      source,
-      args: scopedArgs,
-      context,
-      info: info || {} as ResolverInfo,
-      model,
-    })
-
-    if (transform) {
-      return transform({
+    try {
+      scopedArgs = ((scope && (await scope({
+        args,
+        context,
+        source,
+        info,
         field,
+      }))) || args) as any
+
+      value = await adapter[type]({
         source,
         args: scopedArgs,
         context,
         info: info || {} as ResolverInfo,
-        value,
+        model,
       })
+    } catch (err) {
+      error = err
+    }
+
+    try {
+      if (transform) {
+        return transform({
+          field,
+          source,
+          args: scopedArgs,
+          context,
+          info: info || {} as ResolverInfo,
+          value,
+          error,
+        })
+      }
+    } catch (err) {
+      error = err
+    }
+
+    if (error) {
+      throw error
     }
 
     return value

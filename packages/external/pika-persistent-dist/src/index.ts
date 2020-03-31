@@ -20,7 +20,7 @@ async function getAllFiles(dir : string, sub : string = '') : Promise<string[]> 
     dirents.map(async (dirent) => {
       const res = dirent.name
       return dirent.isDirectory()
-        ? [...(await getAllFiles(path.resolve(dir, res), `${sub + res}/`)), sub + res]
+        ? [...(await getAllFiles(path.resolve(dir, res || ''), `${sub + res}/`)), sub + res]
         : ([sub + res])
     }),
   )
@@ -33,7 +33,7 @@ export async function build({
 }: BuilderOptions): Promise<void> {
   const distFolder = options.dist || 'dist'
 
-  const distPath = path.resolve(out, '..', distFolder)
+  const distPath = path.resolve(out || '', '..', distFolder)
   const dirs = []
   try {
     dirs.push(...(await fs.readdir(distPath)))
@@ -48,7 +48,7 @@ export async function build({
     if (stat.isDirectory()) {
       const files = await getAllFiles(path.resolve(distPath, dir))
       await Promise.all(files.map(async (file) => {
-        const filePath = path.resolve(distPath, dir, file)
+        const filePath = path.resolve(distPath, dir || '', file || '')
 
         if (!['index.js', 'index.ts', 'index.d.ts'].includes(file)) {
           const fstat = await fs.lstat(filePath)
@@ -69,7 +69,7 @@ export async function build({
 export function afterBuild({ reporter, out, options }: BuilderOptions): void {
   setTimeout(async () => {
     const distFolder = options.dist || 'dist'
-    const distPath = path.resolve(out, '..', distFolder)
+    const distPath = path.resolve(out || '', '..', distFolder)
     reporter.info(`moving output to folder ${distFolder}`)
 
     // Copy out to dist
@@ -81,20 +81,3 @@ export function afterBuild({ reporter, out, options }: BuilderOptions): void {
     })
   }, 100)
 }
-
-/*
-export function manifest(newManifest : Manifest, args : any) {
-  console.log(args)
-  const { options, out } = args
-  const distFolder = options.dist || 'dist'
-  const distPath = path.resolve(out, '..', distFolder)
-  console.log(distPath)
-
-
-  setTimeout(async () => {
-    // Copy out to dist
-    await copy(out, distPath)
-  })
-  return newManifest
-}
- */

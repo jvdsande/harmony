@@ -1,5 +1,6 @@
 // Import Fastify
 import Fastify, { FastifyInstance } from 'fastify'
+import FastifySensible from 'fastify-sensible'
 
 // Import SocketIO
 import IO from 'socket.io'
@@ -15,14 +16,20 @@ import { ILogger } from '@harmonyjs/logger'
 type CreateServerArgs = {
   logger: ILogger,
 }
-export function createServer({ logger } : CreateServerArgs) {
+export async function createServer({ logger } : CreateServerArgs) {
   logger.info('Initializing Fastify Server')
 
   // Create a Fastify server
-  return Fastify({
+  const instance = Fastify({
     ignoreTrailingSlash: true,
     modifyCoreObjects: false,
   })
+
+  instance.register(FastifySensible)
+
+  await instance.ready()
+
+  return instance
 }
 
 type CreateSocketArgs = {
@@ -30,7 +37,7 @@ type CreateSocketArgs = {
   config: ServerConfig,
   server: FastifyInstance,
 }
-export function createSocket({ logger, config, server } : CreateSocketArgs) {
+export async function createSocket({ logger, config, server } : CreateSocketArgs) {
   const { cluster } = config
 
   // Create Socket.IO instance

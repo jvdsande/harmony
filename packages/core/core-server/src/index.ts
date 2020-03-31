@@ -17,6 +17,9 @@ import {
 export {
   ServerConfig, ServerInstance, Controller, IController,
 } from '@harmonyjs/types-server'
+export {
+  default as HttpErrors, IHttpErrors,
+} from 'utils/errors'
 
 export default function Server() : ServerInstance {
   // Create an instance
@@ -30,10 +33,10 @@ export default function Server() : ServerInstance {
     const { logger, configuration: config } = instance
 
     // Create server instance (Fastify)
-    instance.server = createServer({ logger })
+    instance.server = await createServer({ logger })
 
     // Create socketIO instance
-    instance.socket = createSocket({ config, logger, server: instance.server })
+    instance.socket = await createSocket({ config, logger, server: instance.server })
 
     // Start the server
     const { server, socket } = instance

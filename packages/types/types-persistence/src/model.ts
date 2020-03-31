@@ -64,7 +64,7 @@ export type Scope<C = ResolverContext, T = BaseResolverParams<C>> =
 export type Scopes<C = ResolverContext> =
   Partial<Record<ResolverEnum, Scope<C, Omit<QueryResolverParams<C>, 'resolvers'>>>>
 
-type TransformParams<C = ResolverContext, T = BaseResolverParams<C>> = T & { value?: any, field: string }
+type TransformParams<C = ResolverContext, T = BaseResolverParams<C>> = T & { value?: any, error?: Error, field: string }
 export type Transform<C = ResolverContext, T = BaseResolverParams<C>> =
   (arg: TransformParams<C, T>) => any|undefined|void
 export type Transforms<C = ResolverContext> =
