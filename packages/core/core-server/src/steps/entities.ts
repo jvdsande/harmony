@@ -25,7 +25,15 @@ export async function createServer({ logger } : CreateServerArgs) {
     modifyCoreObjects: false,
   })
 
-  instance.register(FastifySensible)
+  instance.register(FastifySensible, { errorHandler: false })
+  instance.setErrorHandler((error, request, reply) => {
+    if (reply.res.statusCode === 500 && (error as any).explicitInternalServerError !== true) {
+      logger.error('Internal Server Error:', error)
+      reply.send(new Error('Internal server error'))
+    } else {
+      reply.send(error)
+    }
+  })
 
   await instance.ready()
 

@@ -25,20 +25,6 @@ export async function logBanner({ logger } : LogBannerArgs) {
   )
 }
 
-async function chainedPromises(promiseTriggers : (() => Promise<any>)[]) {
-  const launchNext = async () => {
-    const trigger = promiseTriggers.shift()
-
-    if (!trigger) {
-      return
-    }
-
-    await trigger().then(launchNext)
-  }
-
-  await launchNext()
-}
-
 type RegisterControllersArgs = {
   server: FastifyInstance,
   socket: SocketIO,
@@ -49,7 +35,7 @@ type RegisterControllersArgs = {
 export async function registerControllers({
   server, socket, controllers, logger, config,
 } : RegisterControllersArgs) {
-  controllers.map((controller) => {
+  controllers.forEach((controller) => {
     const pluginRegistration = async (instance: FastifyInstance, options: any, done: Function) => {
       try {
         const controllerLogger = Logger({ name: controller.name, configuration: config.log })

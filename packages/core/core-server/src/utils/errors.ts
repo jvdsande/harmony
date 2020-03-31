@@ -96,4 +96,10 @@ defaultErrors.forEach((error) => {
   HttpErrors[error] = (message) => new createError[error](message)
 })
 
+HttpErrors.InternalServerError = (message) => {
+  const error = new createError.InternalServerError(message)
+  error.explicitInternalServerError = true
+  return error
+}
+
 export default HttpErrors
