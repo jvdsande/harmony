@@ -16,7 +16,7 @@ import { ILogger } from '@harmonyjs/logger'
 type CreateServerArgs = {
   logger: ILogger,
 }
-export async function createServer({ logger } : CreateServerArgs) {
+export function createServer({ logger } : CreateServerArgs) {
   logger.info('Initializing Fastify Server')
 
   // Create a Fastify server
@@ -35,8 +35,6 @@ export async function createServer({ logger } : CreateServerArgs) {
     }
   })
 
-  await instance.ready()
-
   return instance
 }
 
@@ -45,7 +43,7 @@ type CreateSocketArgs = {
   config: ServerConfig,
   server: FastifyInstance,
 }
-export async function createSocket({ logger, config, server } : CreateSocketArgs) {
+export function createSocket({ logger, config, server } : CreateSocketArgs) {
   const { cluster } = config
 
   // Create Socket.IO instance

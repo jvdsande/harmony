@@ -33,10 +33,10 @@ export default function Server() : ServerInstance {
     const { logger, configuration: config } = instance
 
     // Create server instance (Fastify)
-    instance.server = await createServer({ logger })
+    instance.server = createServer({ logger })
 
     // Create socketIO instance
-    instance.socket = await createSocket({ config, logger, server: instance.server })
+    instance.socket = createSocket({ config, logger, server: instance.server })
 
     // Start the server
     const { server, socket } = instance
