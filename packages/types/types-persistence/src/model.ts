@@ -63,11 +63,11 @@ type TransformParams<T = BaseResolverParams> = T & { value?: any, field: string 
 export type Transform<T = BaseResolverParams> = (arg: TransformParams<T>) => any|undefined|void
 export type Transforms = Partial<Record<ResolverEnum, Transform<QueryResolverParams>>>
 
-export type Computed<T = ResolverContext, C extends string = string> = {
-  fields?: Fields<T, C>,
-  queries?: ExtendableFields<T, C>,
-  mutations?: ExtendableFields<T, C>,
-  custom?: Record<string, Resolvers<T, C>>
+export type Computed<ContextType = ResolverContext, ResolverEnum extends string = string> = {
+  fields?: Fields<ContextType, ResolverEnum>,
+  queries?: ExtendableFields<ContextType, ResolverEnum>,
+  mutations?: ExtendableFields<ContextType, ResolverEnum>,
+  custom?: Record<string, Resolvers<ContextType, ResolverEnum>>
 }
 
 export type Model = {
