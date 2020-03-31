@@ -33,8 +33,10 @@ export type QueryResolverParams<C = ResolverContext, R extends string = string> 
   field: string,
 }
 
-export type FieldResolver<C, R extends string> = (arg: FieldResolverParams<C, R>) => Promise<any>
-export type QueryResolver<C, R extends string> = (arg: QueryResolverParams<C, R>) => Promise<any>
+export type FieldResolver<C = ResolverContext, R extends string = string> =
+  (arg: FieldResolverParams<C, R>) => Promise<any>
+export type QueryResolver<C = ResolverContext, R extends string = string> =
+  (arg: QueryResolverParams<C, R>) => Promise<any>
 
 export type ClassicResolverFunction = (arg: {
   source?: ResolverSource, args?: ResolverArgs, context?: ResolverContext, info?: ResolverInfo,

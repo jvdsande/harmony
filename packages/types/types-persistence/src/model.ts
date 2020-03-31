@@ -12,22 +12,22 @@ type FieldBase = {
   mode?: PropertyMode | PropertyMode[]
 }
 
-export type Field<C, R extends string> = FieldBase & {
+export type Field<C = ResolverContext, R extends string = string> = FieldBase & {
   resolve: FieldResolver<C, R>
 
   type: SchemaField
   args?: Schema
   extends?: never
 
-  scopes?: Scope<FieldResolverParams<C, R>>[]
-  transforms?: Transform<FieldResolverParams<C, R>>[]
+  scopes?: Scope<C, FieldResolverParams<C, R>>[]
+  transforms?: Transform<C, FieldResolverParams<C, R>>[]
 }
 
 export type ExtendableFieldBase<C, R extends string> = FieldBase & {
   resolve: QueryResolver<C, R>
 
-  scopes?: Scope<QueryResolverParams<C, R>>[]
-  transforms?: Transform<QueryResolverParams<C, R>>[]
+  scopes?: Scope<C, QueryResolverParams<C, R>>[]
+  transforms?: Transform<C, QueryResolverParams<C, R>>[]
 }
 
 export type FieldArgsType = {
@@ -48,12 +48,15 @@ export type FieldExtendsArgs = {
   args?: never
 }
 
-export type ExtendableField<C, R extends string> =
+export type ExtendableField<C = ResolverContext, R extends string = string> =
   ExtendableFieldBase<C, R> & (FieldArgsType | FieldExtendsType | FieldExtendsArgs)
 
-export type Fields<C, R extends string> = Record<string, Field<C, R>>
-export type ExtendableFields<C, R extends string> = Record<string, ExtendableField<C, R>>
-export type Resolvers<C, R extends string> = Record<string, QueryResolver<C, R>|FieldResolver<C, R>>
+export type Fields<C = ResolverContext, R extends string = string> =
+  Record<string, Field<C, R>>
+export type ExtendableFields<C = ResolverContext, R extends string = string> =
+  Record<string, ExtendableField<C, R>>
+export type Resolvers<C = ResolverContext, R extends string = string> =
+  Record<string, QueryResolver<C, R>|FieldResolver<C, R>>
 
 type ScopeParams<C = ResolverContext, T = BaseResolverParams<C>> = T & { field: string }
 export type Scope<C = ResolverContext, T = BaseResolverParams<C>> =
