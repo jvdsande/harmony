@@ -17,11 +17,11 @@ type LocalVariables = {
   logger: ILogger
   schemas: Record<string, IPropertySchema>
   externals: Record<string, boolean>
-  connection: Connection
 }
 
 type ExposedVariables = {
   models: Record<string, Mongoose.Model<any>>
+  connection: Connection
 }
 
 const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> = function AdapterMongoose(config) {
@@ -33,6 +33,7 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
   const instance : IAdapter & ExposedVariables = ({
     name: 'AdapterMongoose',
     models: {},
+    connection: Mongoose.createConnection(),
 
     async initialize({ models, events, logger } : {
       models: SanitizedModel[],
@@ -91,17 +92,15 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
 
       logger.info('Creating Mongoose models')
 
-      local.connection = Mongoose.createConnection()
-
       // Convert Mongoose Schemas to Mongoose models
       models.forEach((model) => {
-        instance.models[model.name] = local.connection.model(model.name, schemas[model.name])
+        instance.models[model.name] = instance.connection.model(model.name, schemas[model.name])
       })
 
       const connectToMongo = () => {
         logger.info('Connecting to MongoDB')
 
-        local.connection.openUri(
+        instance.connection.openUri(
           config.host,
           {
             useNewUrlParser: true,
@@ -129,26 +128,26 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
 
       connectToMongo()
 
-      local.connection.on('error', () => {
+      instance.connection.on('error', () => {
         logger.error('An error occurred with MongoDB connection')
         setTimeout(connectToMongo, config.connectionRetryTimeout || 5000)
       })
 
-      local.connection.on('disconnected', () => {
+      instance.connection.on('disconnected', () => {
         logger.error('Mongo connection lost')
       })
 
-      local.connection.on('connected', () => {
+      instance.connection.on('connected', () => {
         logger.info('Mongo connected')
       })
     },
 
     async close() {
-      if (local.connection) {
-        local.connection.removeAllListeners('connected')
-        local.connection.removeAllListeners('disconnected')
-        local.connection.removeAllListeners('error')
-        await local.connection.close()
+      if (instance.connection) {
+        instance.connection.removeAllListeners('connected')
+        instance.connection.removeAllListeners('disconnected')
+        instance.connection.removeAllListeners('error')
+        await instance.connection.close()
       }
     },
 
