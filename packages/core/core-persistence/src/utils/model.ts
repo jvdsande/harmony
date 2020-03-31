@@ -185,12 +185,12 @@ function extractRootSchema({
     const { type, args } = field.extends ? extendField(field, extractModelType(name)) : field
 
     const property = sanitizeSchemaField({
-      schema: type || field.type || {},
+      schema: field.type || type || {},
       name: queryName,
     })
 
     if (args || field.args) {
-      property.withArgs(args || field.args || {})
+      property.withArgs(field.args || args || {})
     }
 
     property.mode = wrap(field.mode)
