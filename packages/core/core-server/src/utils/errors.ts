@@ -1,7 +1,5 @@
 import createError from 'http-errors'
 
-const errors = {}
-
 type Errors =
   'BadRequest' |
 'Unauthorized' |

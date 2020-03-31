@@ -4,6 +4,9 @@ import {
   Model, SanitizedModel, Schema, ExtendableField,
   QueryResolverParams,
 } from '@harmonyjs/types-persistence'
+
+import { ApolloError } from 'apollo-server-core'
+
 import { createOperatorType } from 'utils/property/operators'
 import { queryResolvers, ResolverDefinition, mutationResolvers } from 'utils/resolvers'
 
@@ -256,7 +259,12 @@ function extractResolvers({ fields }: { fields: ExtendableFields|Fields }): Reso
           }
 
           if (error) {
-            throw error
+            const apolloError = new ApolloError(error.message, error.name)
+            apolloError.extensions.status = error.status
+            apolloError.extensions.exception = {
+              stacktrace: error.stack.split('\n'),
+            }
+            throw apolloError
           }
 
           return value

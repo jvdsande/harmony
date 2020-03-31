@@ -5,6 +5,7 @@ import {
   ResolverArgs, ResolverContext, ResolverEnum, ResolverFunction, ResolverInfo, ResolverResolvers, ResolverSource,
   SanitizedModel, Scope, Transform,
 } from '@harmonyjs/types-persistence'
+import { ApolloError, ValidationError } from 'apollo-server-core'
 
 import GraphQLLong from 'graphql-type-long'
 import GraphQLJson from 'graphql-type-json'
@@ -186,7 +187,7 @@ export function getResolvers({
       const model = extractModelType(field.of)
 
       if (!modelResolvers[model]) {
-        throw new Error(`No model found for name ${model}`)
+        throw new ValidationError(`No model found for name ${model}`)
       }
 
       resolvers[baseName] = resolvers[baseName] || {}
@@ -355,7 +356,12 @@ function makeResolver({
     }
 
     if (error) {
-      throw error
+      const apolloError = new ApolloError(error.message, error.name)
+      apolloError.extensions.status = error.status
+      apolloError.extensions.exception = {
+        stacktrace: error.stack.split('\n'),
+      }
+      throw apolloError
     }
 
     return value
@@ -382,7 +388,7 @@ function makeReferenceResolver({
   }) => {
     if (model.external) {
       if (foreignFieldName !== '_id') {
-        throw new Error('Reversed References cannot be used on an external schema!')
+        throw new ValidationError('Reversed References cannot be used on an external schema!')
       }
 
       // In case of an external Federation model, return a Representation
