@@ -15,10 +15,10 @@ export type ResolverResolvers<U extends string = string> = Record<
 export type ResolverContext = Record<string, any>
 export type ResolverInfo = GraphQLResolveInfo
 
-export type BaseResolverParams = {
+export type BaseResolverParams<C = ResolverContext> = {
   args?: ResolverArgs,
   source?: ResolverSource,
-  context?: ResolverContext,
+  context?: C,
   info?: ResolverInfo
 }
 export type FieldResolverParams<C = ResolverContext, R extends string = string> = {

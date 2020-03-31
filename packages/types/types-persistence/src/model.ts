@@ -19,15 +19,15 @@ export type Field<C, R extends string> = FieldBase & {
   args?: Schema
   extends?: never
 
-  scopes?: Scope<FieldResolverParams>[]
-  transforms?: Transform<FieldResolverParams>[]
+  scopes?: Scope<FieldResolverParams<C, R>>[]
+  transforms?: Transform<FieldResolverParams<C, R>>[]
 }
 
 export type ExtendableFieldBase<C, R extends string> = FieldBase & {
   resolve: QueryResolver<C, R>
 
-  scopes?: Scope<QueryResolverParams>[]
-  transforms?: Transform<QueryResolverParams>[]
+  scopes?: Scope<QueryResolverParams<C, R>>[]
+  transforms?: Transform<QueryResolverParams<C, R>>[]
 }
 
 export type FieldArgsType = {
@@ -55,13 +55,17 @@ export type Fields<C, R extends string> = Record<string, Field<C, R>>
 export type ExtendableFields<C, R extends string> = Record<string, ExtendableField<C, R>>
 export type Resolvers<C, R extends string> = Record<string, QueryResolver<C, R>|FieldResolver<C, R>>
 
-type ScopeParams<T = BaseResolverParams> = T & { field: string }
-export type Scope<T = BaseResolverParams> = (arg: ScopeParams<T>) => ResolverArgs|undefined|void
-export type Scopes = Partial<Record<ResolverEnum, Scope<QueryResolverParams>>>
+type ScopeParams<C = ResolverContext, T = BaseResolverParams<C>> = T & { field: string }
+export type Scope<C = ResolverContext, T = BaseResolverParams<C>> =
+  (arg: ScopeParams<C, T>) => ResolverArgs|undefined|void
+export type Scopes<C = ResolverContext> =
+  Partial<Record<ResolverEnum, Scope<C, Omit<QueryResolverParams<C>, 'resolvers'>>>>
 
-type TransformParams<T = BaseResolverParams> = T & { value?: any, field: string }
-export type Transform<T = BaseResolverParams> = (arg: TransformParams<T>) => any|undefined|void
-export type Transforms = Partial<Record<ResolverEnum, Transform<QueryResolverParams>>>
+type TransformParams<C = ResolverContext, T = BaseResolverParams<C>> = T & { value?: any, field: string }
+export type Transform<C = ResolverContext, T = BaseResolverParams<C>> =
+  (arg: TransformParams<C, T>) => any|undefined|void
+export type Transforms<C = ResolverContext> =
+  Partial<Record<ResolverEnum, Transform<C, Omit<QueryResolverParams<C>, 'resolvers'>>>>
 
 export type Computed<ContextType = ResolverContext, ResolverEnum extends string = string> = {
   fields?: Fields<ContextType, ResolverEnum>,
