@@ -18,14 +18,12 @@ export type ResolverInfo = GraphQLResolveInfo
 export type BaseResolverParams<C = ResolverContext> = {
   args?: ResolverArgs,
   source?: ResolverSource,
-  context?: C,
-  info?: ResolverInfo
-}
-export type FieldResolverParams<C = ResolverContext, R extends string = string> = {
-  resolvers: ResolverResolvers<R>,
-  source: ResolverSource,
   context: C,
   info: ResolverInfo
+}
+export type FieldResolverParams<C = ResolverContext, R extends string = string> = BaseResolverParams<C> & {
+  resolvers: ResolverResolvers<R>,
+  source: ResolverSource,
   field: string,
 }
 export type QueryResolverParams<C = ResolverContext, R extends string = string> = FieldResolverParams<C, R> & {
@@ -38,15 +36,18 @@ export type FieldResolver<C = ResolverContext, R extends string = string> =
 export type QueryResolver<C = ResolverContext, R extends string = string> =
   (arg: QueryResolverParams<C, R>) => Promise<any>
 
-export type ClassicResolverFunction = (arg: {
+export type ClassicResolverFunctionPartialArgs = (arg: {
   source?: ResolverSource, args?: ResolverArgs, context?: ResolverContext, info?: ResolverInfo,
 }) => any
+export type ClassicResolverFunction = (arg: {
+  source?: ResolverSource, args?: ResolverArgs, context: ResolverContext, info: ResolverInfo,
+}) => any
 export type ReferenceResolverFunction = (arg: {
-  source?: ResolverSource, context?: ResolverContext, info?: ResolverInfo, fieldName: string, foreignFieldName: string
+  source?: ResolverSource, context: ResolverContext, info: ResolverInfo, fieldName: string, foreignFieldName: string
 }) => any
 
 export type ResolverFunction = ClassicResolverFunction|ReferenceResolverFunction
 
 export type ModelResolver =
-  Record<AliasedResolverEnum, ClassicResolverFunction & { unscoped: ClassicResolverFunction }> &
+  Record<AliasedResolverEnum, ClassicResolverFunction & { unscoped: ClassicResolverFunctionPartialArgs }> &
   Record<'reference'|'references', ReferenceResolverFunction>

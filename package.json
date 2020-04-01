@@ -50,8 +50,6 @@
     "typescript": "^3.7.5"
   },
   "dependencies": {
-    "@apollo/federation": "^0.10.3",
-    "@apollo/gateway": "^0.10.9",
     "@harmonyjs/adapter-couchbase": "file:packages/plugins/adapter-couchbase/pkg",
     "@harmonyjs/adapter-memory": "file:packages/plugins/adapter-memory/pkg",
     "@harmonyjs/adapter-mongoose": "file:packages/plugins/adapter-mongoose/pkg",
@@ -71,6 +69,8 @@
     "@harmonyjs/types-persistence": "file:packages/types/types-persistence/pkg",
     "@harmonyjs/types-query": "file:packages/types/types-query/pkg",
     "@harmonyjs/types-server": "file:packages/types/types-server/pkg",
+    "@apollo/federation": "^0.10.3",
+    "@apollo/gateway": "^0.10.9",
     "apollo-boost": "^0.4.7",
     "apollo-server-core": "^2.10.1",
     "apollo-server-types": "^0.2.10",

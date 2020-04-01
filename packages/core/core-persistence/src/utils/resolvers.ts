@@ -276,7 +276,7 @@ export function getResolvers({
     if (!model.external) {
       resolvers[extractModelType(model.name)] = resolvers[extractModelType(model.name)] || {}
       resolvers[extractModelType(model.name)].__resolveReference = (reference: { _id: string }) => (
-        modelResolvers[extractModelType(model.name)].read({
+        modelResolvers[extractModelType(model.name)].read.unscoped({
           args: {
             filter: {
               _id: reference._id,
@@ -308,8 +308,8 @@ function makeResolver({
   } : {
     source?: ResolverSource,
     args?: ResolverArgs,
-    context?: ResolverContext,
-    info?: ResolverInfo,
+    context: ResolverContext,
+    info: ResolverInfo,
   }) => {
     if (!adapter) {
       return () => null
