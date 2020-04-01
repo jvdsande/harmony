@@ -48,6 +48,7 @@
     "@harmonyjs/controller-apollo-gateway": "file:packages/plugins/controller-apollo-gateway/pkg",
     "@harmonyjs/controller-persistence-events": "file:packages/plugins/controller-persistence-events/pkg",
     "@harmonyjs/controller-spa": "file:packages/plugins/controller-spa/pkg",
+    "@harmonyjs/eslint-config": "file:packages/utils/utils-eslint",
     "@harmonyjs/logger": "file:packages/utils/utils-logger/pkg",
     "@harmonyjs/persistence": "file:packages/core/core-persistence/pkg",
     "@harmonyjs/query": "file:packages/core/core-query/pkg",
