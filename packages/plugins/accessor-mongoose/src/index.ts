@@ -295,6 +295,8 @@ export default class AccessorMongoose extends Accessor {
           connectTimeoutMS: 5000,
 
           useUnifiedTopology: true,
+
+          ...this.config.mongooseConfig,
         },
       )
         .then(() => {
