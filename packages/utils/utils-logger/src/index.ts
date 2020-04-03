@@ -36,6 +36,8 @@ function Logger({ name, configuration } : { name: string, configuration: LoggerC
     fileLogger: Winston.createLogger({ transports: [], silent: true }),
   }
 
+  const modes : LogLevel[] = ['error', 'warn', 'info', 'verbose', 'debug', 'silly']
+
   const instance : Partial<ILogger> = ({
     configure(config) {
       const {
@@ -128,10 +130,21 @@ function Logger({ name, configuration } : { name: string, configuration: LoggerC
       return instance as ILogger
     },
 
-    log(message: string, ...meta: any[]) {
+    log(message: string|(() => string), ...meta: any[]) {
       local.logger.warn('Avoid using the \'log\' command, prefer \'info\', \'debug\' or \'warn\'')
-      local.logger.debug(message, ...meta)
-      local.fileLogger.debug(message, ...meta)
+
+      const levelPass = modes.indexOf(instance.level!) >= modes.indexOf('info')
+
+      // eslint-disable-next-line no-nested-ternary
+      const messageToLog = typeof message === 'function'
+        ? (
+          levelPass ? message() : ''
+        )
+        : message
+
+
+      local.logger.debug(messageToLog, ...meta)
+      local.fileLogger.debug(messageToLog, ...meta)
 
       return instance as ILogger
     },
@@ -147,12 +160,20 @@ function Logger({ name, configuration } : { name: string, configuration: LoggerC
 
   instance.configure!(configuration)
 
-  const modes : LogLevel[] = ['error', 'warn', 'info', 'verbose', 'debug', 'silly']
 
   modes.forEach((mode) => {
-    instance[mode] = (message: string, ...meta: any[]) => {
-      local.logger[mode](message, ...meta)
-      local.fileLogger[mode](message, ...meta)
+    instance[mode] = (message: string|(() => string), ...meta: any[]) => {
+      const levelPass = modes.indexOf(instance.level!) >= modes.indexOf(mode)
+
+      // eslint-disable-next-line no-nested-ternary
+      const messageToLog = typeof message === 'function'
+        ? (
+          levelPass ? message() : ''
+        )
+        : message
+
+      local.logger[mode](messageToLog, ...meta)
+      local.fileLogger[mode](messageToLog, ...meta)
 
       return instance as ILogger
     }
