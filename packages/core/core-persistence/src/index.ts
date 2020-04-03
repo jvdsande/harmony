@@ -15,6 +15,7 @@ export {
   PersistenceConfig, PersistenceInstance, Adapter, IAdapter,
   Model, Schema, Computed, Scopes, Transforms, PropertyMode,
   Scope, Transform,
+  SchemaOutputType, SchemaInputType,
 } from '@harmonyjs/types-persistence'
 
 export default function Persistence() {

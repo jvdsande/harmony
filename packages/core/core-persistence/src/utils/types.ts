@@ -1,8 +1,11 @@
 /* Factories for building Properties, externally called "Types" */
-import { Model, Schema, SchemaField } from '@harmonyjs/types-persistence'
+import {
+  IPropertyArray,
+  IPropertySchema, Model, SchemaDescription, SchemaField,
+} from '@harmonyjs/types-persistence'
 
 import PropertyFactory from 'utils/property/factory'
-import { sanitizeSchema, sanitizeArray } from 'utils/property/sanitation'
+import { sanitizeArray, sanitizeSchema } from 'utils/property/sanitation'
 
 const Types = {
   get String() {
@@ -28,38 +31,54 @@ const Types = {
   },
   get Reference() {
     return {
-      of: (name: string|Model) => PropertyFactory({
-        name: '',
-        type: 'reference',
-        of: (name as Model).name || name as string,
-      }),
+      of <T extends SchemaDescription = SchemaDescription>(name: string|Model) {
+        return PropertyFactory<T>({
+          name: '',
+          type: 'reference',
+          of: (name as Model).name || name as string,
+        })
+      },
     }
   },
   get ReversedReference() {
-    const make = (foreignField: string, name: string|Model) => PropertyFactory({
-      name: '',
-      type: 'reversed-reference',
-      of: (name as Model).name || name as string,
-      on: foreignField,
-    })
+    function make<T extends SchemaDescription = SchemaDescription>(foreignField: string, name: string|Model) {
+      return PropertyFactory<T>({
+        name: '',
+        type: 'reversed-reference',
+        of: (name as Model).name || name as string,
+        on: foreignField,
+      })
+    }
 
     return {
-      of: (name: string|Model) => ({
-        on: (foreignField: string) => make(foreignField, name),
-      }),
-      on: (foreignField: string) => ({
-        of: (name: string|Model) => make(foreignField, name),
-      }),
+      of<T extends SchemaDescription = SchemaDescription>(name: string | Model) {
+        return ({
+          on(foreignField: string) {
+            return make<T>(foreignField, name)
+          },
+        })
+      },
+      on(foreignField: string) {
+        return {
+          of<T extends SchemaDescription = SchemaDescription>(name: string | Model) {
+            return make<T>(foreignField, name)
+          },
+        }
+      },
     }
   },
   get Schema() {
     return {
-      of: (schema: Schema) => sanitizeSchema({ schema, name: '' }),
+      of<T extends SchemaDescription = SchemaDescription>(schema: T) {
+        return sanitizeSchema({ schema, name: '' }) as IPropertySchema<T>
+      },
     }
   },
   get Array() {
     return {
-      of: (schema: SchemaField) => sanitizeArray({ name: '', of: schema }),
+      of<T extends SchemaField = SchemaField>(schema: T) {
+        return sanitizeArray({ name: '', of: schema }) as IPropertyArray<T>
+      },
     }
   },
   get Raw() {
