@@ -1,5 +1,5 @@
 export type QuerySelect = {
-  [key: string]: boolean | QuerySelect
+  [key: string]: boolean | QuerySelect | QueryField
 }
 
 export type QueryArgs = {

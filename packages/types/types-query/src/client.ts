@@ -18,12 +18,12 @@ export interface IClient {
   configure(configuration: ClientConfiguration): this
   close(): Promise<void>
 
-  query(query: QueryDefinition): Promise<Record<string, any>>
-  mutation(mutation: QueryDefinition): Promise<Record<string, any>>
+  query<T = {[key: string]: any}>(query: QueryDefinition): Promise<T>
+  mutation<T = {[key: string]: any}>(mutation: QueryDefinition): Promise<T>
 
   subscribe(event: string, callback: Function): this
   unsubscribe(event: string, callback: Function): this
 
-  builder: IQueryBuilder
+  builder: IQueryBuilder<any>
   fork: IClient
 }

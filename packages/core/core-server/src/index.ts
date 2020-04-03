@@ -32,18 +32,19 @@ export default function Server() : ServerInstance {
 
     const { logger, configuration: config } = instance
 
-    // Create server instance (Fastify)
-    instance.server = createServer({ logger })
-
-    // Create socketIO instance
-    instance.socket = createSocket({ config, logger, server: instance.server })
-
-    // Start the server
-    const { server, socket } = instance
 
     try {
       // Log Harmony banner
       await logBanner({ logger })
+
+      // Create server instance (Fastify)
+      instance.server = createServer({ logger })
+
+      // Create socketIO instance
+      instance.socket = createSocket({ config, logger, server: instance.server })
+
+      // Start the server
+      const { server, socket } = instance
 
       // Register Authentication Controller
       const controllers : IController[] = [

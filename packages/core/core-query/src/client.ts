@@ -212,7 +212,7 @@ function ClientMaker() : IClient {
     },
 
     get builder() {
-      return Builder(instance)
+      return Builder<any>(instance)
     },
 
     get fork() {

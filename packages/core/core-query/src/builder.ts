@@ -3,7 +3,7 @@ import {
   IQueryBuilder, QueryArgs, QueryDefinition, QuerySelect,
 } from '@harmonyjs/types-query'
 
-export default function Builder(Client: IClient) : IQueryBuilder {
+export default function Builder<T>(Client: IClient) : IQueryBuilder<T> {
   const local : {
     name?: string,
     alias?: string,
@@ -11,7 +11,7 @@ export default function Builder(Client: IClient) : IQueryBuilder {
     selection?: QuerySelect,
   } = {}
 
-  const instance : IQueryBuilder = {
+  const instance : IQueryBuilder<T> = {
     withName(name) {
       local.name = name
       return instance

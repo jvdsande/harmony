@@ -81,9 +81,9 @@ export type Model = {
   name: string,
   schema: Schema
 
-  computed?: Computed
-  scopes?: Scopes
-  transforms?: Transforms
+  computed?: Computed<any>
+  scopes?: Scopes<any>
+  transforms?: Transforms<any>
 
   external?: boolean
   adapter?: string
@@ -102,10 +102,10 @@ export type SanitizedModel = {
   }
 
   resolvers: {
-    computed: Resolvers<ResolverContext, string>
-    queries: Resolvers<ResolverContext, string>
-    mutations: Resolvers<ResolverContext, string>
-    custom: Record<string, Resolvers<ResolverContext, string>>
+    computed: Resolvers
+    queries: Resolvers
+    mutations: Resolvers
+    custom: Record<string, Resolvers>
   }
 
   scopes: Scopes

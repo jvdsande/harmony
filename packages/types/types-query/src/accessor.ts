@@ -1,77 +1,78 @@
 import { QuerySelect } from 'query'
 
-export interface IAccessorBuilderBase {
+export interface IAccessorBuilderBase<T> {
   select(selection: QuerySelect): this
 
-  then(callback: (value: Record<string, any>) => Promise<any>): Promise<any>
+  then(callback: (value: T) => Promise<any>): Promise<any>
 
   catch(callback: (error: Error) => Promise<any>): Promise<any>
 
   finally(callback: () => void): Promise<any>
 }
 
-export interface IAccessorSubscribableBuilderBase extends IAccessorBuilderBase {
+export interface IAccessorSubscribableBuilderBase<T> extends IAccessorBuilderBase<T> {
   listen(...models: string[]): this
 
-  subscribe(callback: (value: Record<string, any>) => Promise<any>): this
+  subscribe(callback: (value: T) => Promise<any>): this
 
-  unsubscribe(callback: (value: Record<string, any>) => Promise<any>): this
+  unsubscribe(callback: (value: T) => Promise<any>): this
 }
 
-export interface IAccessorCountBuilder extends IAccessorSubscribableBuilderBase {
+export interface IAccessorCountBuilder<T> extends IAccessorSubscribableBuilderBase<T> {
   where(filter: Record<string, any>): this
 }
 
-export interface IAccessorReadBuilder extends IAccessorCountBuilder {
+export interface IAccessorReadBuilder<T> extends IAccessorCountBuilder<T> {
   // where
   skip(skip: number): this
 
   sort(sort: number): this
 }
 
-export interface IAccessorManyReadBuilder extends IAccessorReadBuilder {
+export interface IAccessorManyReadBuilder<T> extends IAccessorReadBuilder<T> {
   // where
   // skip
   // sort
   limit(limit: number): this
 }
 
-export interface IAccessorCreationBuilder extends IAccessorBuilderBase {
+export interface IAccessorCreationBuilder<T> extends IAccessorBuilderBase<T> {
   withRecord(record: Record<string, any>): this
 }
 
-export interface IAccessorManyCreationBuilder extends IAccessorBuilderBase {
+export interface IAccessorManyCreationBuilder<T> extends IAccessorBuilderBase<T> {
   withRecords(...records: Record<string, any>[]): this
 
   withRecords(records: Record<string, any>[]): this
 }
 
-export interface IAccessorUpdateBuilder extends IAccessorCreationBuilder {
+export interface IAccessorUpdateBuilder<T> extends IAccessorCreationBuilder<T> {
   // withRecord
   withId(id: string): this
 }
 
-export interface IAccessorManyUpdateBuilder extends IAccessorManyCreationBuilder {
+export interface IAccessorManyUpdateBuilder<T> extends IAccessorManyCreationBuilder<T> {
   // withRecords
 }
 
-export interface IAccessorDeletionBuilder extends IAccessorBuilderBase {
+export interface IAccessorDeletionBuilder<T> extends IAccessorBuilderBase<T> {
   withId(id: string): this
 }
 
-export interface IAccessorManyDeletionBuilder extends IAccessorBuilderBase {
+export interface IAccessorManyDeletionBuilder<T> extends IAccessorBuilderBase<T> {
   withIds(...ids: string[]): this
 
   withIds(ids: string[]): this
 }
 
-export type IAccessorQueryBuilder = IAccessorCountBuilder | IAccessorReadBuilder | IAccessorManyReadBuilder
-export type IAccessorMutationBuilder = IAccessorCreationBuilder | IAccessorUpdateBuilder | IAccessorDeletionBuilder |
-  IAccessorManyCreationBuilder | IAccessorManyUpdateBuilder | IAccessorManyDeletionBuilder
+export type IAccessorQueryBuilder<T> = IAccessorCountBuilder<T> | IAccessorReadBuilder<T> | IAccessorManyReadBuilder<T>
+export type IAccessorMutationBuilder<T> = IAccessorCreationBuilder<T> | IAccessorUpdateBuilder<T> |
+  IAccessorDeletionBuilder<T> | IAccessorManyCreationBuilder<T> |
+  IAccessorManyUpdateBuilder<T> | IAccessorManyDeletionBuilder<T>
 
 
-export interface IAccessorUndiscriminatedQueryBuilder extends IAccessorBuilderBase {
-  where(filter: Record<string, any>): this
+export interface IAccessorUndiscriminatedQueryBuilder<T> extends IAccessorBuilderBase<T> {
+  where(filter: {[key: string]: any}): this
 
   skip(skip: number): this
 
@@ -81,17 +82,17 @@ export interface IAccessorUndiscriminatedQueryBuilder extends IAccessorBuilderBa
 
   listen(...models: string[]): this
 
-  subscribe(callback: (value: Record<string, any>) => Promise<any>): this
+  subscribe(callback: (value: T) => Promise<any>): this
 
-  unsubscribe(callback: (value: Record<string, any>) => Promise<any>): this
+  unsubscribe(callback: (value: T) => Promise<any>): this
 }
 
-export interface IAccessorUndiscriminatedMutationBuilder extends IAccessorBuilderBase {
-  withRecord(record: Record<string, any>): this
+export interface IAccessorUndiscriminatedMutationBuilder<T> extends IAccessorBuilderBase<T> {
+  withRecord(record: T & { _id: string }): this
 
-  withRecords(...records: Record<string, any>[]): this
+  withRecords(...records: (T & { _id: string })[]): this
 
-  withRecords(records: Record<string, any>[]): this
+  withRecords(records: (T & { _id: string })[]): this
 
   withId(id: string): this
 
@@ -100,29 +101,29 @@ export interface IAccessorUndiscriminatedMutationBuilder extends IAccessorBuilde
   withIds(ids: string[]): this
 }
 
-type ModelQueryBuilders = {
-  get: IAccessorReadBuilder
-  find: IAccessorReadBuilder
-  read: IAccessorReadBuilder
+type ModelQueryBuilders<T> = {
+  get: IAccessorReadBuilder<T>
+  find: IAccessorReadBuilder<T>
+  read: IAccessorReadBuilder<T>
 
-  list: IAccessorManyReadBuilder
-  readMany: IAccessorManyReadBuilder
+  list: IAccessorManyReadBuilder<T[]>
+  readMany: IAccessorManyReadBuilder<T[]>
 
-  count: IAccessorCountBuilder
+  count: IAccessorCountBuilder<number>
 }
 
-type ModelMutationBuilders = {
-  create: IAccessorCreationBuilder
-  createMany: IAccessorManyCreationBuilder
+type ModelMutationBuilders<T> = {
+  create: IAccessorCreationBuilder<T>
+  createMany: IAccessorManyCreationBuilder<T[]>
 
-  update: IAccessorUpdateBuilder
-  updateMany: IAccessorManyUpdateBuilder
+  update: IAccessorUpdateBuilder<T>
+  updateMany: IAccessorManyUpdateBuilder<T[]>
 
-  delete: IAccessorDeletionBuilder
-  deleteMany: IAccessorManyDeletionBuilder
+  delete: IAccessorDeletionBuilder<T>
+  deleteMany: IAccessorManyDeletionBuilder<T[]>
 }
 
-export interface IAccessor {
-  query: ModelQueryBuilders
-  mutate: ModelMutationBuilders
+export interface IAccessor<T> {
+  query: ModelQueryBuilders<T>
+  mutate: ModelMutationBuilders<T>
 }

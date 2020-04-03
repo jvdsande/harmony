@@ -12,11 +12,11 @@ type ResolverArgs = {
   info: ResolverInfo,
   model: SanitizedModel,
 }
-type Entity = Record<string, any> | null
+type Entity = {[key: string]: any} | null
 
 type QueryResolverArgs = ResolverArgs & {
   args: {
-    filter?: Record<string, any>
+    filter?: {[key: string]: any}
     limit?: number,
     skip?: number,
     sort?: any,
@@ -25,25 +25,25 @@ type QueryResolverArgs = ResolverArgs & {
 
 type CreateResolverArgs = ResolverArgs & {
   args: {
-    record: Record<string, any>
+    record: {[key: string]: any}
   }
 }
 
 type CreateManyResolverArgs = ResolverArgs & {
   args: {
-    records: Record<string, any>[] | Record<string, any>
+    records: {[key: string]: any}[] | {[key: string]: any}
   }
 }
 
 type UpdateResolverArgs = ResolverArgs & {
   args: {
-    record: Record<string, any> & { _id: string }
+    record: {[key: string]: any} & { _id: string }
   }
 }
 
 type UpdateManyResolverArgs = ResolverArgs & {
   args: {
-    records: (Record<string, any> & { _id: string })[] | (Record<string, any> & { _id: string })
+    records: ({[key: string]: any} & { _id: string })[] | ({[key: string]: any} & { _id: string })
   }
 }
 

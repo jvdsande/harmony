@@ -3,8 +3,8 @@ import { GraphQLResolveInfo } from 'graphql'
 export type ResolverEnum = 'read'|'readMany'|'count'|'create'|'createMany'|'update'|'updateMany'|'delete'|'deleteMany'
 export type AliasedResolverEnum = ResolverEnum|'get'|'list'|'edit'|'editMany'
 
-export type ResolverArgs = Record<string, any>
-export type ResolverSource = Record<string, any>
+export type ResolverArgs = {[key: string]: any}
+export type ResolverSource = {[key: string]: any}
 export type ResolverResolvers<U extends string = string> = Record<
   U,
   Record<
@@ -12,7 +12,7 @@ export type ResolverResolvers<U extends string = string> = Record<
     ((arg: any) => Promise<any>) & { unscoped: ((arg: any) => Promise<any>) }
   >
 >
-export type ResolverContext = Record<string, any>
+export type ResolverContext = {[key: string]: any}
 export type ResolverInfo = GraphQLResolveInfo
 
 export type BaseResolverParams<C = ResolverContext> = {
