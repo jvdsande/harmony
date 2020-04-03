@@ -17,13 +17,13 @@ export type LoggerConfig = {
 export interface ILogger {
   configure(config: LoggerConfig): this
 
-  error(message: string, ...meta: any[]): this
-  warn(message: string, ...meta: any[]): this
-  info(message: string, ...meta: any[]): this
-  verbose(message: string, ...meta: any[]): this
-  debug(message: string, ...meta: any[]): this
-  silly(message: string, ...meta: any[]): this
-  log(message: string, ...meta: any[]): this
+  error(message: string|(() => string), ...meta: any[]): this
+  warn(message: string|(() => string), ...meta: any[]): this
+  info(message: string|(() => string), ...meta: any[]): this
+  verbose(message: string|(() => string), ...meta: any[]): this
+  debug(message: string|(() => string), ...meta: any[]): this
+  silly(message: string|(() => string), ...meta: any[]): this
+  log(message: string|(() => string), ...meta: any[]): this
 
   level: LogLevel
 }
