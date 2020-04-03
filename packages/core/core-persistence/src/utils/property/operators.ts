@@ -70,7 +70,7 @@ function createOperatorField({
   if (property.type === 'schema') {
     return Types.Schema.of({
       // eslint-disable-next-line no-use-before-define
-      match: createOperatorType({ schema: property }),
+      match: createOperatorType({ schema: property as IPropertySchema }),
     })
   }
 

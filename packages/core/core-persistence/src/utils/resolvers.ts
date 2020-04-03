@@ -204,7 +204,7 @@ export function getResolvers({
     }
     if (field.type === 'schema') {
       // eslint-disable-next-line no-use-before-define
-      extractReferences(field)
+      extractReferences(field as IPropertySchema)
     }
     if (field.type === 'array') {
       extractReference(field.deepOf)
