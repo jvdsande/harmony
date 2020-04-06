@@ -199,10 +199,18 @@ export type IProperty = IPropertyRequired | (IPropertyString | IPropertyNumber |
   | IPropertyReference | IPropertyReversedReference | IPropertyArray | IPropertySchema
   | IPropertyRaw)
 
+type NullableFields<T> = { [K in keyof T]: T[K] extends NonNullable<T[K]> ? never : K}[keyof T]
+type NonNullableFields<T> = { [K in keyof T]: T[K] extends NonNullable<T[K]> ? K : never}[keyof T]
 
-export type SchemaOutputType<T extends Schema> = {
-  [P in (keyof T)]: PropertyOutputType<T[P]>
+type OptionalNullable<T> = {
+  [K in NonNullableFields<T>]: T[K]
+} & {
+  [K in NullableFields<T>]?: NonNullable<T[K]>
 }
+
+export type SchemaOutputType<T extends Schema> = OptionalNullable<{
+  [P in (keyof T)]: PropertyOutputType<T[P]>
+}>
 
 export type PropertyOutputType<P extends SchemaField> =
   P extends IPropertyRequired ? Required<P>['valueType'] :
@@ -210,9 +218,9 @@ export type PropertyOutputType<P extends SchemaField> =
   P extends Array<SchemaField> ? PropertyOutputType<P[0]>[] :
   P extends Schema ? SchemaOutputType<P> : undefined
 
-export type SchemaInputType<T extends Schema> = {
+export type SchemaInputType<T extends Schema> = OptionalNullable<{
   [P in (keyof T)]: PropertyInputType<T[P]>
-}
+}>
 
 export type PropertyInputType<P extends SchemaField> =
   P extends IPropertyRequired ? Required<P>['valueInput'] :
