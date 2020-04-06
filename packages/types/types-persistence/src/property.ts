@@ -121,82 +121,65 @@ export interface IPropertyJSONRequired extends IPropertyPrimitive<
 export interface IPropertyDate extends IPropertyPrimitive<'date', IPropertyDateRequired, false, Date> {}
 export interface IPropertyDateRequired extends IPropertyPrimitive<'date', IPropertyDateRequired, true, Date> {}
 
-export interface IPropertyReference<T extends Schema = any> extends IPropertyBase {
+
+interface IPropertyReferenceBase<T extends Schema> extends IPropertyBase {
   type : 'reference'
   of : string
-  required: IPropertyReferenceRequired
-  isRequired: false
-  valueType?: SchemaOutputType<T>
+  required: IPropertyReferenceRequired<T>
+  valueType?: SchemaOutputType<T>|string
   valueInput?: string
 }
-export interface IPropertyReferenceRequired<T extends Schema = any> extends IPropertyBase {
-  type : 'reference'
-  of : string
-  required: IPropertyReferenceRequired
+export interface IPropertyReference<T extends Schema = any> extends IPropertyReferenceBase<T> {
+  isRequired: false
+}
+export interface IPropertyReferenceRequired<T extends Schema = any> extends IPropertyReferenceBase<T> {
   isRequired: true
-  valueType?: SchemaOutputType<T>
-  valueInput?: string
 }
 
-export interface IPropertyReversedReference<T extends Schema = any> extends IPropertyBase {
-  type: 'reversed-reference'
+interface IPropertyReversedReferenceBase<T extends Schema> extends IPropertyBase {
+  type : 'reversed-reference'
   of : string
   on : string
-  required: IPropertyReversedReferenceRequired
-  isRequired: false
-  valueType?: SchemaOutputType<T>
+  required: IPropertyReversedReferenceRequired<T>
+  valueType?: SchemaOutputType<T>|string
   valueInput?: string
 }
-export interface IPropertyReversedReferenceRequired<T extends Schema = any> extends IPropertyBase {
-  type: 'reversed-reference'
-  of : string
-  on : string
-  required: IPropertyReversedReferenceRequired
+export interface IPropertyReversedReference<T extends Schema = any> extends IPropertyReversedReferenceBase<T> {
+  isRequired: false
+}
+export interface IPropertyReversedReferenceRequired<T extends Schema = any> extends IPropertyReversedReferenceBase<T> {
   isRequired: true
-  valueType?: SchemaOutputType<T>
-  valueInput?: string
 }
 
-export interface IPropertyArray<T extends SchemaField = any> extends IPropertyBase {
+export interface IPropertyArrayBase<T extends SchemaField> extends IPropertyBase {
   type: 'array'
   of : IProperty
   deepOf : IProperty
-  required: IPropertyArrayRequired
-  isRequired: false
+  required: IPropertyArrayRequired<T>
   valueType?: (T extends Schema ? SchemaOutputType<T> : PropertyOutputType<T>)[]
   valueInput?: (T extends Schema ? SchemaInputType<T> : PropertyInputType<T>)[]
 }
-export interface IPropertyArrayRequired<T extends SchemaField = any> extends IPropertyBase {
-  type: 'array'
-  of : IProperty
-  deepOf : IProperty
-  required: IPropertyArrayRequired
+export interface IPropertyArray<T extends SchemaField = any> extends IPropertyArrayBase<T> {
+  isRequired: false
+}
+export interface IPropertyArrayRequired<T extends SchemaField = any> extends IPropertyArrayBase<T> {
   isRequired: true
-  valueType?: (T extends Schema ? SchemaOutputType<T> : PropertyOutputType<T>)[]
-  valueInput?: (T extends Schema ? SchemaInputType<T> : PropertyInputType<T>)[]
 }
 
-export interface IPropertySchema<T extends Schema = {[key: string]: IProperty}> extends IPropertyBase {
+export interface IPropertySchemaBase<T extends Schema> extends IPropertyBase {
   type: 'schema',
   of : {
     [key: string] : IProperty
   }
-  required: IPropertySchemaRequired
-  isRequired: false
+  required: IPropertySchemaRequired<T>
   valueType?: SchemaOutputType<T>
   valueInput?: SchemaInputType<T>
 }
-export interface IPropertySchemaRequired<
-  T extends Schema = {[key: string]: IProperty}
-> extends IPropertyBase {
-  type: 'schema',
-  of : {
-    [key: string] : IProperty
-  }
-  required: IPropertySchemaRequired
+export interface IPropertySchema<T extends Schema = {[key: string]: IProperty}> extends IPropertySchemaBase<T> {
+  isRequired: false
+}
+export interface IPropertySchemaRequired<T extends Schema = {[key: string]: IProperty}> extends IPropertySchemaBase<T> {
   isRequired: true
-  valueType?: SchemaOutputType<T>
-  valueInput?: SchemaInputType<T>
 }
 
 export interface IPropertyUndiscriminated extends IPropertyBase {
