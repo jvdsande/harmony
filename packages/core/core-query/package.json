@@ -1,6 +1,6 @@
 {
   "name": "@harmonyjs/query",
-  "version": "2.0.0-rc2.9",
+  "version": "2.0.0-rc2.10",
   "publishConfig": {
     "access": "public"
   },
