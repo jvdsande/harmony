@@ -1,17 +1,18 @@
 import {
-  AliasedResolverEnum,
-  ClassicResolverFunction, IAdapter, IProperty, IPropertySchema, ModelResolver, ReferenceResolverFunction,
-  FieldResolver, QueryResolver,
-  ResolverArgs, ResolverContext, ResolverEnum, ResolverFunction, ResolverInfo, ResolverResolvers, ResolverSource,
-  SanitizedModel, Scope, Transform,
+  AliasedResolverEnum, ResolverEnum,
+  InternalResolvers,
+  ScopedInternalResolver, UnscopedInternalResolver, InternalResolver, Resolver, ReferenceResolver, Scope, Transform,
+  IAdapter, IProperty, IPropertySchema,
+  SanitizedModel, ModelResolvers,
 } from '@harmonyjs/types-persistence'
 import { ApolloError, ValidationError } from 'apollo-server-core'
+import { GraphQLResolveInfo } from 'graphql'
 
 import GraphQLLong from 'graphql-type-long'
 import GraphQLJson from 'graphql-type-json'
 import GraphQLDate from 'graphql-date'
 
-import { extractModelType } from 'utils/property/utils'
+import { extractModelName } from 'utils/property/utils'
 
 export type ResolverDefinition = {
   type: ResolverEnum,
@@ -60,10 +61,15 @@ export const mutationResolvers: ResolverDefinition[] = [
   },
 ]
 
+type ResolverSource = any
+type ResolverArgs = {[key: string]: any}
+type ResolverContext = {[key: string]: any}
+type ResolverInfo = GraphQLResolveInfo
+
 function computeFieldResolver({
-  field, resolver, modelResolvers,
+  field, resolver, internalResolvers,
 } : {
-  field: string, resolver: FieldResolver|QueryResolver, modelResolvers: Record<string, ModelResolver>
+  field: string, resolver: Resolver, internalResolvers: Record<string, InternalResolvers>
 }) {
   return (
     source: ResolverSource,
@@ -71,32 +77,32 @@ function computeFieldResolver({
     context: ResolverContext,
     info: ResolverInfo,
   ) => {
-    const wrappedResolvers : ResolverResolvers = {}
+    const wrappedResolvers : {[model: string]: ModelResolvers } = {}
 
-    Object.keys(modelResolvers)
+    Object.keys(internalResolvers)
       .forEach((mod) => {
-        const modelResolver = modelResolvers[mod]
+        const internalResolver = internalResolvers[mod]
 
-        Object.keys(modelResolver)
+        Object.keys(internalResolver)
           .forEach((res) => {
             const alias = res as AliasedResolverEnum
 
             wrappedResolvers[mod] = wrappedResolvers[mod] || {}
 
-            const wrappedResolver = (nArgs : ResolverArgs) => modelResolver[alias]({
+            const cArgs = {
+              source, info, context,
+            }
+
+            const wrappedResolver = (nArgs : ResolverArgs) => internalResolver[alias]({
               args: nArgs,
-              source,
-              info,
-              context,
+              ...cArgs,
             })
-            wrappedResolver.unscoped = (nArgs : ResolverArgs) => modelResolver[alias].unscoped({
+            wrappedResolver.unscoped = (nArgs : ResolverArgs) => internalResolver[alias].unscoped({
               args: nArgs,
-              source,
-              info,
-              context,
+              ...cArgs,
             })
 
-            wrappedResolvers[mod][alias] = wrappedResolver
+            wrappedResolvers[mod][alias] = wrappedResolver as any
           })
       })
 
@@ -112,16 +118,18 @@ function computeFieldResolver({
 }
 
 export function getResolvers({
-  modelResolvers, models,
+  internalResolvers,
+  models,
 } : {
-  modelResolvers: Record<string, ModelResolver>, models: SanitizedModel[]
+  internalResolvers: { [model: string]: InternalResolvers },
+  models: SanitizedModel[]
 }) {
   const resolvers: { [key: string]: any } = {}
 
   resolvers.Query = {}
   resolvers.Mutation = {}
 
-  Object.keys(modelResolvers)
+  Object.keys(internalResolvers)
     .forEach((model) => {
       const baseName = model[0].toLowerCase() + model.slice(1)
 
@@ -136,7 +144,7 @@ export function getResolvers({
           args: ResolverArgs,
           context: ResolverContext,
           info: ResolverInfo,
-        ) => modelResolvers[model][res.type]({
+        ) => internalResolvers[model][res.type]({
           source, args, context, info,
         })
       })
@@ -146,7 +154,7 @@ export function getResolvers({
           args: ResolverArgs,
           context: ResolverContext,
           info: ResolverInfo,
-        ) => modelResolvers[model][res.type]({
+        ) => internalResolvers[model][res.type]({
           source, args, context, info,
         })
       })
@@ -162,17 +170,17 @@ export function getResolvers({
         ? field.parent && field.parent.parent && field.parent.parent.graphqlName
         : field.parent && field.parent.graphqlName
       ) || ''
-      const model = extractModelType(field.of)
+      const model = extractModelName(field.of)
 
       resolvers[baseName] = resolvers[baseName] || {}
-      const resolver = isArray ? modelResolvers[model].references : modelResolvers[model].reference
+      const resolver = isArray ? internalResolvers[model].references : internalResolvers[model].reference
 
       resolvers[baseName][fieldName] = (
         source: ResolverSource,
         args: ResolverArgs,
         context: ResolverContext,
         info: ResolverInfo,
-      ) => resolver({
+      ) => (resolver as ReferenceResolver)({
         source, context, info, fieldName, foreignFieldName: '_id',
       })
     }
@@ -184,14 +192,14 @@ export function getResolvers({
         ? field.parent && field.parent.parent && field.parent.parent.graphqlName
         : field.parent && field.parent.graphqlName
       ) || ''
-      const model = extractModelType(field.of)
+      const model = extractModelName(field.of)
 
-      if (!modelResolvers[model]) {
+      if (!internalResolvers[model]) {
         throw new ValidationError(`No model found for name ${model}`)
       }
 
       resolvers[baseName] = resolvers[baseName] || {}
-      const resolver = isArray ? modelResolvers[model].references : modelResolvers[model].reference
+      const resolver = isArray ? internalResolvers[model].references : internalResolvers[model].reference
 
       resolvers[baseName][fieldName] = (
         source: ResolverSource,
@@ -228,12 +236,12 @@ export function getResolvers({
     // Create resolvers from computed fields
     Object.keys(model.resolvers.computed)
       .forEach((field) => {
-        const baseName = extractModelType(model.name)
+        const baseName = extractModelName(model.name)
 
         resolvers[baseName] = resolvers[baseName] || {}
         resolvers[baseName][field] = computeFieldResolver({
           resolver: model.resolvers.computed[field],
-          modelResolvers,
+          internalResolvers,
           field,
         })
       })
@@ -243,7 +251,7 @@ export function getResolvers({
       .forEach((field) => {
         resolvers.Query[field] = computeFieldResolver({
           resolver: model.resolvers.queries[field],
-          modelResolvers,
+          internalResolvers,
           field,
         })
       })
@@ -253,7 +261,7 @@ export function getResolvers({
       .forEach((field) => {
         resolvers.Mutation[field] = computeFieldResolver({
           resolver: model.resolvers.mutations[field],
-          modelResolvers,
+          internalResolvers,
           field,
         })
       })
@@ -266,7 +274,7 @@ export function getResolvers({
           .forEach((field) => {
             resolvers[baseName][field] = computeFieldResolver({
               resolver: model.resolvers.custom[baseName][field],
-              modelResolvers,
+              internalResolvers,
               field,
             })
           })
@@ -274,9 +282,9 @@ export function getResolvers({
 
     // Create federation resolver
     if (!model.external) {
-      resolvers[extractModelType(model.name)] = resolvers[extractModelType(model.name)] || {}
-      resolvers[extractModelType(model.name)].__resolveReference = (reference: { _id: string }) => (
-        modelResolvers[extractModelType(model.name)].read.unscoped({
+      resolvers[extractModelName(model.name)] = resolvers[extractModelName(model.name)] || {}
+      resolvers[extractModelName(model.name)].__resolveReference = (reference: { _id: string }) => (
+        internalResolvers[extractModelName(model.name)].read.unscoped({
           args: {
             filter: {
               _id: reference._id,
@@ -295,19 +303,29 @@ export function getResolvers({
 }
 
 function makeResolver({
-  field, adapter, model, type, scope, transform,
+  field,
+  adapter,
+  model,
+  type,
+  scope,
+  transform,
 } : {
-  field: string, adapter?: IAdapter, model: SanitizedModel, type: ResolverEnum, scope?: Scope, transform?: Transform,
-}) : ClassicResolverFunction {
+  field: string,
+  adapter?: IAdapter,
+  model: SanitizedModel,
+  type: ResolverEnum,
+  scope?: Scope<false>,
+  transform?: Transform<false>,
+}) : ScopedInternalResolver {
   if (!adapter) {
-    return () => null
+    return async () => null
   }
 
   return async ({
     source, args, context, info,
   } : {
     source?: ResolverSource,
-    args?: ResolverArgs,
+    args: ResolverArgs,
     context: ResolverContext,
     info: ResolverInfo,
   }) => {
@@ -326,11 +344,11 @@ function makeResolver({
         source,
         info,
         field,
-      }))) || args) as any
+      }))) || args)
 
       value = await adapter[type]({
         source,
-        args: scopedArgs,
+        args: scopedArgs as any,
         context,
         info: info || {} as ResolverInfo,
         model,
@@ -344,7 +362,7 @@ function makeResolver({
         return transform({
           field,
           source,
-          args: scopedArgs,
+          args: scopedArgs as any,
           context,
           info: info || {} as ResolverInfo,
           value,
@@ -372,12 +390,12 @@ function makeReferenceResolver({
   adapter, model, type,
 } : {
   adapter?: IAdapter, model: SanitizedModel, type: 'resolveRef'|'resolveRefs', scope?: Function
-}) : ReferenceResolverFunction {
+}) : ReferenceResolver {
   if (!adapter) {
     return () => null
   }
 
-  return ({
+  return async ({
     source, fieldName, foreignFieldName, context, info,
   } : {
     fieldName: string,
@@ -432,7 +450,9 @@ function makeReferenceResolver({
 }
 
 export function makeResolvers({ adapter, model } : { adapter?: IAdapter, model: SanitizedModel }) {
-  const resolvers : Record<string, ResolverFunction&{unscoped?:ResolverFunction}> = {}
+  const resolvers :
+    Record<AliasedResolverEnum, InternalResolver> &
+    Record<'reference'|'references', ReferenceResolver> = {} as any
 
   const rootResolvers = [...queryResolvers, ...mutationResolvers]
 
@@ -441,17 +461,17 @@ export function makeResolvers({ adapter, model } : { adapter?: IAdapter, model: 
       type: res.type,
       adapter,
       model,
-      scope: model.scopes[res.type] as Scope,
-      transform: model.transforms[res.type] as Transform,
-      field: extractModelType(model.name) + res.suffix,
-    })
+      scope: model.scopes[res.type],
+      transform: model.transforms[res.type],
+      field: extractModelName(model.name) + res.suffix,
+    }) as InternalResolver
 
     resolvers[res.type].unscoped = makeResolver({
       type: res.type,
       adapter,
       model,
-      field: extractModelType(model.name) + res.suffix,
-    })
+      field: extractModelName(model.name) + res.suffix,
+    }) as UnscopedInternalResolver
 
     if (res.alias) {
       res.alias.forEach((alias) => {
@@ -472,5 +492,5 @@ export function makeResolvers({ adapter, model } : { adapter?: IAdapter, model: 
     model,
   })
 
-  return resolvers as ModelResolver
+  return resolvers
 }

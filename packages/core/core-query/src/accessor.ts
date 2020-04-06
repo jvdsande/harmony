@@ -11,7 +11,7 @@ import Voca from 'voca'
 import Builder from 'builder'
 import Client from 'client'
 
-export function extractModelType(name: string): string {
+export function extractModelName(name: string): string {
   return (Voca.camelCase(name))
 }
 
@@ -89,11 +89,11 @@ function AccessorQueryBuilder<T = {[key: string]: any}>(
   function updateSubscription(unsubscribe ?: boolean) {
     if (unsubscribe || !local.subscription.active) {
       local.subscription.models.forEach((m) => {
-        client.unsubscribe(`${m.toLowerCase()}-updated`, subscription)
+        client.unsubscribe(`${m}-updated`, subscription)
       })
     } else {
       local.subscription.models.forEach((m) => {
-        client.subscribe(`${m.toLowerCase()}-updated`, subscription)
+        client.subscribe(`${m}-updated`, subscription)
       })
     }
 
@@ -285,7 +285,7 @@ function AccessorMutationBuilder<T>(
 }
 
 export function Accessor<T>(model: string, client?: IClient) : IAccessor<T> {
-  const name = extractModelType(model)
+  const name = extractModelName(model)
 
   const instance : IAccessor<T> = {
     query: {

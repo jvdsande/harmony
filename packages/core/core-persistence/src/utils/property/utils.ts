@@ -10,7 +10,7 @@ export function wrap<T>(arrayLike ?: T|T[]) : T[] {
 }
 
 // Turn any given name into a properly cased model name
-export function extractModelType(name: string, capitalize: boolean = true): string {
+export function extractModelName(name: string, capitalize: boolean = true): string {
   const camelCased = Voca.camelCase(name)
   return capitalize ? Voca.capitalize(camelCased) : camelCased
 }

@@ -1,8 +1,9 @@
 import {
-  Fields, ExtendableFields, Resolvers, Scopes,
+  Resolvers, Scopes,
+  Resolver,
+  ComputedField, ComputedQuery,
   IProperty, PropertyMode,
-  Model, SanitizedModel, Schema, ExtendableField,
-  QueryResolverParams,
+  Model, SanitizedModel, Schema,
 } from '@harmonyjs/types-persistence'
 
 import { ApolloError } from 'apollo-server-core'
@@ -13,10 +14,10 @@ import { queryResolvers, ResolverDefinition, mutationResolvers } from 'utils/res
 import Types from 'utils/types'
 
 import PropertyFactory from 'utils/property/factory'
-import { extractModelType, wrap } from 'utils/property/utils'
+import { extractModelName, wrap } from 'utils/property/utils'
 import { sanitizeSchemaField, sanitizeSchema } from 'utils/property/sanitation'
 
-function extendField(field: ExtendableField, modelName: string): { type?: IProperty, args?: Schema } {
+function extendField(field: ComputedQuery, modelName: string): { type?: IProperty, args?: Schema } {
   switch (field.extends) {
     case 'read': {
       return {
@@ -120,7 +121,11 @@ function extractMainSchema({ schema, name }: { schema: Schema, name: string }) {
   return sanitized
 }
 
-function extractComputedSchema({ fields, name }: { fields?: Fields, name: string }) {
+function extractComputedSchema({
+  fields, name,
+} : {
+  fields?: {[key: string]: ComputedField}, name: string
+}) {
   const schema: Schema = {}
 
   if (!fields) {
@@ -155,7 +160,7 @@ function extractComputedSchema({ fields, name }: { fields?: Fields, name: string
 function extractRootSchema({
   fields, name, baseName, base, external, strict, scopes,
 } : {
-  fields: ExtendableFields,
+  fields: {[key: string]: ComputedQuery},
   name: string,
   baseName: string,
   base: ResolverDefinition[],
@@ -170,10 +175,10 @@ function extractRootSchema({
     if (!external && (!strict || scopes[res.type])) {
       const { type, args } = extendField(
         { extends: res.type, resolve: null as any },
-        extractModelType(name),
+        extractModelName(name),
       )
 
-      schema[extractModelType(name, false) + res.suffix] = sanitizeSchemaField({
+      schema[extractModelName(name, false) + res.suffix] = sanitizeSchemaField({
         schema: type!,
         name: '',
       })
@@ -183,9 +188,9 @@ function extractRootSchema({
 
   // Fill schema with provided queries
   Object.keys(fields).forEach((queryName) => {
-    const field : ExtendableField = fields[queryName]
+    const field : ComputedQuery = fields[queryName]
 
-    const { type, args } = field.extends ? extendField(field, extractModelType(name)) : field
+    const { type, args } = field.extends ? extendField(field, extractModelName(name)) : field
 
     const property = sanitizeSchemaField({
       schema: field.type || type || {},
@@ -204,7 +209,9 @@ function extractRootSchema({
   return extractMainSchema({ schema, name: baseName })
 }
 
-function extractResolvers({ fields }: { fields: ExtendableFields|Fields }): Resolvers {
+function extractResolvers({ fields }: {
+  fields: {[key: string]:ComputedQuery}|{[key: string]:ComputedField}
+}): Resolvers {
   const resolvers: Resolvers = {}
 
 
@@ -214,9 +221,9 @@ function extractResolvers({ fields }: { fields: ExtendableFields|Fields }): Reso
       const { scopes, transforms } = fields[field]
 
       if (!scopes && !transforms) {
-        resolvers[field] = resolve
+        resolvers[field] = resolve as any
       } else {
-        resolvers[field] = async (params: Omit<QueryResolverParams, 'field'>) => {
+        resolvers[field] = async (params: Parameters<Resolver>[0]) => {
           let { args } = params
 
           let error = null
@@ -229,14 +236,14 @@ function extractResolvers({ fields }: { fields: ExtendableFields|Fields }): Reso
               for (const scope of scopes) {
                 // eslint-disable-next-line no-await-in-loop
                 args = (await scope({
-                  ...params, args, field,
+                  ...params, args: args as any, field,
                 })) || args
               }
             }
 
             // Run main resolver function
             value = await resolve({
-              ...params, args, field,
+              ...params, args: args as any, field,
             })
           } catch (err) {
             // Throwing in a scope stops the subsequent scopes and the resolver from running
@@ -249,7 +256,7 @@ function extractResolvers({ fields }: { fields: ExtendableFields|Fields }): Reso
               for (const transform of transforms) {
                 // eslint-disable-next-line no-await-in-loop
                 value = (await transform({
-                  ...params, args, value, error, field,
+                  ...params, args: args as any, value, error, field,
                 })) || value
               }
             }
@@ -277,9 +284,13 @@ function extractResolvers({ fields }: { fields: ExtendableFields|Fields }): Reso
 }
 
 // eslint-disable-next-line import/prefer-default-export
-export function sanitizeModel({ model, strict }: { model: Model, strict: boolean }): SanitizedModel {
+export function sanitizeModel({
+  model, strict, name,
+}: {
+  model: Model, strict: boolean, name: string
+}): SanitizedModel {
   const {
-    name, adapter, schema, computed, external, scopes, transforms, ...otherProps
+    adapter, schema, computed, external, scopes, transforms, ...otherProps
   } = model
 
   return ({
@@ -364,13 +375,13 @@ export function printSchema({ model }: { model: SanitizedModel }) {
 
   // Add _and, _or, _nor to inputFilterSchema
   inputFilterSchema._and = Types.Array.of(
-    PropertyFactory({ type: 'raw', of: `${extractModelType(model.name)}FilterInput`, name: '' }),
+    PropertyFactory({ type: 'raw', of: `${extractModelName(model.name)}FilterInput`, name: '' }),
   )
   inputFilterSchema._or = Types.Array.of(
-    PropertyFactory({ type: 'raw', of: `${extractModelType(model.name)}FilterInput`, name: '' }),
+    PropertyFactory({ type: 'raw', of: `${extractModelName(model.name)}FilterInput`, name: '' }),
   )
   inputFilterSchema._nor = Types.Array.of(
-    PropertyFactory({ type: 'raw', of: `${extractModelType(model.name)}FilterInput`, name: '' }),
+    PropertyFactory({ type: 'raw', of: `${extractModelName(model.name)}FilterInput`, name: '' }),
   )
 
   // Add _operators to inputFilterSchema
@@ -392,10 +403,10 @@ ${inputs}
 # Output Schema
 ${
   sanitizeSchema({ schema: outputSchema, name: model.name }).graphqlSchema.replace(
-    `type ${extractModelType(model.name)} {`,
+    `type ${extractModelName(model.name)} {`,
     model.external
-      ? `extend type ${extractModelType(model.name)} @key(fields: "_id") {`
-      : `type ${extractModelType(model.name)} @key(fields: "_id") {`,
+      ? `extend type ${extractModelName(model.name)} @key(fields: "_id") {`
+      : `type ${extractModelName(model.name)} @key(fields: "_id") {`,
   )
 }
 

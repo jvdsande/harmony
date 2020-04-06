@@ -1,7 +1,7 @@
 /* Factories for building Properties, externally called "Types" */
 import {
   IPropertyArray,
-  IPropertySchema, Model, SchemaDescription, SchemaField,
+  IPropertySchema, Schema, SchemaField,
 } from '@harmonyjs/types-persistence'
 
 import PropertyFactory from 'utils/property/factory'
@@ -31,27 +31,27 @@ const Types = {
   },
   get Reference() {
     return {
-      of <T extends SchemaDescription = SchemaDescription>(name: string|Model) {
+      of <T extends Schema = Schema>(name: string) {
         return PropertyFactory<T>({
           name: '',
           type: 'reference',
-          of: (name as Model).name || name as string,
+          of: name as string,
         })
       },
     }
   },
   get ReversedReference() {
-    function make<T extends SchemaDescription = SchemaDescription>(foreignField: string, name: string|Model) {
+    function make<T extends Schema = Schema>(foreignField: string, name: string) {
       return PropertyFactory<T>({
         name: '',
         type: 'reversed-reference',
-        of: (name as Model).name || name as string,
+        of: name,
         on: foreignField,
       })
     }
 
     return {
-      of<T extends SchemaDescription = SchemaDescription>(name: string | Model) {
+      of<T extends Schema = Schema>(name: string) {
         return ({
           on(foreignField: string) {
             return make<T>(foreignField, name)
@@ -60,7 +60,7 @@ const Types = {
       },
       on(foreignField: string) {
         return {
-          of<T extends SchemaDescription = SchemaDescription>(name: string | Model) {
+          of<T extends Schema = Schema>(name: string) {
             return make<T>(foreignField, name)
           },
         }
@@ -69,7 +69,7 @@ const Types = {
   },
   get Schema() {
     return {
-      of<T extends SchemaDescription = SchemaDescription>(schema: T) {
+      of<T extends Schema = Schema>(schema: T) {
         return sanitizeSchema({ schema, name: '' }) as IPropertySchema<T>
       },
     }

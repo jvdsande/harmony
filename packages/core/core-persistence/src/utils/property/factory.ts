@@ -3,7 +3,7 @@ import {
   IPropertyArray,
   IPropertyBoolean, IPropertyDate, IPropertyFloat, IPropertyID, IPropertyJSON, IPropertyNumber, IPropertyRaw,
   IPropertyReference, IPropertyReversedReference, IPropertySchema,
-  IPropertyString, IPropertyUndiscriminated, PropertyMode, Schema, SchemaDescription,
+  IPropertyString, IPropertyUndiscriminated, PropertyMode, Schema,
 } from '@harmonyjs/types-persistence'
 
 import {
@@ -36,9 +36,9 @@ function PropertyFactory(args: PropertyFactoryBoolean): IPropertyBoolean
 function PropertyFactory(args: PropertyFactoryID): IPropertyID
 function PropertyFactory(args: PropertyFactoryJSON): IPropertyJSON
 function PropertyFactory(args: PropertyFactoryDate): IPropertyDate
-function PropertyFactory<T extends SchemaDescription>(args: PropertyFactoryReference)
+function PropertyFactory<T extends Schema>(args: PropertyFactoryReference)
   : IPropertyReference<T>
-function PropertyFactory<T extends SchemaDescription>(args: PropertyFactoryReversedReference)
+function PropertyFactory<T extends Schema>(args: PropertyFactoryReversedReference)
   : IPropertyReversedReference<T>
 function PropertyFactory(args: PropertyFactorySchema): IPropertySchema
 function PropertyFactory(args: PropertyFactoryArray): IPropertyArray

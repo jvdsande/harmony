@@ -199,6 +199,8 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
       const mongooseModel = instance.models[model.name]
       const harmonyModel = local.schemas[model.name]
 
+      const filter = Object.keys(args.filter || {}).length ? sanitizeFilter(args.filter) : undefined
+
       // TODO add sort support
       return buildPopulatedQuery({
         harmonyModel,
@@ -206,7 +208,7 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
         external: model.external,
         info,
         query: mongooseModel
-          .findOne(sanitizeFilter(args.filter)!)
+          .findOne(filter || {})
           .skip(args.skip || 0),
       })
     },
@@ -217,6 +219,8 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
       const mongooseModel = instance.models[model.name]
       const harmonyModel = local.schemas[model.name]
 
+      const filter = Object.keys(args.filter || {}).length ? sanitizeFilter(args.filter) : undefined
+
       // TODO add sort support
       return buildPopulatedQuery({
         harmonyModel,
@@ -224,7 +228,7 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
         external: model.external,
         info,
         query: mongooseModel
-          .find(sanitizeFilter(args.filter)!)
+          .find(filter || {})
           .limit(args.limit || 0)
           .skip(args.skip || 0),
       })
@@ -235,7 +239,9 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
     }) {
       const mongooseModel = instance.models[model.name]
 
-      return mongooseModel.countDocuments(sanitizeFilter(args.filter)!)
+      const filter = Object.keys(args.filter || {}).length ? sanitizeFilter(args.filter) : undefined
+
+      return mongooseModel.countDocuments(filter || {})
     },
 
 

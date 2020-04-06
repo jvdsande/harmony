@@ -1,93 +1,140 @@
-import { IProperty, IPropertySchema, PropertyMode } from 'property'
 import {
-  QueryResolver, FieldResolver, ResolverArgs, ResolverEnum, BaseResolverParams, QueryResolverParams,
-  FieldResolverParams, ResolverContext,
-} from 'resolvers'
+  IPropertySchema, PropertyMode, Schema,
+  SchemaOutputType,
+  SchemaInputType,
+  PropertyOutputType, SchemaField,
+} from 'property'
 
-export type SchemaField = IProperty | SchemaDescription | SchemaField[]
-export type SchemaDescription = { [key: string]: SchemaField }
-export type Schema = SchemaDescription | IPropertySchema
+import {
+  ResolverEnum,
+  Resolver, Resolvers,
+  Scope, Scopes,
+  Transform, Transforms,
 
-type FieldBase = {
+  ExtendedArgs, ExtendedType,
+} from 'resolver'
+
+export type TypedComputedQuery<CurrentModel extends Schema,
+  Context extends { [key: string]: any },
+  Schemas extends { [key: string]: Schema },
+  Extension extends ResolverEnum,
+  Args extends Schema,
+  Return extends SchemaField | undefined,
+  > = (
+  { extends: Extension, type?: Return, args?: never } |
+  { extends: Extension, type?: never, args?: Args } |
+  { extends?: never, type: Return, args?: Args }
+)
+  & {
   mode?: PropertyMode | PropertyMode[]
+
+  scopes?: Scope<true,
+    // Source
+    any,
+    // Args
+    never extends Args
+    ? ExtendedArgs<Extension, CurrentModel>
+    : SchemaInputType<NonNullable<Args>>,
+    Context,
+    Schemas>[]
+  transforms?: Transform<true,
+    // Source
+    any,
+    // Args
+    never extends Args
+    ? ExtendedArgs<Extension, CurrentModel>
+    : SchemaInputType<NonNullable<Args>>,
+    // Return
+    never extends Return
+    ? ExtendedType<Extension, CurrentModel>
+    : Return extends Schema ? SchemaOutputType<Return> | null : PropertyOutputType<NonNullable<Return>>,
+    Context,
+    Schemas>[]
+
+  resolve: Resolver<
+    // Source
+    any,
+    // Args
+    never extends Args
+    ? ExtendedArgs<Extension, CurrentModel>
+    : SchemaInputType<NonNullable<Args>>,
+    // Return
+    never extends Return
+    ? ExtendedType<Extension, CurrentModel>
+    : Return extends Schema ? SchemaOutputType<Return> | null : PropertyOutputType<NonNullable<Return>>,
+    Context,
+    Schemas>
 }
 
-export type Field<C = ResolverContext, R extends string = string> = FieldBase & {
-  resolve: FieldResolver<C, R>
+export type ComputedQuery<CurrentModel extends Schema = any,
+  Context extends { [key: string]: any } = any,
+  Schemas extends { [key: string]: Schema } = any,
+  > =
+  TypedComputedQuery<CurrentModel, Context, Schemas, ResolverEnum, any, any>
 
-  type: SchemaField
-  args?: Schema
-  extends?: never
+export type TypedComputedField<CurrentModel extends Schema,
+  Context extends { [key: string]: any },
+  Schemas extends { [key: string]: Schema },
+  Args extends Schema | undefined,
+  Return extends SchemaField,
+  > = {
+  type: Return
+  args?: Args
+  mode?: PropertyMode | PropertyMode[]
 
-  scopes?: Scope<C, FieldResolverParams<C, R>>[]
-  transforms?: Transform<C, FieldResolverParams<C, R>>[]
+  scopes?: Scope<true,
+    SchemaOutputType<CurrentModel>,
+    undefined extends Args ? undefined : SchemaInputType<NonNullable<Args>>,
+    Context,
+    Schemas>[]
+  transforms?: Transform<true,
+    SchemaOutputType<CurrentModel>,
+    undefined extends Args ? undefined : SchemaInputType<NonNullable<Args>>,
+    Return extends Schema ? SchemaOutputType<Return> | null : PropertyOutputType<Return>,
+    Context,
+    Schemas>[]
+
+  resolve?: Resolver<SchemaOutputType<CurrentModel> & { _id: string },
+    undefined extends Args ? undefined : SchemaInputType<NonNullable<Args>>,
+    Return extends Schema ? SchemaOutputType<Return> | null : PropertyOutputType<Return>,
+    Context,
+    Schemas
+  >
 }
 
-export type ExtendableFieldBase<C, R extends string> = FieldBase & {
-  resolve: QueryResolver<C, R>
+export type ComputedField<CurrentModel extends Schema = any,
+  Context extends { [key: string]: any } = any,
+  Models extends { [key: string]: Schema } = any> = TypedComputedField<CurrentModel, Context, Models, any, any>
 
-  scopes?: Scope<C, QueryResolverParams<C, R>>[]
-  transforms?: Transform<C, QueryResolverParams<C, R>>[]
-}
 
-export type FieldArgsType = {
-  type: SchemaField
-  args?: Schema
-  extends?: never
-}
-
-export type FieldExtendsType = {
-  extends: ResolverEnum
-  args?: Schema
-  type?: never
-}
-
-export type FieldExtendsArgs = {
-  extends: ResolverEnum
-  type?: SchemaField
-  args?: never
-}
-
-export type ExtendableField<C = ResolverContext, R extends string = string> =
-  ExtendableFieldBase<C, R> & (FieldArgsType | FieldExtendsType | FieldExtendsArgs)
-
-export type Fields<C = ResolverContext, R extends string = string> =
-  Record<string, Field<C, R>>
-export type ExtendableFields<C = ResolverContext, R extends string = string> =
-  Record<string, ExtendableField<C, R>>
-export type Resolvers<C = ResolverContext, R extends string = string> =
-  Record<string, QueryResolver<C, R>|FieldResolver<C, R>>
-
-type ScopeParams<C = ResolverContext, T = BaseResolverParams<C>> = T & { field: string }
-export type Scope<C = ResolverContext, T = BaseResolverParams<C>> =
-  (arg: ScopeParams<C, T>) => ResolverArgs|undefined|void
-export type Scopes<C = ResolverContext> =
-  Partial<Record<ResolverEnum, Scope<C, Omit<QueryResolverParams<C>, 'resolvers'>>>>
-
-type TransformParams<C = ResolverContext, T = BaseResolverParams<C>> = T & { value?: any, error?: Error, field: string }
-export type Transform<C = ResolverContext, T = BaseResolverParams<C>> =
-  (arg: TransformParams<C, T>) => any|undefined|void
-export type Transforms<C = ResolverContext> =
-  Partial<Record<ResolverEnum, Transform<C, Omit<QueryResolverParams<C>, 'resolvers'>>>>
-
-export type Computed<ContextType = ResolverContext, ResolverEnum extends string = string> = {
-  fields?: Fields<ContextType, ResolverEnum>,
-  queries?: ExtendableFields<ContextType, ResolverEnum>,
-  mutations?: ExtendableFields<ContextType, ResolverEnum>,
-  custom?: Record<string, Resolvers<ContextType, ResolverEnum>>
+export type Computed<CurrentModel extends Schema = any,
+  Context extends { [key: string]: any } = { [key: string]: any },
+  Schemas extends { [key: string]: Schema } = any> = {
+  fields?: {
+    [field: string]: ComputedField<CurrentModel, Context, Schemas>
+  }
+  queries?: {
+    [field: string]: ComputedQuery<CurrentModel, Context, Schemas>
+  }
+  mutations?: {
+    [field: string]: ComputedQuery<CurrentModel, Context, Schemas>
+  }
+  custom?: {
+    [type: string]: Resolvers
+  }
 }
 
 export type Model = {
-  name: string,
   schema: Schema
 
-  computed?: Computed<any>
-  scopes?: Scopes<any>
-  transforms?: Transforms<any>
+  computed?: Computed
+  scopes?: Scopes
+  transforms?: Transforms
 
   external?: boolean
   adapter?: string
 
+  // A model can be extended with any kind of properties
   [key: string]: any
 }
 
@@ -105,7 +152,9 @@ export type SanitizedModel = {
     computed: Resolvers
     queries: Resolvers
     mutations: Resolvers
-    custom: Record<string, Resolvers>
+    custom: {
+      [type: string]: Resolvers
+    }
   }
 
   scopes: Scopes

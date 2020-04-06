@@ -3,7 +3,7 @@ import {
 } from '@harmonyjs/types-persistence'
 import { PropertyConfiguration } from 'utils/property/type'
 
-import { extractModelType } from 'utils/property/utils'
+import { extractModelName } from 'utils/property/utils'
 
 // Get the GraphQL type name of a Property
 export function computeGraphQLName({
@@ -11,7 +11,7 @@ export function computeGraphQLName({
 } : {
   name: string, parent?: IProperty
 }) : string {
-  return (parent ? computeGraphQLName({ name: parent.name, parent: parent.parent }) : '') + extractModelType(name)
+  return (parent ? computeGraphQLName({ name: parent.name, parent: parent.parent }) : '') + extractModelName(name)
 }
 
 // Get the GraphQL annotations for a Property
@@ -50,8 +50,8 @@ export function computeGraphQLType({
 }) {
   const graphqlType : string = {
     ...commonTypeTransform(of as string),
-    'reference': () => extractModelType(of as string),
-    'reversed-reference': () => extractModelType(of as string),
+    'reference': () => extractModelName(of as string),
+    'reversed-reference': () => extractModelName(of as string),
     'schema': () => name!,
     'array': () => `[${(of as IProperty).graphqlType}]`,
   }[type]()

@@ -156,7 +156,7 @@ export function buildPopulatedQuery({
   harmonyModel: IPropertySchema,
   harmonyExternals: Record<string, boolean>,
   external: boolean,
-  info: GraphQLResolveInfo,
+  info?: GraphQLResolveInfo,
   query: Query<any>
 }) {
   if (external) {

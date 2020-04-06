@@ -1,11 +1,14 @@
 import Logger from '@harmonyjs/logger'
 // Import helpers and types
-import { IAdapter, PersistenceConfig, PersistenceInstance } from '@harmonyjs/types-persistence'
+import {
+  TypedComputedField, TypedComputedQuery, IAdapter, PersistenceConfig, PersistenceInstance,
+  Schema, SchemaField, ResolverEnum, Model,
+} from '@harmonyjs/types-persistence'
 
 import { configurePersistence } from 'steps/configuration'
 import { importModels, initializeAdapters } from 'steps/entities'
 import {
-  defineControllers, defineResolvers, defineSchema,
+  defineControllers, defineResolvers, defineModelResolvers, defineSchema,
 } from 'steps/launch'
 import EventsHandler from 'utils/events'
 
@@ -18,10 +21,12 @@ export {
   SchemaOutputType, SchemaInputType,
 } from '@harmonyjs/types-persistence'
 
-export default function Persistence() {
+export default function Persistence<
+  Models extends {[key in string]: Model} = any,
+>() {
   // Create an instance
   const events = EventsHandler()
-  const instance : Partial<PersistenceInstance> = {
+  const instance : Partial<PersistenceInstance<Models>> = {
     events,
   }
 
@@ -31,7 +36,9 @@ export default function Persistence() {
     adapters: {},
   }
 
-  instance.initialize = async (configuration: Partial<PersistenceConfig>) => {
+  instance.initialize = async (
+    configuration: PersistenceConfig<Models>,
+  ) => {
     instance.configuration = configurePersistence({ config: configuration })
     instance.logger = Logger({ name: 'Persistence', configuration: instance.configuration.log })
 
@@ -53,12 +60,18 @@ export default function Persistence() {
     // Finish preparing instance
     instance.context = {}
     instance.schema = await defineSchema({ models: instance.models })
-    instance.resolvers = await defineResolvers({
+    const internalResolvers = await defineResolvers({
       models: instance.models,
       adapters,
       defaultAdapterName: configuration.defaultAdapter,
     })
-    instance.controllers = await defineControllers({ instance: instance as PersistenceInstance })
+    instance.resolvers = await defineModelResolvers<Models>({
+      internalResolvers,
+    })
+    instance.controllers = await defineControllers({
+      internalResolvers,
+      instance: instance as PersistenceInstance<Models>,
+    })
   }
 
   instance.close = async () => {
@@ -68,5 +81,56 @@ export default function Persistence() {
     }))
   }
 
-  return instance as PersistenceInstance
+  return instance as PersistenceInstance<Models>
+}
+
+
+export function field<
+  // Used for extends fields, to calculate source and args
+  CurrentModel extends Schema,
+
+  // Context
+  Context extends {[key: string]: any},
+
+  // Used for resolvers
+  Models extends {[model: string]: Model},
+
+  // Args and return
+  Return extends SchemaField,
+  Args extends Schema = {},
+>(f: TypedComputedField<
+  CurrentModel,
+  Context,
+  Models,
+  Args,
+  Return
+  >) {
+  return f
+}
+
+export function query<
+  // Used for extends fields, to calculate source and args
+  CurrentModel extends Schema,
+
+  // Context
+  Context extends {[key: string]: any},
+
+  // Used for resolvers
+  Models extends {[model: string]: Model},
+
+  // Extension
+  Extension extends ResolverEnum,
+
+  // Args and return
+  Return extends SchemaField,
+  Args extends Schema = {},
+  >(f: TypedComputedQuery<
+  CurrentModel,
+  Context,
+  Models,
+  Extension,
+  Args,
+  Return
+  >) {
+  return f
 }

@@ -1,15 +1,15 @@
 import { ILogger } from '@harmonyjs/logger'
+import { GraphQLResolveInfo } from 'graphql'
 
-import { ResolverContext, ResolverInfo, ResolverSource } from 'resolvers'
 import { SanitizedModel } from 'model'
 import { IEvents } from './events'
 
 
 type InitArgs = { models: SanitizedModel[], events: IEvents, logger: ILogger }
 type ResolverArgs = {
-  source?: ResolverSource,
-  context?: ResolverContext,
-  info: ResolverInfo,
+  source?: any,
+  context?: {[key: string]: any},
+  info?: GraphQLResolveInfo,
   model: SanitizedModel,
 }
 type Entity = {[key: string]: any} | null

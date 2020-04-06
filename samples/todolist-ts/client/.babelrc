@@ -1,0 +1,30 @@
+{
+    "presets": ["@babel/env", "@babel/react"],
+    "ignore":
+    [
+        "node_modules",
+        "/js/**"
+    ],
+    "plugins":
+    [
+        [
+            "@babel/plugin-proposal-decorators",
+            {
+                "legacy": true
+            }
+        ],
+        [
+            "@babel/plugin-proposal-class-properties",
+            {
+                "loose": true
+            }
+        ],
+        [
+            "@babel/plugin-transform-runtime",
+            {
+                "regenerator": true,
+                "corejs": 2
+            }
+        ]
+    ]
+}

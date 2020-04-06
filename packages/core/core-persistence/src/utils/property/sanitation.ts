@@ -1,7 +1,7 @@
 /* eslint-disable no-use-before-define */
 import {
   IProperty, IPropertyArray, IPropertySchema,
-  Schema, SchemaDescription, SchemaField,
+  Schema, SchemaField,
 } from '@harmonyjs/types-persistence'
 
 import PropertyFactory from 'utils/property/factory'
@@ -21,7 +21,7 @@ export function sanitizeSchemaField({ schema, name } : { schema: SchemaField, na
   // Check if we are dealing with an object
   if (!schema.type || (typeof schema.type !== 'string')) {
     // If the "type" does not exist or is not a string, then this is a plain object that needs sanitizing
-    return sanitizeSchema({ schema: schema as SchemaDescription, name })
+    return sanitizeSchema({ schema: schema as Schema, name })
   }
 
   // Else we are dealing with a correct IProperty, so we keep it as-is
@@ -40,7 +40,7 @@ export function sanitizeArray({ name, of } : { name: string, of: SchemaField }) 
 }
 
 // Get a Schema-like or proper Schema Property, turn it into a Schema Property and sanitize its fields names and parent
-export function sanitizeSchema({ schema, name } : { schema: Schema, name: string }) : IPropertySchema {
+export function sanitizeSchema({ schema, name } : { schema: Schema|IPropertySchema, name: string }) : IPropertySchema {
   // If we are dealing with a proper schema, simply go through the properties to update names and parents
   if (schema.type === 'schema') {
     const propertySchema = schema as IPropertySchema
@@ -56,7 +56,7 @@ export function sanitizeSchema({ schema, name } : { schema: Schema, name: string
   const sanitized : {[key: string]: IProperty} = {}
   const sanitizedProperty = PropertyFactory({ type: 'schema', name, of: sanitized })
 
-  const fields : SchemaDescription = schema as SchemaDescription
+  const fields : Schema = schema as Schema
 
   Object.keys(fields).forEach((key) => {
     sanitized[key] = sanitizeSchemaField({ schema: fields[key], name: key })

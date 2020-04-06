@@ -1,5 +1,3 @@
-import { Schema, SchemaDescription, SchemaField } from 'model'
-
 export type PropertyType =
   'string'
   | 'number'
@@ -35,7 +33,7 @@ export interface IPropertyBase {
   indexed : this
   unique : this
   required : this|IPropertyBase
-  withArgs(args : Schema) : this
+  withArgs(args : Schema|IPropertySchema) : this
   withMode(mode : PropertyMode|PropertyMode[]) : this
 
   // Accessors
@@ -79,55 +77,59 @@ interface IPropertyPrimitive<
   valueInput?: U
 }
 
-export interface IPropertyRaw extends IPropertyPrimitive<'raw', IPropertyRawRequired, false, string|undefined> {}
+export interface IPropertyRaw extends IPropertyPrimitive<'raw', IPropertyRawRequired, false, string> {}
 export interface IPropertyRawRequired extends IPropertyPrimitive<'raw', IPropertyRawRequired, true, string> {}
 
-export interface IPropertyID extends IPropertyPrimitive<'id', IPropertyIDRequired, false, string|undefined> {}
+export interface IPropertyID extends IPropertyPrimitive<'id', IPropertyIDRequired, false, string> {}
 export interface IPropertyIDRequired extends IPropertyPrimitive<'id', IPropertyIDRequired, true, string> {}
 
 export interface IPropertyString extends IPropertyPrimitive<
-  'string', IPropertyStringRequired, false, string|undefined
+  'string', IPropertyStringRequired, false, string
 > {}
 export interface IPropertyStringRequired extends IPropertyPrimitive<
   'string', IPropertyStringRequired, true, string
 > {}
 
 export interface IPropertyNumber extends IPropertyPrimitive<
-  'number', IPropertyNumberRequired, false, number|undefined
+  'number', IPropertyNumberRequired, false, number
 > {}
 export interface IPropertyNumberRequired extends IPropertyPrimitive<
   'number', IPropertyNumberRequired, true, number
 > {}
 
-export interface IPropertyFloat extends IPropertyPrimitive<'float', IPropertyFloatRequired, false, number|undefined> {}
-export interface IPropertyFloatRequired extends IPropertyPrimitive<'float', IPropertyFloatRequired, true, number> {}
+export interface IPropertyFloat extends IPropertyPrimitive<
+  'float', IPropertyFloatRequired, false, number
+> {}
+export interface IPropertyFloatRequired extends IPropertyPrimitive<
+  'float', IPropertyFloatRequired, true, number
+> {}
 
 export interface IPropertyBoolean extends IPropertyPrimitive<
-  'boolean', IPropertyBooleanRequired, false, boolean|undefined
+  'boolean', IPropertyBooleanRequired, false, boolean
 > {}
 export interface IPropertyBooleanRequired extends IPropertyPrimitive<
   'boolean', IPropertyBooleanRequired, true, boolean
 > {}
 
 export interface IPropertyJSON extends IPropertyPrimitive<
-  'json', IPropertyJSONRequired, false, {[key: string]: any}|undefined
+  'json', IPropertyJSONRequired, false, {[key: string]: any}
 > {}
 export interface IPropertyJSONRequired extends IPropertyPrimitive<
   'json', IPropertyJSONRequired, true, {[key: string]: any}
 > {}
 
-export interface IPropertyDate extends IPropertyPrimitive<'date', IPropertyDateRequired, false, Date|undefined> {}
+export interface IPropertyDate extends IPropertyPrimitive<'date', IPropertyDateRequired, false, Date> {}
 export interface IPropertyDateRequired extends IPropertyPrimitive<'date', IPropertyDateRequired, true, Date> {}
 
-export interface IPropertyReference<T extends SchemaDescription = any> extends IPropertyBase {
+export interface IPropertyReference<T extends Schema = any> extends IPropertyBase {
   type : 'reference'
   of : string
   required: IPropertyReferenceRequired
   isRequired: false
-  valueType?: SchemaOutputType<T>|undefined
+  valueType?: SchemaOutputType<T>
   valueInput?: string
 }
-export interface IPropertyReferenceRequired<T extends SchemaDescription = any> extends IPropertyBase {
+export interface IPropertyReferenceRequired<T extends Schema = any> extends IPropertyBase {
   type : 'reference'
   of : string
   required: IPropertyReferenceRequired
@@ -136,7 +138,7 @@ export interface IPropertyReferenceRequired<T extends SchemaDescription = any> e
   valueInput?: string
 }
 
-export interface IPropertyReversedReference<T extends SchemaDescription = any> extends IPropertyBase {
+export interface IPropertyReversedReference<T extends Schema = any> extends IPropertyBase {
   type: 'reversed-reference'
   of : string
   on : string
@@ -145,7 +147,7 @@ export interface IPropertyReversedReference<T extends SchemaDescription = any> e
   valueType?: SchemaOutputType<T>
   valueInput?: string
 }
-export interface IPropertyReversedReferenceRequired<T extends SchemaDescription = any> extends IPropertyBase {
+export interface IPropertyReversedReferenceRequired<T extends Schema = any> extends IPropertyBase {
   type: 'reversed-reference'
   of : string
   on : string
@@ -161,8 +163,8 @@ export interface IPropertyArray<T extends SchemaField = any> extends IPropertyBa
   deepOf : IProperty
   required: IPropertyArrayRequired
   isRequired: false
-  valueType?: (T extends SchemaDescription ? SchemaOutputType<T> : PropertyOutputType<T>)[]
-  valueInput?: (T extends SchemaDescription ? SchemaInputType<T> : PropertyInputType<T>)[]
+  valueType?: (T extends Schema ? SchemaOutputType<T> : PropertyOutputType<T>)[]
+  valueInput?: (T extends Schema ? SchemaInputType<T> : PropertyInputType<T>)[]
 }
 export interface IPropertyArrayRequired<T extends SchemaField = any> extends IPropertyBase {
   type: 'array'
@@ -170,11 +172,11 @@ export interface IPropertyArrayRequired<T extends SchemaField = any> extends IPr
   deepOf : IProperty
   required: IPropertyArrayRequired
   isRequired: true
-  valueType?: (T extends SchemaDescription ? SchemaOutputType<T> : PropertyOutputType<T>)[]
-  valueInput?: (T extends SchemaDescription ? SchemaInputType<T> : PropertyInputType<T>)[]
+  valueType?: (T extends Schema ? SchemaOutputType<T> : PropertyOutputType<T>)[]
+  valueInput?: (T extends Schema ? SchemaInputType<T> : PropertyInputType<T>)[]
 }
 
-export interface IPropertySchema<T extends SchemaDescription = {[key: string]: IProperty}> extends IPropertyBase {
+export interface IPropertySchema<T extends Schema = {[key: string]: IProperty}> extends IPropertyBase {
   type: 'schema',
   of : {
     [key: string] : IProperty
@@ -185,7 +187,7 @@ export interface IPropertySchema<T extends SchemaDescription = {[key: string]: I
   valueInput?: SchemaInputType<T>
 }
 export interface IPropertySchemaRequired<
-  T extends SchemaDescription = {[key: string]: IProperty}
+  T extends Schema = {[key: string]: IProperty}
 > extends IPropertyBase {
   type: 'schema',
   of : {
@@ -215,22 +217,33 @@ export type IProperty = IPropertyRequired | (IPropertyString | IPropertyNumber |
   | IPropertyRaw)
 
 
-export type SchemaOutputType<T extends SchemaDescription> = {
+export type SchemaOutputType<T extends Schema> = {
   [P in (keyof T)]: PropertyOutputType<T[P]>
 }
 
 export type PropertyOutputType<P extends SchemaField> =
-  P extends IPropertyRequired ? NonNullable<Required<P>['valueType']> :
+  P extends IPropertyRequired ? Required<P>['valueType'] :
   P extends IProperty ? P['valueType'] :
-  P extends Array<SchemaField> ? PropertyOutputType<P[0]>[] | undefined :
-  P extends SchemaDescription ? SchemaOutputType<P> : any
+  P extends Array<SchemaField> ? PropertyOutputType<P[0]>[] :
+  P extends Schema ? SchemaOutputType<P> : undefined
 
-export type SchemaInputType<T extends SchemaDescription> = {
+export type SchemaInputType<T extends Schema> = {
   [P in (keyof T)]: PropertyInputType<T[P]>
 }
 
 export type PropertyInputType<P extends SchemaField> =
-  P extends IPropertyRequired ? NonNullable<Required<P>['valueInput']> :
+  P extends IPropertyRequired ? Required<P>['valueInput'] :
   P extends IProperty ? P['valueInput'] :
-  P extends Array<SchemaField> ? PropertyInputType<P[0]>[] | undefined :
-  P extends SchemaDescription ? SchemaInputType<P> : any
+  P extends Array<SchemaField> ? PropertyInputType<P[0]>[]|undefined :
+  P extends Schema ? SchemaInputType<P>|undefined : undefined
+
+// TODO: Definitely type SchemaOperatorType
+export type SchemaOperatorType<T extends Schema> = {
+  [P in (keyof T)]: any
+}
+
+
+export type SchemaField = IProperty | Schema | SchemaField[]
+export type Schema = {
+  [field: string]: SchemaField
+}

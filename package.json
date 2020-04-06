@@ -4,7 +4,13 @@
   "description": "Full-features NodeJS Framework",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "watch:external": "mixt watch --sources packages/external",
+    "watch:utils": "mixt watch --sources packages/utils",
+    "watch:types": "mixt watch --sources packages/types",
+    "watch:plugins": "mixt watch --sources packages/plugins",
+    "watch:query": "mixt watch core-query",
+    "watch:persistence": "mixt watch core-persistence",
+    "watch:server": "mixt watch core-server"
   },
   "repository": {
     "type": "git",

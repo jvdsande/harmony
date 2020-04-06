@@ -1,21 +1,23 @@
 import Logger, { ILogger } from '@harmonyjs/logger'
 import {
   SanitizedModel, Model,
-  PersistenceConfig,
+  PersistenceInitializedConfig,
   IEvents, IAdapter,
 } from '@harmonyjs/types-persistence'
 
 import { sanitizeModel } from 'utils/model'
+import { extractModelName } from 'utils/property/utils'
 
 
-type ImportModelsArgs = { models: Model[], logger: ILogger, strict: boolean }
+type ImportModelsArgs = { models: Record<string, Model>, logger: ILogger, strict: boolean }
 export async function importModels({
   models, logger, strict,
 } : ImportModelsArgs) {
-  logger.info(`Initializing Persistence instance with ${models.length} models`)
+  const modelNames = Object.keys(models)
+  logger.info(`Initializing Persistence instance with ${modelNames.length} models`)
 
-  return models
-    .map((model : Model) => sanitizeModel({ model, strict }))
+  return modelNames
+    .map((name : string) => sanitizeModel({ model: models[name], strict, name: extractModelName(name) }))
     .map((model : SanitizedModel) => {
       logger.info(`Model '${model.name}' imported.`)
       return model
@@ -24,7 +26,7 @@ export async function importModels({
 
 
 type InitializeAdaptersArgs = {
-  config: PersistenceConfig,
+  config: PersistenceInitializedConfig,
   adapters: { [key: string]: IAdapter },
   models: SanitizedModel[],
   events: IEvents,
