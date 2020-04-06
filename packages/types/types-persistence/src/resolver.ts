@@ -73,10 +73,10 @@ export type ScopedInternalResolver = (arg: {
   args: {[key: string]: any}
   context: {[key: string]: any}
   info: GraphQLResolveInfo
-}) => {[key: string]: any}|Promise<{[key: string]: any}>
+}) => Promise<{[key: string]: any}|null>
 export type UnscopedInternalResolver = (arg: {
   args: {[key: string]: any}
-}) => {[key: string]: any}|Promise<{[key: string]: any}>
+}) => Promise<{[key: string]: any}|null>
 export type InternalResolver = ScopedInternalResolver & { unscoped: UnscopedInternalResolver }
 
 export type ReferenceResolver = (params: {
@@ -86,7 +86,7 @@ export type ReferenceResolver = (params: {
 
   fieldName: string,
   foreignFieldName: string
-}) => {[key: string]: any}|null|Promise<{[key: string]: any}|null>
+}) => Promise<{[key: string]: any}|null>
 
 export type InternalResolvers =
   Record<AliasedResolverEnum, InternalResolver> &
@@ -97,11 +97,11 @@ export type InternalResolvers =
 export type ScopedModelResolver<
   Args extends {[key: string]: any} = {[key: string]: any},
   Return extends any = any
-> = ((args: Args) => Promise<Return>|Return)
+> = ((args: Args) => Promise<Return>)
 export type UnscopedModelResolver<
   Args extends {[key: string]: any} = {[key: string]: any},
   Return extends any = any
-  > = ((args: Args) => Promise<Return>|Return)
+  > = ((args: Args) => Promise<Return>)
 export type ModelResolver<
   Args extends {[key: string]: any} = {[key: string]: any},
   Return extends any = any
@@ -130,7 +130,7 @@ export type Resolver<
 
   resolvers: {[schema in keyof Schemas]: ModelResolvers<Schemas[schema]>}
   field: string
-}) => Return|Promise<Return>
+}) => Promise<Return>
 
 export type Resolvers = {
   [field: string]: Resolver
@@ -155,7 +155,7 @@ export type Scope<
 
 } : {
   resolvers: {[schema in keyof Schemas]: ModelResolvers<NonNullable<Schemas>[schema]>}
-})) => (Args|undefined|void)|Promise<(Args|undefined|void)>
+})) => Promise<(Args|undefined|void)>
 
 export type Scopes = Partial<Record<ResolverEnum, Scope<
   {[key: string]: any}, any, any, {[key: string]: any}, false
@@ -183,7 +183,7 @@ export type Transform<
 
 } : {
   resolvers: {[schema in keyof Schemas]: ModelResolvers<NonNullable<Schemas>[schema]>}
-})) => (Return|undefined|void)|Promise<(Return|undefined|void)>
+})) => Promise<(Return|undefined|void)>
 
 export type Transforms = Partial<Record<ResolverEnum, Transform<
   {[key: string]: any}, any, any, {[key: string]: any}, any, false

@@ -392,7 +392,7 @@ function makeReferenceResolver({
   adapter?: IAdapter, model: SanitizedModel, type: 'resolveRef'|'resolveRefs', scope?: Function
 }) : ReferenceResolver {
   if (!adapter) {
-    return () => null
+    return async () => null
   }
 
   return async ({
