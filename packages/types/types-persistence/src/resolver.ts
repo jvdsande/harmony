@@ -139,11 +139,11 @@ export type Resolvers = {
 
 // Scopes
 export type Scope<
-  HasResolvers extends boolean,
-  Source extends any = {[key: string]: any},
-  Args extends {[key: string]: any}|undefined = {[key: string]: any},
   Context extends {[key: string]: any} = {[key: string]: any},
   Schemas extends { [key: string]: Schema }|undefined = any,
+  Source extends any = any,
+  Args extends {[key: string]: any}|undefined = {[key: string]: any},
+  HasResolvers extends boolean = true,
   > = (params: {
   source: Source
   args: Args
@@ -157,17 +157,19 @@ export type Scope<
   resolvers: {[schema in keyof Schemas]: ModelResolvers<NonNullable<Schemas>[schema]>}
 })) => (Args|undefined|void)|Promise<(Args|undefined|void)>
 
-export type Scopes = Partial<Record<ResolverEnum, Scope<false>>>
+export type Scopes = Partial<Record<ResolverEnum, Scope<
+  {[key: string]: any}, any, any, {[key: string]: any}, false
+>>>
 
 
 // Transforms
 export type Transform<
-  HasResolvers extends boolean,
-  Source extends any = {[key: string]: any},
-  Args extends {[key: string]: any}|undefined = {[key: string]: any},
-  Return extends any = any,
   Context extends {[key: string]: any} = {[key: string]: any},
   Schemas extends { [key: string]: Schema }|undefined = any,
+  Source extends any = any,
+  Args extends {[key: string]: any}|undefined = {[key: string]: any},
+  Return extends any = any,
+  HasResolvers extends boolean = true,
   > = (params: {
   source: Source
   args: Args
@@ -183,4 +185,6 @@ export type Transform<
   resolvers: {[schema in keyof Schemas]: ModelResolvers<NonNullable<Schemas>[schema]>}
 })) => (Return|undefined|void)|Promise<(Return|undefined|void)>
 
-export type Transforms = Partial<Record<ResolverEnum, Transform<false>>>
+export type Transforms = Partial<Record<ResolverEnum, Transform<
+  {[key: string]: any}, any, any, {[key: string]: any}, any, false
+>>>

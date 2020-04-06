@@ -28,16 +28,18 @@ export type TypedComputedQuery<CurrentModel extends Schema,
   & {
   mode?: PropertyMode | PropertyMode[]
 
-  scopes?: Scope<true,
+  scopes?: Scope<
+    Context,
+    Schemas,
     // Source
     any,
     // Args
     never extends Args
     ? ExtendedArgs<Extension, CurrentModel>
-    : SchemaInputType<NonNullable<Args>>,
+    : SchemaInputType<NonNullable<Args>>>[]
+  transforms?: Transform<
     Context,
-    Schemas>[]
-  transforms?: Transform<true,
+    Schemas,
     // Source
     any,
     // Args
@@ -47,9 +49,7 @@ export type TypedComputedQuery<CurrentModel extends Schema,
     // Return
     never extends Return
     ? ExtendedType<Extension, CurrentModel>
-    : Return extends Schema ? SchemaOutputType<Return> | null : PropertyOutputType<NonNullable<Return>>,
-    Context,
-    Schemas>[]
+    : Return extends Schema ? SchemaOutputType<Return> | null : PropertyOutputType<NonNullable<Return>>>[]
 
   resolve: Resolver<
     // Source
@@ -82,17 +82,17 @@ export type TypedComputedField<CurrentModel extends Schema,
   args?: Args
   mode?: PropertyMode | PropertyMode[]
 
-  scopes?: Scope<true,
+  scopes?: Scope<
+    Context,
+    Schemas,
+    SchemaOutputType<CurrentModel>,
+    undefined extends Args ? undefined : SchemaInputType<NonNullable<Args>>>[]
+  transforms?: Transform<
+    Context,
+    Schemas,
     SchemaOutputType<CurrentModel>,
     undefined extends Args ? undefined : SchemaInputType<NonNullable<Args>>,
-    Context,
-    Schemas>[]
-  transforms?: Transform<true,
-    SchemaOutputType<CurrentModel>,
-    undefined extends Args ? undefined : SchemaInputType<NonNullable<Args>>,
-    Return extends Schema ? SchemaOutputType<Return> | null : PropertyOutputType<Return>,
-    Context,
-    Schemas>[]
+    Return extends Schema ? SchemaOutputType<Return> | null : PropertyOutputType<Return>>[]
 
   resolve?: Resolver<SchemaOutputType<CurrentModel> & { _id: string },
     undefined extends Args ? undefined : SchemaInputType<NonNullable<Args>>,
