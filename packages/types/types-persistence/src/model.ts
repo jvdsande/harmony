@@ -19,7 +19,7 @@ export type TypedComputedQuery<CurrentModel extends Schema,
   Schemas extends { [key: string]: Schema },
   Extension extends ResolverEnum,
   Args extends Schema,
-  Return extends SchemaField | undefined,
+  Return extends SchemaField,
   > = (
   { extends: Extension, type?: Return, args?: never } |
   { extends: Extension, type?: never, args?: Args } |
@@ -34,7 +34,7 @@ export type TypedComputedQuery<CurrentModel extends Schema,
     // Source
     any,
     // Args
-    never extends Args
+    undefined extends Args
     ? ExtendedArgs<Extension, CurrentModel>
     : SchemaInputType<NonNullable<Args>>>[]
   transforms?: Transform<
@@ -43,11 +43,11 @@ export type TypedComputedQuery<CurrentModel extends Schema,
     // Source
     any,
     // Args
-    never extends Args
+    undefined extends Args
     ? ExtendedArgs<Extension, CurrentModel>
     : SchemaInputType<NonNullable<Args>>,
     // Return
-    never extends Return
+    undefined extends Return
     ? ExtendedType<Extension, CurrentModel>
     : Return extends Schema ? SchemaOutputType<Return> | null : PropertyOutputType<NonNullable<Return>>>[]
 
@@ -55,11 +55,11 @@ export type TypedComputedQuery<CurrentModel extends Schema,
     // Source
     any,
     // Args
-    never extends Args
+    undefined extends Args
     ? ExtendedArgs<Extension, CurrentModel>
     : SchemaInputType<NonNullable<Args>>,
     // Return
-    never extends Return
+    undefined extends Return
     ? ExtendedType<Extension, CurrentModel>
     : Return extends Schema ? SchemaOutputType<Return> | null : PropertyOutputType<NonNullable<Return>>,
     Context,
