@@ -314,8 +314,8 @@ function makeResolver({
   adapter?: IAdapter,
   model: SanitizedModel,
   type: ResolverEnum,
-  scope?: Scope<false>,
-  transform?: Transform<false>,
+  scope?: Scope<any, any, any, any, false>,
+  transform?: Transform<any, any, any, any, any, false>,
 }) : ScopedInternalResolver {
   if (!adapter) {
     return async () => null
