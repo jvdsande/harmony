@@ -243,8 +243,8 @@ function extractResolvers({ fields }: {
 
             // Run main resolver function
             value = await resolve({
-              ...params, args: args as any, field,
-            })
+              ...params, args, field,
+            } as any)
           } catch (err) {
             // Throwing in a scope stops the subsequent scopes and the resolver from running
             error = err

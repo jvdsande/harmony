@@ -93,7 +93,7 @@ export function field<
   Context extends {[key: string]: any},
 
   // Used for resolvers
-  Models extends {[model: string]: Model},
+  Schemas extends {[model: string]: Schema},
 
   // Args and return
   Return extends SchemaField,
@@ -101,7 +101,7 @@ export function field<
 >(f: TypedComputedField<
   CurrentModel,
   Context,
-  Models,
+  Schemas,
   Args,
   Return
   >) {
@@ -116,7 +116,7 @@ export function query<
   Context extends {[key: string]: any},
 
   // Used for resolvers
-  Models extends {[model: string]: Model},
+  Schemas extends {[model: string]: Schema},
 
   // Extension
   Extension extends ResolverEnum,
@@ -127,7 +127,7 @@ export function query<
   >(f: TypedComputedQuery<
   CurrentModel,
   Context,
-  Models,
+  Schemas,
   Extension,
   Args,
   Return

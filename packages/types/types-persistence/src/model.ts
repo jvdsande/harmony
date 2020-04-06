@@ -104,7 +104,7 @@ export type TypedComputedField<CurrentModel extends Schema,
 
 export type ComputedField<CurrentModel extends Schema = any,
   Context extends { [key: string]: any } = any,
-  Models extends { [key: string]: Schema } = any> = TypedComputedField<CurrentModel, Context, Models, any, any>
+  Schemas extends { [key: string]: Schema } = any> = TypedComputedField<CurrentModel, Context, Schemas, any, any>
 
 
 export type Computed<CurrentModel extends Schema = any,

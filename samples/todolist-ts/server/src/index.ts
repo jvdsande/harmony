@@ -59,12 +59,9 @@ async function run() {
 
         views: [{
           path: '/',
-          dir: path.resolve(__dirname, './views/'),
+          // Note: '../../src/views/' will be the path once the package is built to ../pkg/dist-node/index.js
+          dir: path.resolve(__dirname, '../../src/views/'),
           file: 'index.html',
-        }, {
-          path: '/test',
-          dir: path.resolve(__dirname, './views/'),
-          file: 'test.html',
         }],
 
         webpack: {

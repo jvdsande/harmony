@@ -1,0 +1,23 @@
+{
+  "name": "@harmonyjs/sample-todolist-server",
+  "private": true,
+  "version": "1.0.0",
+  "@pika/pack": {
+    "pipeline": [
+      [
+        "@pika/plugin-ts-standard-pkg"
+      ],
+      [
+        "@harmonyjs/pika-plugin-ts-resolve-imports"
+      ],
+      [
+        "@pika/plugin-build-node"
+      ]
+    ]
+  },
+  "scripts": {
+    "start": "node ./pkg/dist-node/index.js",
+    "build": "pika build",
+    "watch": "nodemon -e ts,js,tsx,jsx,json,yml --watch src --exec \"npm run mixt:build && npm run mixt:start\""
+  }
+}

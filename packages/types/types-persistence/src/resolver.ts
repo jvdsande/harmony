@@ -8,36 +8,36 @@ export type ResolverEnum = 'read'|'readMany'|'count'|'create'|'createMany'|'upda
 export type AliasedResolverEnum = ResolverEnum|'get'|'list'|'edit'|'editMany'
 
 // Helpers
-type FilterArgs<Model extends Schema> = Partial<SchemaInputType<Model> & {
+type FilterArgs<CurrentSchema extends Schema> = Partial<SchemaInputType<CurrentSchema> & {
   _id?: string,
-  _and?: FilterArgs<Model>[]
-  _or?: FilterArgs<Model>[]
-  _nor?: FilterArgs<Model>[]
-  _operators?: SchemaOperatorType<Model>
+  _and?: FilterArgs<CurrentSchema>[]
+  _or?: FilterArgs<CurrentSchema>[]
+  _nor?: FilterArgs<CurrentSchema>[]
+  _operators?: SchemaOperatorType<CurrentSchema>
 }>
 
-type RecordArgs<Model extends Schema> = Partial<SchemaInputType<Model>> & {
+type RecordArgs<CurrentSchema extends Schema> = Partial<SchemaInputType<CurrentSchema>> & {
   _id: string
 }
 
 export type ExtendedArgs<
   Extension extends AliasedResolverEnum,
-  Model extends Schema
+  CurrentSchema extends Schema
   > = (
   ResolverEnum extends Extension ? any :
-  'count' extends Extension ? { filter?: FilterArgs<Model> } :
-  'read' extends Extension ? { filter?: FilterArgs<Model>, skip?: number } :
-  'get' extends Extension ? { filter?: FilterArgs<Model>, skip?: number } :
-  'find' extends Extension ? { filter?: FilterArgs<Model>, skip?: number } :
-  'readMany' extends Extension ? { filter?: FilterArgs<Model>, skip?: number, limit?: number } :
-  'list' extends Extension ? { filter?: FilterArgs<Model>, skip?: number, limit?: number } :
+  'count' extends Extension ? { filter?: FilterArgs<CurrentSchema> } :
+  'read' extends Extension ? { filter?: FilterArgs<CurrentSchema>, skip?: number } :
+  'get' extends Extension ? { filter?: FilterArgs<CurrentSchema>, skip?: number } :
+  'find' extends Extension ? { filter?: FilterArgs<CurrentSchema>, skip?: number } :
+  'readMany' extends Extension ? { filter?: FilterArgs<CurrentSchema>, skip?: number, limit?: number } :
+  'list' extends Extension ? { filter?: FilterArgs<CurrentSchema>, skip?: number, limit?: number } :
 
-  'create' extends Extension ? { record: Partial<RecordArgs<Model>> } :
-  'createMany' extends Extension ? { records: Partial<RecordArgs<Model>[]> } :
-  'update' extends Extension ? { record: RecordArgs<Model> } :
-  'updateMany' extends Extension ? { records: RecordArgs<Model>[] } :
-  'edit' extends Extension ? { record: RecordArgs<Model> } :
-  'editMany' extends Extension ? { records: RecordArgs<Model>[] } :
+  'create' extends Extension ? { record: Partial<RecordArgs<CurrentSchema>> } :
+  'createMany' extends Extension ? { records: Partial<RecordArgs<CurrentSchema>[]> } :
+  'update' extends Extension ? { record: RecordArgs<CurrentSchema> } :
+  'updateMany' extends Extension ? { records: RecordArgs<CurrentSchema>[] } :
+  'edit' extends Extension ? { record: RecordArgs<CurrentSchema> } :
+  'editMany' extends Extension ? { records: RecordArgs<CurrentSchema>[] } :
   'delete' extends Extension ? { _id: string } :
   'deleteMany' extends Extension ? { _ids: string[] } :
   any
@@ -45,24 +45,24 @@ export type ExtendedArgs<
 
 export type ExtendedType<
   Extension extends AliasedResolverEnum,
-  Model extends Schema
+  CurrentSchema extends Schema
   > = (
   ResolverEnum extends Extension ? any :
   'count' extends Extension ? number :
-  'read' extends Extension ? (SchemaOutputType<Model> & { _id: string })|null :
-  'get' extends Extension ? (SchemaOutputType<Model> & { _id: string })|null :
-  'find' extends Extension ? (SchemaOutputType<Model> & { _id: string })|null :
-  'readMany' extends Extension ? (SchemaOutputType<Model> & { _id: string })[] :
-  'list' extends Extension ? (SchemaOutputType<Model> & { _id: string })[] :
+  'read' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })|null :
+  'get' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })|null :
+  'find' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })|null :
+  'readMany' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })[] :
+  'list' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })[] :
 
-  'create' extends Extension ? (SchemaOutputType<Model> & { _id: string })|null :
-  'createMany' extends Extension ? (SchemaOutputType<Model> & { _id: string })[] :
-  'update' extends Extension ? (SchemaOutputType<Model> & { _id: string })|null :
-  'updateMany' extends Extension ? (SchemaOutputType<Model> & { _id: string })[] :
-  'edit' extends Extension ? (SchemaOutputType<Model> & { _id: string })|null :
-  'editMany' extends Extension ? (SchemaOutputType<Model> & { _id: string })[] :
-  'delete' extends Extension ? (SchemaOutputType<Model> & { _id: string })|null :
-  'deleteMany' extends Extension ? (SchemaOutputType<Model> & { _id: string })[] :
+  'create' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })|null :
+  'createMany' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })[] :
+  'update' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })|null :
+  'updateMany' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })[] :
+  'edit' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })|null :
+  'editMany' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })[] :
+  'delete' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })|null :
+  'deleteMany' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })[] :
   any
   )
 
@@ -107,11 +107,11 @@ export type ModelResolver<
   Return extends any = any
 > = ScopedModelResolver<Args, Return> & { unscoped: UnscopedModelResolver<Args, Return> }
 
-export type ModelResolvers<Model extends Schema = Schema> = {
-  [key in AliasedResolverEnum]: ModelResolver<ExtendedArgs<key, Model>, ExtendedType<key, Model>>
+export type ModelResolvers<CurrentSchema extends Schema = Schema> = {
+  [key in AliasedResolverEnum]: ModelResolver<ExtendedArgs<key, CurrentSchema>, ExtendedType<key, CurrentSchema>>
 }
-export type UnscopedModelResolvers<Model extends Schema = Schema> = {
-  [key in AliasedResolverEnum]: UnscopedModelResolver<ExtendedArgs<key, Model>>
+export type UnscopedModelResolvers<CurrentSchema extends Schema = Schema> = {
+  [key in AliasedResolverEnum]: UnscopedModelResolver<ExtendedArgs<key, CurrentSchema>>
 }
 
 
@@ -128,7 +128,7 @@ export type Resolver<
   context: Context
   info: GraphQLResolveInfo
 
-  resolvers: {[model in keyof Schemas]: ModelResolvers<Schemas[model]>}
+  resolvers: {[schema in keyof Schemas]: ModelResolvers<Schemas[schema]>}
   field: string
 }) => Return|Promise<Return>
 
@@ -154,7 +154,7 @@ export type Scope<
 } & (false extends HasResolvers ? {
 
 } : {
-  resolvers: {[model in keyof Schemas]: ModelResolvers<NonNullable<Schemas>[model]>}
+  resolvers: {[schema in keyof Schemas]: ModelResolvers<NonNullable<Schemas>[schema]>}
 })) => (Args|undefined|void)|Promise<(Args|undefined|void)>
 
 export type Scopes = Partial<Record<ResolverEnum, Scope<false>>>
@@ -180,7 +180,7 @@ export type Transform<
 } & (false extends HasResolvers ? {
 
 } : {
-  resolvers: {[model in keyof Schemas]: ModelResolvers<NonNullable<Schemas>[model]>}
+  resolvers: {[schema in keyof Schemas]: ModelResolvers<NonNullable<Schemas>[schema]>}
 })) => (Return|undefined|void)|Promise<(Return|undefined|void)>
 
 export type Transforms = Partial<Record<ResolverEnum, Transform<false>>>

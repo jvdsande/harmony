@@ -6,11 +6,8 @@
   "main": "index.js",
   "scripts": {
     "build": "webpack --mode production --env.production",
-    "dev": "npm run dev-webpack & npm run dev-server",
-    "dev-server": "NODE_ENV=development nodemon server/index.js",
-    "dev-webpack": "webpack-dev-server --inline --hot --watch --mode development",
-    "dll": "webpack --mode production --config webpack.dll.js",
-    "start": "NODE_ENV=production node server/server.js"
+    "dev": "webpack-dev-server --inline --hot --watch --mode development",
+    "dll": "webpack --mode production --config webpack.dll.js"
   },
   "author": "Jeremie VAN DER SANDE <jeremie.vandersande@gmail.com>",
   "license": "ISC",
