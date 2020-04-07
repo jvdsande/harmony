@@ -368,7 +368,7 @@ export function typeIdsAndReferences({ models } : { models: SanitizedModel[] }) 
       typeIdsAndReferencesForSchema(model, (field as IPropertyUndiscriminated).__configuration.args!.of)
     }
   }
-  /* eslint-ensable no-param-reassign */
+  /* eslint-enable no-param-reassign */
 
   function typeIdsAndReferencesForSchema(model: SanitizedModel, schema: {[key: string]: IProperty}) {
     Object.keys(schema).forEach((key: string) => typeIdsAndReferencesForProperty(model, schema[key]))

@@ -376,8 +376,8 @@ export type SchemaOutputType<T extends Schema> = OptionalNullable<{
 export type PropertyOutputType<P extends SchemaField> =
   P extends IPropertyRequired ? Required<P>['valueType'] :
   P extends IProperty ? P['valueType'] :
-  P extends Array<SchemaField> ? PropertyOutputType<P[0]>[] :
-  P extends Schema ? SchemaOutputType<P> : undefined
+  P extends Array<SchemaField> ? PropertyOutputType<P[0]>[] | undefined :
+  P extends Schema ? SchemaOutputType<P> | undefined : undefined
 
 export type SchemaInputType<T extends Schema> = OptionalNullable<{
   [P in (keyof T)]: PropertyInputType<T[P]>

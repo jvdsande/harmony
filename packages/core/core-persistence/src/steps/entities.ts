@@ -62,7 +62,9 @@ export async function initializeAdapters({
           }
 
           return adapter.initialize({
-            models: models.filter((m) => adapterName === (m.adapter || defaultAdapter)),
+            models: models
+              .filter((m) => adapterName === (m.adapter || defaultAdapter))
+              .filter((m) => !m.external),
             events,
             logger: adapterLogger,
           })
