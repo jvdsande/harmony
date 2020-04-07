@@ -350,15 +350,20 @@ export interface IPropertyUndiscriminated extends IPropertyBase {
   deepOf: IProperty
 }
 
-export type IPropertyRequired = (IPropertyStringRequired | IPropertyNumberRequired | IPropertyFloatRequired
-  | IPropertyBooleanRequired | IPropertyIDRequired | IPropertyJSONRequired | IPropertyDateRequired
-  | IPropertyReferenceRequired | IPropertyReversedReferenceRequired | IPropertyArrayRequired
-  | IPropertySchemaRequired | IPropertyRawRequired | IPropertyScalarRequired)
+export type IPropertyRequired = (
+  IPropertyStringRequired<any, any> | IPropertyNumberRequired<any, any> | IPropertyFloatRequired<any, any>
+  | IPropertyBooleanRequired<any, any> | IPropertyIDRequired<any, any> | IPropertyJSONRequired<any, any>
+  | IPropertyDateRequired<any, any>
+  | IPropertyReferenceRequired<any, any, any> | IPropertyReversedReferenceRequired<any, any, any>
+  | IPropertyArrayRequired<any, any, any> | IPropertySchemaRequired<any, any, any>
+  | IPropertyRawRequired<any, any> | IPropertyScalarRequired<any, any>)
 
-export type IProperty = IPropertyRequired | (IPropertyString | IPropertyNumber | IPropertyFloat | IPropertyBoolean
-  | IPropertyID | IPropertyJSON | IPropertyDate
-  | IPropertyReference | IPropertyReversedReference | IPropertyArray | IPropertySchema
-  | IPropertyRaw | IPropertyScalar)
+export type IProperty = IPropertyRequired | (
+  IPropertyString | IPropertyNumber<any, any> | IPropertyFloat<any, any> | IPropertyBoolean<any, any>
+  | IPropertyID<any, any> | IPropertyJSON<any, any> | IPropertyDate<any, any>
+  | IPropertyReference<any, any, any> | IPropertyReversedReference<any, any, any>
+  | IPropertyArray<any, any, any> | IPropertySchema<any, any, any>
+  | IPropertyRaw<any, any> | IPropertyScalar<any, any>)
 
 type NullableFields<T> = { [K in keyof T]: T[K] extends NonNullable<T[K]> ? never : K }[keyof T]
 type NonNullableFields<T> = { [K in keyof T]: T[K] extends NonNullable<T[K]> ? K : never }[keyof T]
