@@ -1,7 +1,6 @@
 // Resolver enums
 import { GraphQLResolveInfo } from 'graphql'
 import {
-  IPropertyNumber,
   Schema, SchemaInputType, SchemaOperatorType, SchemaOutputType,
 } from 'property'
 
@@ -164,9 +163,15 @@ export type Scope<
   resolvers: {[schema in keyof Schemas]: ModelResolvers<NonNullable<Schemas>[schema]>}
 })) => Promise<(Args|undefined|void)>
 
-export type Scopes = Partial<Record<ResolverEnum, Scope<
-  {[key: string]: any}, any, any, {[key: string]: any}, false
->>>
+export type Scopes<
+  Context = {[key: string]: any},
+  Schemas extends { [key: string]: Schema }|undefined = any,
+  CurrentSchema extends Schema = any,
+  > = {
+  [R in ResolverEnum]?: Scope<
+    Context, Schemas, CurrentSchema, ExtendedArgs<R, CurrentSchema>, false
+  >
+}
 
 
 // Transforms
@@ -192,6 +197,12 @@ export type Transform<
   resolvers: {[schema in keyof Schemas]: ModelResolvers<NonNullable<Schemas>[schema]>}
 })) => Promise<(Return|undefined|void)>
 
-export type Transforms = Partial<Record<ResolverEnum, Transform<
-  {[key: string]: any}, any, any, {[key: string]: any}, any, false
->>>
+export type Transforms<
+  Context = {[key: string]: any},
+  Schemas extends { [key: string]: Schema }|undefined = any,
+  CurrentSchema extends Schema = any,
+  > = {
+  [R in ResolverEnum]?: Transform<
+    Context, Schemas, CurrentSchema, ExtendedArgs<R, CurrentSchema>, ExtendedType<R, CurrentSchema>, false
+  >
+}
