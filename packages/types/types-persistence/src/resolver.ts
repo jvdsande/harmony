@@ -1,6 +1,7 @@
 // Resolver enums
 import { GraphQLResolveInfo } from 'graphql'
 import {
+  IPropertyNumber,
   Schema, SchemaInputType, SchemaOperatorType, SchemaOutputType,
 } from 'property'
 
@@ -9,16 +10,22 @@ export type AliasedResolverEnum = ResolverEnum|'get'|'list'|'edit'|'editMany'
 
 // Helpers
 type FilterArgs<CurrentSchema extends Schema> = Partial<SchemaInputType<CurrentSchema> & {
-  _id?: string,
   _and?: FilterArgs<CurrentSchema>[]
   _or?: FilterArgs<CurrentSchema>[]
   _nor?: FilterArgs<CurrentSchema>[]
   _operators?: SchemaOperatorType<CurrentSchema>
-}>
+} & (
+  unknown extends CurrentSchema['_id'] ? { _id?: string } : {}
+)>
 
-type RecordArgs<CurrentSchema extends Schema> = Partial<SchemaInputType<CurrentSchema>> & {
-  _id: string
-}
+type RecordArgs<CurrentSchema extends Schema> = Partial<SchemaInputType<CurrentSchema>> & (
+  unknown extends CurrentSchema['_id'] ? { _id: string } : {}
+)
+
+type OutputType<CurrentSchema extends Schema> = SchemaOutputType<CurrentSchema> & (
+  unknown extends CurrentSchema['_id'] ? { _id: string } : {}
+)
+
 
 export type ExtendedArgs<
   Extension extends AliasedResolverEnum,
@@ -49,20 +56,20 @@ export type ExtendedType<
   > = (
   ResolverEnum extends Extension ? any :
   'count' extends Extension ? number :
-  'read' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })|null :
-  'get' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })|null :
-  'find' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })|null :
-  'readMany' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })[] :
-  'list' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })[] :
+  'read' extends Extension ? OutputType<CurrentSchema>|null :
+  'get' extends Extension ? OutputType<CurrentSchema>|null :
+  'find' extends Extension ? OutputType<CurrentSchema>|null :
+  'readMany' extends Extension ? OutputType<CurrentSchema>[] :
+  'list' extends Extension ? OutputType<CurrentSchema>[] :
 
-  'create' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })|null :
-  'createMany' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })[] :
-  'update' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })|null :
-  'updateMany' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })[] :
-  'edit' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })|null :
-  'editMany' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })[] :
-  'delete' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })|null :
-  'deleteMany' extends Extension ? (SchemaOutputType<CurrentSchema> & { _id: string })[] :
+  'create' extends Extension ? OutputType<CurrentSchema>|null :
+  'createMany' extends Extension ? OutputType<CurrentSchema>[] :
+  'update' extends Extension ? OutputType<CurrentSchema>|null :
+  'updateMany' extends Extension ? OutputType<CurrentSchema>[] :
+  'edit' extends Extension ? OutputType<CurrentSchema>|null :
+  'editMany' extends Extension ? OutputType<CurrentSchema>[] :
+  'delete' extends Extension ? OutputType<CurrentSchema>|null :
+  'deleteMany' extends Extension ? OutputType<CurrentSchema>[] :
   any
   )
 

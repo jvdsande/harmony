@@ -3,7 +3,7 @@ import {
   Resolver,
   ComputedField, ComputedQuery,
   IProperty, PropertyMode,
-  Model, SanitizedModel, Schema,
+  Model, SanitizedModel, Schema, IPropertyUndiscriminated, IPropertyID,
 } from '@harmonyjs/types-persistence'
 
 import { ApolloError } from 'apollo-server-core'
@@ -285,9 +285,9 @@ function extractResolvers({ fields }: {
 
 // eslint-disable-next-line import/prefer-default-export
 export function sanitizeModel({
-  model, strict, name,
+  model, strict, name, defaultAdapter,
 }: {
-  model: Model, strict: boolean, name: string
+  model: Model, strict: boolean, name: string, defaultAdapter: string,
 }): SanitizedModel {
   const {
     adapter, schema, computed, external, scopes, transforms, ...otherProps
@@ -296,7 +296,7 @@ export function sanitizeModel({
   return ({
     ...otherProps,
     name,
-    adapter,
+    adapter: adapter || defaultAdapter,
     schemas: {
       main: extractMainSchema({
         schema, name,
@@ -335,6 +335,53 @@ export function sanitizeModel({
   })
 }
 
+
+export function typeIdsAndReferences({ models } : { models: SanitizedModel[] }) {
+  /* eslint-disable no-param-reassign */
+  function typeIdsAndReferencesForProperty(model: SanitizedModel, field: IProperty) {
+    // If field is an ID, set the isFor
+    if (field.type === 'id' && field.isFor === '') {
+      field.isFor = model.adapter
+    }
+
+    // If field is an Reference, set the isFor
+    if ((field.type === 'reference' || field.type === 'reversed-reference') && field.isFor === '') {
+      const fieldModel = models.find((m) => m.name === field.of)
+
+      field.isFor = (fieldModel || model).adapter
+    }
+
+    // If field is an Array, set isFor for Array.of
+    if (field.type === 'array') {
+      typeIdsAndReferencesForProperty(model, field.of)
+    }
+
+    // If field is a Schema, set isFor for Schema.of
+    if (field.type === 'schema') {
+      // eslint-disable-next-line no-use-before-define
+      typeIdsAndReferencesForSchema(model, field.of)
+    }
+
+    // Anyway, set isFor for args
+    if ((field as IPropertyUndiscriminated).__configuration.args) {
+      // eslint-disable-next-line no-use-before-define
+      typeIdsAndReferencesForSchema(model, (field as IPropertyUndiscriminated).__configuration.args!.of)
+    }
+  }
+  /* eslint-ensable no-param-reassign */
+
+  function typeIdsAndReferencesForSchema(model: SanitizedModel, schema: {[key: string]: IProperty}) {
+    Object.keys(schema).forEach((key: string) => typeIdsAndReferencesForProperty(model, schema[key]))
+  }
+
+  models.forEach((model) => {
+    typeIdsAndReferencesForSchema(model, model.schemas.main.of)
+    typeIdsAndReferencesForSchema(model, model.schemas.computed.of)
+    typeIdsAndReferencesForSchema(model, model.schemas.queries.of)
+    typeIdsAndReferencesForSchema(model, model.schemas.mutations.of)
+  })
+}
+
 export function printSchema({ model }: { model: SanitizedModel }) {
   const outputSchema: Schema = {}
   const inputFilterSchema: Schema = {}
@@ -358,12 +405,20 @@ export function printSchema({ model }: { model: SanitizedModel }) {
   }
 
   // Add _id to filter and create schemas
-  inputFilterSchema._id = Types.ID
-  inputCreateSchema._id = Types.ID
+  inputFilterSchema._id = (inputFilterSchema._id as IPropertyID || Types.ID)
+  inputCreateSchema._id = (inputCreateSchema._id as IPropertyID || Types.ID)
+
+  inputFilterSchema._id.for(model.adapter)
+  inputCreateSchema._id.for(model.adapter)
 
   // Add _id.required to update schema and output schema
-  outputSchema._id = model.external ? Types.ID.required.external : Types.ID.required
-  inputUpdateSchema._id = Types.ID.required
+  outputSchema._id = (outputSchema._id as IPropertyID || Types.ID)
+  outputSchema._id = outputSchema._id.required
+  outputSchema._id = model.external ? outputSchema._id.external : outputSchema._id
+  outputSchema._id.for(model.adapter)
+  inputUpdateSchema._id = (inputUpdateSchema._id as IPropertyID || Types.ID)
+  inputUpdateSchema._id = inputUpdateSchema._id.required
+  inputUpdateSchema._id.for(model.adapter)
 
   // Populate using main schema
   extract(model.schemas.main.of)

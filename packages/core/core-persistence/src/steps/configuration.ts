@@ -9,6 +9,7 @@ export function configurePersistence({
   const configuration = config
   configuration.models = config.models || {}
   configuration.adapters = config.adapters || {}
+  configuration.scalars = config.scalars || {}
   configuration.log = config.log || {}
   configuration.strict = !!config.strict
 

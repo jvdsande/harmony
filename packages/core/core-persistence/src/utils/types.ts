@@ -86,6 +86,9 @@ const Types = {
       of: (type: string) => PropertyFactory({ type: 'raw', name: type, of: type }),
     }
   },
+  Scalar(scalar: string) {
+    return PropertyFactory({ type: 'scalar', name: scalar, of: scalar })
+  },
 }
 
 export default Types

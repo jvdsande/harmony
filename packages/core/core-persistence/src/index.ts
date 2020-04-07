@@ -11,6 +11,7 @@ import {
   defineControllers, defineResolvers, defineModelResolvers, defineSchema,
 } from 'steps/launch'
 import EventsHandler from 'utils/events'
+import { typeIdsAndReferences } from 'utils/model'
 
 // Export utility types and classes
 export { default as Types } from 'utils/types'
@@ -44,22 +45,37 @@ export default function Persistence<
 
     const { logger, configuration: config } = instance
 
+    if (!config.defaultAdapter) {
+      logger.warn(`No default adapter was specified. Will fallback to adapter '${
+        Object.keys(config.adapters || { mock: null })[0] || 'mock'
+      }'`)
+      // eslint-disable-next-line no-param-reassign
+      config.defaultAdapter = Object.keys(config.adapters)[0] || 'mock'
+    }
+
     const {
-      adapters, models, strict,
+      scalars, adapters, models, strict, defaultAdapter,
     } = config
 
     // Import models
-    instance.models = await importModels({ models, logger, strict })
+    instance.models = await importModels({
+      models, logger, strict, defaultAdapter,
+    })
+
+    await typeIdsAndReferences({ models: instance.models })
 
     // Initialize adapters
     await initializeAdapters({
-      config, adapters, logger, models: instance.models, events,
+      config, adapters, logger, models: instance.models, events, scalars,
     })
     local.adapters = adapters
 
     // Finish preparing instance
     instance.context = {}
-    instance.schema = await defineSchema({ models: instance.models })
+    instance.schema = await defineSchema({
+      models: instance.models,
+      scalars: Object.keys(scalars),
+    })
     const internalResolvers = await defineResolvers({
       models: instance.models,
       adapters,
@@ -70,6 +86,7 @@ export default function Persistence<
     })
     instance.controllers = await defineControllers({
       internalResolvers,
+      scalars,
       instance: instance as PersistenceInstance<Models>,
     })
   }

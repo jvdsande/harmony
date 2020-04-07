@@ -1,7 +1,9 @@
-import { FastifyRequest } from 'fastify'
+import { FastifyRequest, RouteOptions } from 'fastify'
+import { Config } from '@harmonyjs/apollo-fastify'
 
 import { ILogger, LoggerConfig } from '@harmonyjs/logger'
 import { Controller } from '@harmonyjs/types-server'
+import { GraphQLScalarType } from 'graphql'
 import { Schema } from 'property'
 
 import { UnscopedModelResolvers } from 'resolver'
@@ -17,6 +19,7 @@ export type PersistenceConfig<
 > = {
   models?: Models
   adapters?: {[name: string]: IAdapter}
+  scalars?: {[name: string]: GraphQLScalarType}
   defaultAdapter?: string
   log?: LoggerConfig
   strict?: boolean
@@ -27,7 +30,8 @@ export type PersistenceInitializedConfig<
   > = {
   models: Models
   adapters: {[name: string]: IAdapter}
-  defaultAdapter?: string
+  scalars: {[name: string]: GraphQLScalarType}
+  defaultAdapter: string
   log: LoggerConfig
   strict: boolean
 }
@@ -52,7 +56,12 @@ export type PersistenceInstance<
 
   schema: string
   controllers: {
-    ControllerGraphQL: Controller<{ path: string, enablePlayground: boolean }>
+    ControllerGraphQL: Controller<{
+      path: string
+      enablePlayground: boolean
+      apolloConfig?: Omit<Config, 'schema'|'playground'|'introspection'|'mocks'|'mockEntireSchema'|'context'>
+      routeConfig?: Omit<RouteOptions, 'auth'>
+    }>
     ControllerEvents: Controller<void>
   }
   resolvers: {

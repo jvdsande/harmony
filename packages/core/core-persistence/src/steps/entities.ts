@@ -4,20 +4,23 @@ import {
   PersistenceInitializedConfig,
   IEvents, IAdapter,
 } from '@harmonyjs/types-persistence'
+import { GraphQLID, GraphQLScalarType } from 'graphql'
 
 import { sanitizeModel } from 'utils/model'
 import { extractModelName } from 'utils/property/utils'
 
 
-type ImportModelsArgs = { models: Record<string, Model>, logger: ILogger, strict: boolean }
+type ImportModelsArgs = { models: Record<string, Model>, logger: ILogger, defaultAdapter: string, strict: boolean }
 export async function importModels({
-  models, logger, strict,
+  models, logger, defaultAdapter, strict,
 } : ImportModelsArgs) {
   const modelNames = Object.keys(models)
   logger.info(`Initializing Persistence instance with ${modelNames.length} models`)
 
   return modelNames
-    .map((name : string) => sanitizeModel({ model: models[name], strict, name: extractModelName(name) }))
+    .map((name : string) => sanitizeModel({
+      model: models[name], strict, name: extractModelName(name), defaultAdapter,
+    }))
     .map((model : SanitizedModel) => {
       logger.info(`Model '${model.name}' imported.`)
       return model
@@ -26,23 +29,16 @@ export async function importModels({
 
 
 type InitializeAdaptersArgs = {
-  config: PersistenceInitializedConfig,
-  adapters: { [key: string]: IAdapter },
-  models: SanitizedModel[],
-  events: IEvents,
-  logger: ILogger,
+  config: PersistenceInitializedConfig
+  adapters: { [key: string]: IAdapter }
+  models: SanitizedModel[]
+  events: IEvents
+  scalars: { [key: string]: GraphQLScalarType }
+  logger: ILogger
 }
 export async function initializeAdapters({
-  config, adapters, models, events, logger,
+  config, adapters, models, events, scalars, logger,
 } : InitializeAdaptersArgs) {
-  if (!config.defaultAdapter) {
-    logger.warn(`No default adapter was specified. Will fallback to adapter '${
-      Object.keys(adapters || { mock: null })[0] || 'mock'
-    }'`)
-    // eslint-disable-next-line no-param-reassign
-    config.defaultAdapter = Object.keys(adapters)[0] || undefined
-  }
-
   const { defaultAdapter } = config
 
   logger.info(`Adapters: [${Object.keys(adapters)}] - default: ${defaultAdapter || 'mock'}`)
@@ -54,6 +50,16 @@ export async function initializeAdapters({
         .map(([adapterName, adapter]) => {
           const adapterLogger = Logger({ name: adapter.name, configuration: config.log })
           adapterLogger.level = logger.level
+
+          if (!scalars[`${extractModelName(adapterName)}ID`]) {
+            // eslint-disable-next-line no-param-reassign
+            scalars[`${extractModelName(adapterName)}ID`] = GraphQLID
+          }
+
+          if (adapter.scalar) {
+            // eslint-disable-next-line no-param-reassign
+            scalars[`${extractModelName(adapterName)}ID`] = adapter.scalar
+          }
 
           return adapter.initialize({
             models: models.filter((m) => adapterName === (m.adapter || defaultAdapter)),

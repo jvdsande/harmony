@@ -6,7 +6,7 @@ import {
   SanitizedModel, ModelResolvers,
 } from '@harmonyjs/types-persistence'
 import { ApolloError, ValidationError } from 'apollo-server-core'
-import { GraphQLResolveInfo } from 'graphql'
+import { GraphQLResolveInfo, GraphQLScalarType } from 'graphql'
 
 import GraphQLLong from 'graphql-type-long'
 import GraphQLJson from 'graphql-type-json'
@@ -119,15 +119,27 @@ function computeFieldResolver({
 
 export function getResolvers({
   internalResolvers,
+  scalars,
   models,
 } : {
   internalResolvers: { [model: string]: InternalResolvers },
+  scalars: { [model: string]: GraphQLScalarType },
   models: SanitizedModel[]
 }) {
   const resolvers: { [key: string]: any } = {}
 
   resolvers.Query = {}
   resolvers.Mutation = {}
+
+  Object.keys(scalars).forEach((s) => {
+    resolvers[s] = new GraphQLScalarType({
+      name: s,
+      description: scalars[s].description,
+      serialize: scalars[s].serialize,
+      parseValue: scalars[s].parseValue,
+      parseLiteral: scalars[s].parseLiteral,
+    })
+  })
 
   Object.keys(internalResolvers)
     .forEach((model) => {

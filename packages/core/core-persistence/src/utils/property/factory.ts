@@ -2,7 +2,7 @@ import {
   IProperty,
   IPropertyArray,
   IPropertyBoolean, IPropertyDate, IPropertyFloat, IPropertyID, IPropertyJSON, IPropertyNumber, IPropertyRaw,
-  IPropertyReference, IPropertyReversedReference, IPropertySchema,
+  IPropertyReference, IPropertyReversedReference, IPropertyScalar, IPropertySchema,
   IPropertyString, IPropertyUndiscriminated, PropertyMode, Schema,
 } from '@harmonyjs/types-persistence'
 
@@ -19,7 +19,7 @@ import {
   PropertyFactoryArray,
   PropertyFactoryBoolean, PropertyFactoryDate,
   PropertyFactoryFloat, PropertyFactoryID, PropertyFactoryJSON, PropertyFactoryNumber, PropertyFactoryRaw,
-  PropertyFactoryReference, PropertyFactoryReversedReference, PropertyFactorySchema,
+  PropertyFactoryReference, PropertyFactoryReversedReference, PropertyFactoryScalar, PropertyFactorySchema,
   PropertyFactoryString, PropertyFactoryUndiscriminated,
 } from 'utils/property/type'
 import { wrap } from 'utils/property/utils'
@@ -28,6 +28,7 @@ import { wrap } from 'utils/property/utils'
 /**
  * Create a Property completely sanitized, with type autodetected from the `type` argument
  */
+function PropertyFactory(args: PropertyFactoryScalar): IPropertyScalar
 function PropertyFactory(args: PropertyFactoryRaw): IPropertyRaw
 function PropertyFactory(args: PropertyFactoryString): IPropertyString
 function PropertyFactory(args: PropertyFactoryNumber): IPropertyNumber
@@ -66,12 +67,15 @@ function PropertyFactory({
   }
 
   const instance : IPropertyUndiscriminated = {
+    __configuration: configuration,
+
     type,
     name,
     mode: wrap(mode),
     parent,
     of: of!,
     on: on!,
+    isFor: '',
 
     // Modifiers
     get indexed() {
@@ -93,6 +97,13 @@ function PropertyFactory({
     },
     withMode(m: PropertyMode|PropertyMode[]) {
       instance.mode = wrap(m)
+      return instance
+    },
+    as<O, I = O>() {
+      return instance as IProperty
+    },
+    for(adapter: string) {
+      instance.isFor = adapter
       return instance
     },
 
@@ -152,6 +163,7 @@ function PropertyFactory({
         configuration,
         name: instance.graphqlName,
         of: instance.of,
+        isFor: instance.isFor,
       })
     },
     get graphqlInputType() {
@@ -160,6 +172,7 @@ function PropertyFactory({
         configuration,
         name: instance.graphqlName,
         of: instance.of,
+        isFor: instance.isFor,
       })
     },
     get graphqlSchema() {

@@ -31,29 +31,32 @@ export function computeGraphQLAnnotations({
 // Extract the GraphQL type of a Property, either output or input type
 const commonTypeTransform = (of: string) => ({
   raw: () => of,
+  scalar: () => of,
   string: () => 'String',
   number: () => 'Number',
   float: () => 'Float',
   boolean: () => 'Boolean',
   json: () => 'JSON',
   date: () => 'Date',
-  id: () => 'ID',
 })
 
 // Get the output type of a Property
 export function computeGraphQLType({
-  type, configuration, of, name,
+  type, configuration, of, name, isFor,
 } : {
   type: PropertyType, configuration: PropertyConfiguration,
   of?: IProperty|{[key: string]: IProperty}|string
   name?: string,
+  isFor?: string,
 }) {
   const graphqlType : string = {
     ...commonTypeTransform(of as string),
+    'id': () => `${extractModelName(isFor as string)}ID`,
     'reference': () => extractModelName(of as string),
     'reversed-reference': () => extractModelName(of as string),
     'schema': () => name!,
     'array': () => `[${(of as IProperty).graphqlType}]`,
+    'untyped': () => 'string',
   }[type]()
 
   return graphqlType + (configuration.required ? '!' : '')
@@ -61,18 +64,21 @@ export function computeGraphQLType({
 
 // Get the input type of a Property
 export function computeGraphQLInputType({
-  type, configuration, of, name,
+  type, configuration, of, name, isFor,
 } : {
   type: PropertyType, configuration: PropertyConfiguration,
   of?: IProperty|{[key: string]: IProperty}|string
   name?: string,
+  isFor?: string,
 }) {
   const graphqlType : string = {
     ...commonTypeTransform(of as string),
-    'reference': () => 'ID',
-    'reversed-reference': () => 'ID',
+    'id': () => `${extractModelName(isFor as string)}ID`,
+    'reference': () => `${extractModelName(isFor as string)}ID`,
+    'reversed-reference': () => `${extractModelName(isFor as string)}ID`,
     'schema': () => `${name!}Input`,
     'array': () => `[${(of as IProperty).graphqlInputType}]`,
+    'untyped': () => 'string',
   }[type]()
 
   return graphqlType + (configuration.required ? '!' : '')

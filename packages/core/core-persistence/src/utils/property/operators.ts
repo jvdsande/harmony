@@ -1,4 +1,6 @@
-import { IProperty, IPropertySchema, PropertyType } from '@harmonyjs/types-persistence'
+import {
+  IProperty, IPropertySchema, IPropertyUndiscriminated, PropertyType,
+} from '@harmonyjs/types-persistence'
 import PropertyFactory from 'utils/property/factory'
 import Types from 'utils/types'
 
@@ -27,9 +29,10 @@ const stringOperators : Operator[] = [
   { name: 'regex', type: 'string' },
 ]
 
-function createOperator({ operator, type } : { operator: Operator, type: PropertyType }) {
+function createOperator({ operator, type, of } : { operator: Operator, type: PropertyType, of?: any }) {
   const ops = PropertyFactory({
     type: operator.type === 'inherit' ? type : operator.type,
+    of,
     name: '',
   })
 
@@ -44,7 +47,13 @@ function createOperatorField({
   const operators : {[key:string]: IProperty} = {}
 
   function makeOperator(operator : Operator) {
-    operators[operator.name] = createOperator({ operator, type: property.type })
+    operators[operator.name] = createOperator({
+      operator,
+      type: property.type,
+      of: (property as IPropertyUndiscriminated).of,
+    });
+
+    (operators[operator.name] as IPropertyUndiscriminated).isFor = (property as IPropertyUndiscriminated).isFor
   }
 
   if (!['array', 'schema'].includes(property.type)) {

@@ -160,7 +160,7 @@ export type SanitizedModel = {
   scopes: Scopes
   transforms: Transforms
 
-  adapter?: string
+  adapter: string
   external: boolean
 
   [key: string]: any

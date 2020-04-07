@@ -1,20 +1,9 @@
 import {
-  IProperty, IPropertySchema,
+  IProperty, IPropertyUndiscriminated,
   PropertyMode, PropertyType,
 } from '@harmonyjs/types-persistence'
 
-export type PropertyConfiguration = {
-  indexed: boolean,
-  unique: boolean,
-  required: boolean,
-  args?: IPropertySchema,
-
-  // federation
-  primary: boolean,
-  external: boolean,
-  provides: string[],
-  requires: string[],
-}
+export type PropertyConfiguration = IPropertyUndiscriminated['__configuration']
 
 export type PropertyFactoryCommonArgs = {
   name: string
@@ -32,6 +21,12 @@ export type PropertyFactoryBoolean = PropertyFactoryPrimitive<'boolean'>
 export type PropertyFactoryID = PropertyFactoryPrimitive<'id'>
 export type PropertyFactoryJSON = PropertyFactoryPrimitive<'json'>
 export type PropertyFactoryDate = PropertyFactoryPrimitive<'date'>
+
+export type PropertyFactoryScalar = PropertyFactoryCommonArgs & ({
+  type: 'scalar'
+  of: string
+  on?: never
+})
 
 export type PropertyFactoryRaw = PropertyFactoryCommonArgs & ({
   type: 'raw'
