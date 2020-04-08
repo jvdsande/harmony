@@ -167,7 +167,7 @@ export type Scope<
 })) => Promise<(Args|undefined|void)>
 
 export type Scopes<
-  Context = {[key: string]: any},
+  Context = any,
   Schemas extends { [key: string]: Schema }|undefined = any,
   CurrentSchema extends Schema = any,
   > = {
@@ -201,7 +201,7 @@ export type Transform<
 })) => Promise<(Return|undefined|void)>
 
 export type Transforms<
-  Context = {[key: string]: any},
+  Context = any,
   Schemas extends { [key: string]: Schema }|undefined = any,
   CurrentSchema extends Schema = any,
   > = {
