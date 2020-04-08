@@ -126,7 +126,7 @@ export type Resolver<
   Source extends any = any,
   Args extends {[key: string]: any}|undefined = {[key: string]: any},
   Return extends any = any,
-  Context extends {[key: string]: any} = {[key: string]: any},
+  Context extends any = any,
   Schemas extends { [key: string]: Schema } = any,
   > = (params: {
   source: Source
@@ -139,7 +139,7 @@ export type Resolver<
 }) => Promise<Return>
 
 export type Resolvers<
-  Context extends {[key: string]: any} = {[key: string]: any},
+  Context extends any = any,
   Schemas extends { [key: string]: Schema } = any,
 > = {
   [field: string]: Resolver<any, any, any, Context, Schemas>
@@ -148,7 +148,7 @@ export type Resolvers<
 
 // Scopes
 export type Scope<
-  Context extends {[key: string]: any} = {[key: string]: any},
+  Context extends any = any,
   Schemas extends { [key: string]: Schema }|undefined = any,
   Source extends any = any,
   Args extends {[key: string]: any}|undefined = {[key: string]: any},
@@ -179,7 +179,7 @@ export type Scopes<
 
 // Transforms
 export type Transform<
-  Context extends {[key: string]: any} = {[key: string]: any},
+  Context extends any = any,
   Schemas extends { [key: string]: Schema }|undefined = any,
   Source extends any = any,
   Args extends {[key: string]: any}|undefined = {[key: string]: any},

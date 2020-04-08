@@ -15,7 +15,7 @@ import {
 } from 'resolver'
 
 export type TypedComputedQuery<
-  Context extends { [key: string]: any },
+  Context extends any,
   Schemas extends { [key: string]: Schema },
   CurrentSchema extends Schema,
   Extension extends ResolverEnum,
@@ -67,14 +67,14 @@ export type TypedComputedQuery<
     Schemas>
 }
 
-export type ComputedQuery<Context extends { [key: string]: any } = any,
+export type ComputedQuery<Context extends any = any,
   Schemas extends { [key: string]: Schema } = any,
   CurrentSchema extends Schema = any,
 > =
   TypedComputedQuery<Context, Schemas, CurrentSchema, ResolverEnum, any, any>
 
 export type TypedComputedField<
-  Context extends { [key: string]: any },
+  Context extends any,
   Schemas extends { [key: string]: Schema },
   CurrentSchema extends Schema,
   Args extends Schema | undefined,
@@ -104,14 +104,14 @@ export type TypedComputedField<
   >
 }
 
-export type ComputedField<Context extends { [key: string]: any } = any,
+export type ComputedField<Context extends any = any,
   Schemas extends { [key: string]: Schema } = any,
   CurrentSchema extends Schema = any,
 > = TypedComputedField<Context, Schemas, CurrentSchema, any, any>
 
 
 export type Computed<
-  Context extends { [key: string]: any } = { [key: string]: any },
+  Context extends any = any,
   Schemas extends { [key: string]: Schema } = any,
   CurrentSchema extends Schema = any,
 > = {
