@@ -1,4 +1,5 @@
 import Mongoose, { Connection } from 'mongoose'
+import Voca from 'voca'
 
 import { ILogger } from '@harmonyjs/logger'
 import {
@@ -48,6 +49,8 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
       // Convert Persistence Models to Mongoose Schemas
       const schemas : Record<string, Mongoose.Schema> = {}
 
+      const extractCollectionName = config.extractCollectionName || Voca.kebabCase
+
       models.forEach((model : SanitizedModel) => {
         const schema = new Mongoose.Schema(toMongooseSchema(model.schemas.main, models))
         local.schemas[model.name] = model.schemas.main
@@ -94,7 +97,7 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
 
       // Convert Mongoose Schemas to Mongoose models
       models.forEach((model) => {
-        instance.models[model.name] = instance.connection.model(model.name, schemas[model.name])
+        instance.models[model.name] = instance.connection.model(extractCollectionName(model.name), schemas[model.name])
       })
 
       const connectToMongo = () => {

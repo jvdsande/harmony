@@ -10,5 +10,7 @@ export type AdapterMongooseConfiguration = {
   connectionRetryTimeout?: number,
 
   // Mongoose configuration to be merged
-  mongooseConfig?: Omit<ConnectionOptions, 'user'|'pass'|'dbName'|'useNewUrlParser'>
+  mongooseConfig?: Omit<ConnectionOptions, 'user'|'pass'|'dbName'|'useNewUrlParser'>,
+
+  extractCollectionName?: (name: string) => string
 }
