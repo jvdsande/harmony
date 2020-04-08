@@ -396,7 +396,7 @@ export type PropertyInputType<P extends SchemaField> =
 
 // TODO: Definitely type SchemaOperatorType
 export type SchemaOperatorType<T extends Schema> = {
-  [P in (keyof T)]: any
+  [P in (keyof T)]?: any
 }
 
 
