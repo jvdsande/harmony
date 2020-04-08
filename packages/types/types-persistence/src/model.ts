@@ -14,9 +14,10 @@ import {
   ExtendedArgs, ExtendedType,
 } from 'resolver'
 
-export type TypedComputedQuery<CurrentModel extends Schema,
+export type TypedComputedQuery<
   Context extends { [key: string]: any },
   Schemas extends { [key: string]: Schema },
+  CurrentSchema extends Schema,
   Extension extends ResolverEnum,
   Args extends Schema,
   Return extends SchemaField,
@@ -35,7 +36,7 @@ export type TypedComputedQuery<CurrentModel extends Schema,
     any,
     // Args
     undefined extends Args
-    ? ExtendedArgs<Extension, CurrentModel>
+    ? ExtendedArgs<Extension, CurrentSchema>
     : SchemaInputType<NonNullable<Args>>>[]
   transforms?: Transform<
     Context,
@@ -44,11 +45,11 @@ export type TypedComputedQuery<CurrentModel extends Schema,
     any,
     // Args
     undefined extends Args
-    ? ExtendedArgs<Extension, CurrentModel>
+    ? ExtendedArgs<Extension, CurrentSchema>
     : SchemaInputType<NonNullable<Args>>,
     // Return
     undefined extends Return
-    ? ExtendedType<Extension, CurrentModel>
+    ? ExtendedType<Extension, CurrentSchema>
     : Return extends Schema ? SchemaOutputType<Return> | null : PropertyOutputType<NonNullable<Return>>>[]
 
   resolve: Resolver<
@@ -56,25 +57,26 @@ export type TypedComputedQuery<CurrentModel extends Schema,
     any,
     // Args
     undefined extends Args
-    ? ExtendedArgs<Extension, CurrentModel>
+    ? ExtendedArgs<Extension, CurrentSchema>
     : SchemaInputType<NonNullable<Args>>,
     // Return
     undefined extends Return
-    ? ExtendedType<Extension, CurrentModel>
+    ? ExtendedType<Extension, CurrentSchema>
     : Return extends Schema ? SchemaOutputType<Return> | null : PropertyOutputType<NonNullable<Return>>,
     Context,
     Schemas>
 }
 
-export type ComputedQuery<CurrentModel extends Schema = any,
-  Context extends { [key: string]: any } = any,
+export type ComputedQuery<Context extends { [key: string]: any } = any,
   Schemas extends { [key: string]: Schema } = any,
-  > =
-  TypedComputedQuery<CurrentModel, Context, Schemas, ResolverEnum, any, any>
+  CurrentSchema extends Schema = any,
+> =
+  TypedComputedQuery<CurrentSchema, Context, Schemas, ResolverEnum, any, any>
 
-export type TypedComputedField<CurrentModel extends Schema,
+export type TypedComputedField<
   Context extends { [key: string]: any },
   Schemas extends { [key: string]: Schema },
+  CurrentSchema extends Schema,
   Args extends Schema | undefined,
   Return extends SchemaField,
   > = {
@@ -85,16 +87,16 @@ export type TypedComputedField<CurrentModel extends Schema,
   scopes?: Scope<
     Context,
     Schemas,
-    SchemaOutputType<CurrentModel>,
+    SchemaOutputType<CurrentSchema>,
     undefined extends Args ? undefined : SchemaInputType<NonNullable<Args>>>[]
   transforms?: Transform<
     Context,
     Schemas,
-    SchemaOutputType<CurrentModel>,
+    SchemaOutputType<CurrentSchema>,
     undefined extends Args ? undefined : SchemaInputType<NonNullable<Args>>,
     Return extends Schema ? SchemaOutputType<Return> | null : PropertyOutputType<Return>>[]
 
-  resolve?: Resolver<SchemaOutputType<CurrentModel> & { _id: string },
+  resolve?: Resolver<SchemaOutputType<CurrentSchema> & { _id: string },
     undefined extends Args ? undefined : SchemaInputType<NonNullable<Args>>,
     Return extends Schema ? SchemaOutputType<Return> | null : PropertyOutputType<Return>,
     Context,
@@ -102,25 +104,28 @@ export type TypedComputedField<CurrentModel extends Schema,
   >
 }
 
-export type ComputedField<CurrentModel extends Schema = any,
-  Context extends { [key: string]: any } = any,
-  Schemas extends { [key: string]: Schema } = any> = TypedComputedField<CurrentModel, Context, Schemas, any, any>
+export type ComputedField<Context extends { [key: string]: any } = any,
+  Schemas extends { [key: string]: Schema } = any,
+  CurrentSchema extends Schema = any,
+> = TypedComputedField<CurrentSchema, Context, Schemas, any, any>
 
 
-export type Computed<CurrentModel extends Schema = any,
+export type Computed<
   Context extends { [key: string]: any } = { [key: string]: any },
-  Schemas extends { [key: string]: Schema } = any> = {
+  Schemas extends { [key: string]: Schema } = any,
+  CurrentSchema extends Schema = any,
+> = {
   fields?: {
-    [field: string]: ComputedField<CurrentModel, Context, Schemas>
+    [field: string]: ComputedField<Context, Schemas, CurrentSchema>
   }
   queries?: {
-    [field: string]: ComputedQuery<CurrentModel, Context, Schemas>
+    [field: string]: ComputedQuery<Context, Schemas, CurrentSchema>
   }
   mutations?: {
-    [field: string]: ComputedQuery<CurrentModel, Context, Schemas>
+    [field: string]: ComputedQuery<Context, Schemas, CurrentSchema>
   }
   custom?: {
-    [type: string]: Resolvers
+    [type: string]: Resolvers<Context, Schemas>
   }
 }
 

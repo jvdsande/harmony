@@ -123,7 +123,7 @@ export type UnscopedModelResolvers<CurrentSchema extends Schema = Schema> = {
 
 // Resolvers
 export type Resolver<
-  Source extends any = {[key: string]: any},
+  Source extends any = any,
   Args extends {[key: string]: any}|undefined = {[key: string]: any},
   Return extends any = any,
   Context extends {[key: string]: any} = {[key: string]: any},
@@ -138,8 +138,11 @@ export type Resolver<
   field: string
 }) => Promise<Return>
 
-export type Resolvers = {
-  [field: string]: Resolver
+export type Resolvers<
+  Context extends {[key: string]: any} = {[key: string]: any},
+  Schemas extends { [key: string]: Schema } = any,
+> = {
+  [field: string]: Resolver<any, any, any, Context, Schemas>
 }
 
 

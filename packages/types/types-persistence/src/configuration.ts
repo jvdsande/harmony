@@ -44,7 +44,7 @@ export type PersistenceContext = {
 }
 
 export type PersistenceInstance<
-  Models extends {[model: string]: Model},
+  Models extends {[model: string]: Model} = any,
   Schemas extends { [key in keyof Models]: Schema } = { [key in keyof Models]: Models[key]['schema'] }
 > = {
   configuration: PersistenceInitializedConfig<Models>

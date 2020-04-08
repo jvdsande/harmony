@@ -103,22 +103,22 @@ export default function Persistence<
 
 
 export function field<
-  // Used for extends fields, to calculate source and args
-  CurrentModel extends Schema,
-
   // Context
   Context extends {[key: string]: any},
 
   // Used for resolvers
   Schemas extends {[model: string]: Schema},
 
+  // Used for extends fields, to calculate source and args
+  CurrentSchema extends Schema,
+
   // Args and return
   Return extends SchemaField,
   Args extends Schema = {},
 >(f: TypedComputedField<
-  CurrentModel,
   Context,
   Schemas,
+  CurrentSchema,
   Args,
   Return
   >) {
@@ -126,14 +126,14 @@ export function field<
 }
 
 export function query<
-  // Used for extends fields, to calculate source and args
-  CurrentModel extends Schema,
-
   // Context
   Context extends {[key: string]: any},
 
   // Used for resolvers
   Schemas extends {[model: string]: Schema},
+
+  // Used for extends fields, to calculate source and args
+  CurrentSchema extends Schema,
 
   // Extension
   Extension extends ResolverEnum,
@@ -142,9 +142,9 @@ export function query<
   Return extends SchemaField,
   Args extends Schema = {},
   >(f: TypedComputedQuery<
-  CurrentModel,
   Context,
   Schemas,
+  CurrentSchema,
   Extension,
   Args,
   Return
