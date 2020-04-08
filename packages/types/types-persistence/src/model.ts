@@ -96,7 +96,9 @@ export type TypedComputedField<
     undefined extends Args ? undefined : SchemaInputType<NonNullable<Args>>,
     Return extends Schema ? SchemaOutputType<Return> | null : PropertyOutputType<Return>>[]
 
-  resolve?: Resolver<SchemaOutputType<CurrentSchema> & { _id: string },
+  resolve?: Resolver<SchemaOutputType<CurrentSchema> & (
+      unknown extends CurrentSchema['_id'] ? { _id: string } : {}
+    ),
     undefined extends Args ? undefined : SchemaInputType<NonNullable<Args>>,
     Return extends Schema ? SchemaOutputType<Return> | null : PropertyOutputType<Return>,
     Context,
