@@ -71,7 +71,7 @@ export type ComputedQuery<Context extends { [key: string]: any } = any,
   Schemas extends { [key: string]: Schema } = any,
   CurrentSchema extends Schema = any,
 > =
-  TypedComputedQuery<CurrentSchema, Context, Schemas, ResolverEnum, any, any>
+  TypedComputedQuery<Context, Schemas, CurrentSchema, ResolverEnum, any, any>
 
 export type TypedComputedField<
   Context extends { [key: string]: any },
@@ -107,7 +107,7 @@ export type TypedComputedField<
 export type ComputedField<Context extends { [key: string]: any } = any,
   Schemas extends { [key: string]: Schema } = any,
   CurrentSchema extends Schema = any,
-> = TypedComputedField<CurrentSchema, Context, Schemas, any, any>
+> = TypedComputedField<Context, Schemas, CurrentSchema, any, any>
 
 
 export type Computed<
