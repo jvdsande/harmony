@@ -27,48 +27,48 @@ export enum PropertyMode {
 }
 
 export interface IPropertyBase {
-  mode: PropertyMode[]
+  readonly mode: PropertyMode[]
 
   name: string
   parent?: IProperty
 
   // Modifiers
-  indexed: this
-  unique: this
-  required: this | IPropertyBase
+  readonly indexed: this
+  readonly unique: this
+  readonly required: this | IPropertyBase
 
   withArgs(args: Schema | IPropertySchema): this
 
   withMode(mode: PropertyMode | PropertyMode[]): this
 
   // Accessors
-  isIndexed: boolean
-  isUnique: boolean
-  isRequired: boolean
+  readonly isIndexed: boolean
+  readonly isUnique: boolean
+  readonly isRequired: boolean
 
   // Federation specific modifiers
-  primary: this
-  external: this
+  readonly primary: this
+  readonly external: this
 
   provides(fields: string): this
 
   requires(fields: string): this
 
   // Federation specific accessors
-  isPrimary: boolean
-  isExternal: boolean
-  doesProvide: string
-  doesRequire: string
+  readonly isPrimary: boolean
+  readonly isExternal: boolean
+  readonly doesProvide: string
+  readonly doesRequire: string
 
   // GraphQL helpers
-  graphqlName: string
-  graphqlAnnotations: string
-  graphqlType: string
-  graphqlInputType: string
-  graphqlSchema: string
-  graphqlInputSchema: string
-  graphqlArgsSchema: string
-  graphqlArgs: string
+  readonly graphqlName: string
+  readonly graphqlAnnotations: string
+  readonly graphqlType: string
+  readonly graphqlInputType: string
+  readonly graphqlSchema: string
+  readonly graphqlInputSchema: string
+  readonly graphqlArgsSchema: string
+  readonly graphqlArgs: string
 
 
   clone(): this

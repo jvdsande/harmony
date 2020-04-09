@@ -146,7 +146,7 @@ function extractComputedSchema({
       }
 
       if (fields[key] && fields[key].mode) {
-        sanitized.of[key].mode = wrap(fields[key].mode)
+        sanitized.of[key].withMode(wrap(fields[key].mode))
       }
 
       if (sanitized.of[key].mode.length < 1) {
@@ -201,7 +201,7 @@ function extractRootSchema({
       property.withArgs(field.args || args || {})
     }
 
-    property.mode = wrap(field.mode)
+    property.withMode(wrap(field.mode))
 
     schema[queryName] = property
   })
