@@ -404,6 +404,11 @@ export function printSchema({ model }: { model: SanitizedModel }) {
       })
   }
 
+  // Populate using main schema
+  extract(model.schemas.main.of)
+  // Populate using compute schema, computed overrides main
+  extract(model.schemas.computed.of)
+
   // Add _id to filter and create schemas
   inputFilterSchema._id = (inputFilterSchema._id as IPropertyID || Types.ID)
   inputCreateSchema._id = (inputCreateSchema._id as IPropertyID || Types.ID)
@@ -419,11 +424,6 @@ export function printSchema({ model }: { model: SanitizedModel }) {
   inputUpdateSchema._id = (inputUpdateSchema._id as IPropertyID || Types.ID)
   inputUpdateSchema._id = inputUpdateSchema._id.required
   inputUpdateSchema._id.for(model.adapter)
-
-  // Populate using main schema
-  extract(model.schemas.main.of)
-  // Populate using compute schema, computed overrides main
-  extract(model.schemas.computed.of)
 
   // Create _operators before adding _and/_or/_nor
   const ops = createOperatorType({ schema: sanitizeSchema({ schema: inputFilterSchema, name: '' }) })
