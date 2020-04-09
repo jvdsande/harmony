@@ -341,14 +341,14 @@ export function typeIdsAndReferences({ models } : { models: SanitizedModel[] }) 
   function typeIdsAndReferencesForProperty(model: SanitizedModel, field: IProperty) {
     // If field is an ID, set the isFor
     if (field.type === 'id' && field.isFor === '') {
-      field.isFor = model.adapter
+      field.for(model.adapter)
     }
 
     // If field is an Reference, set the isFor
     if ((field.type === 'reference' || field.type === 'reversed-reference') && field.isFor === '') {
       const fieldModel = models.find((m) => m.name === field.of)
 
-      field.isFor = (fieldModel || model).adapter
+      field.for((fieldModel || model).adapter)
     }
 
     // If field is an Array, set isFor for Array.of

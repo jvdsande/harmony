@@ -53,7 +53,7 @@ function createOperatorField({
       of: (property as IPropertyUndiscriminated).of,
     });
 
-    (operators[operator.name] as IPropertyUndiscriminated).isFor = (property as IPropertyUndiscriminated).isFor
+    (operators[operator.name] as IPropertyUndiscriminated).for((property as IPropertyUndiscriminated).isFor)
   }
 
   if (!['array', 'schema'].includes(property.type)) {

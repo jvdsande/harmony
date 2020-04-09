@@ -79,18 +79,29 @@ function PropertyFactory({
 
     clone() {
       const clone : IPropertyUndiscriminated = PropertyFactory({
-        type,
-        name,
-        mode: instance.mode,
-        of,
-        on,
+        type: instance.type,
+        name: instance.name,
+        of: instance.of,
+        on: instance.on,
       }) as IPropertyUndiscriminated
 
-      clone.__configuration = {
-        ...configuration,
-        mode: [...configuration.mode],
-        provides: [...configuration.provides],
-        requires: [...configuration.requires],
+      clone.__configuration.indexed = configuration.indexed
+      clone.__configuration.unique = configuration.unique
+      clone.__configuration.required = configuration.required
+      clone.__configuration.isFor = configuration.isFor
+      clone.__configuration.mode = [...configuration.mode]
+      // federation
+      clone.__configuration.primary = configuration.primary
+      clone.__configuration.external = configuration.external
+      clone.__configuration.provides = [...configuration.provides]
+      clone.__configuration.requires = [...configuration.requires]
+
+      if (configuration.args) {
+        clone.__configuration.args = sanitizeSchema({
+          schema: configuration.args,
+          name: 'args',
+        })
+        clone.__configuration.args.parent = clone as IProperty
       }
 
       if (clone.type === 'schema') {
@@ -104,6 +115,7 @@ function PropertyFactory({
       if (clone.type === 'array') {
         const ofProp = (clone.of as IProperty).clone()
         ofProp.parent = clone as IProperty
+        clone.of = ofProp
       }
 
       return clone
