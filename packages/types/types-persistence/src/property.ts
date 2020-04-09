@@ -69,6 +69,9 @@ export interface IPropertyBase {
   graphqlInputSchema: string
   graphqlArgsSchema: string
   graphqlArgs: string
+
+
+  clone(): this
 }
 
 export interface StringSerializable {
@@ -327,16 +330,18 @@ export interface IPropertyScalarRequired<O = any, I = any> extends IPropertyScal
 
 export interface IPropertyUndiscriminated extends IPropertyBase {
   __configuration: {
-    indexed: boolean,
-    unique: boolean,
-    required: boolean,
-    args?: IPropertySchema,
+    indexed: boolean
+    unique: boolean
+    required: boolean
+    args?: IPropertySchema
+    isFor: string
+    mode: PropertyMode[]
 
     // federation
-    primary: boolean,
-    external: boolean,
-    provides: string[],
-    requires: string[],
+    primary: boolean
+    external: boolean
+    provides: string[]
+    requires: string[]
   }
 
   type: PropertyType,

@@ -24,8 +24,8 @@ export function sanitizeSchemaField({ schema, name } : { schema: SchemaField, na
     return sanitizeSchema({ schema: schema as Schema, name })
   }
 
-  // Else we are dealing with a correct IProperty, so we keep it as-is
-  return schema as IProperty
+  // Else we are dealing with a correct IProperty, so we clone it and keep it as is
+  return (schema as IProperty).clone()
 }
 
 // Get a SchemaLikeValue, turn it into a proper Property and wrap it in an Array
@@ -43,7 +43,7 @@ export function sanitizeArray({ name, of } : { name: string, of: SchemaField }) 
 export function sanitizeSchema({ schema, name } : { schema: Schema|IPropertySchema, name: string }) : IPropertySchema {
   // If we are dealing with a proper schema, simply go through the properties to update names and parents
   if (schema.type === 'schema') {
-    const propertySchema = schema as IPropertySchema
+    const propertySchema = (schema as IPropertySchema).clone()
 
     Object.keys(propertySchema.of).forEach((key) => {
       propertySchema.of[key].name = key

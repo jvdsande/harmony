@@ -394,12 +394,12 @@ export function printSchema({ model }: { model: SanitizedModel }) {
       .forEach((key) => {
         const { mode } = schema[key]
         if (mode.includes(PropertyMode.OUTPUT) || mode.length < 1) {
-          outputSchema[key] = schema[key]
+          outputSchema[key] = schema[key].clone()
         }
         if (mode.includes(PropertyMode.INPUT) || mode.length < 1) {
-          inputFilterSchema[key] = schema[key]
-          inputCreateSchema[key] = schema[key]
-          inputUpdateSchema[key] = schema[key]
+          inputFilterSchema[key] = schema[key].clone()
+          inputCreateSchema[key] = schema[key].clone()
+          inputUpdateSchema[key] = schema[key].clone()
         }
       })
   }

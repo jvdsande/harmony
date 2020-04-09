@@ -58,6 +58,8 @@ function PropertyFactory({
     unique: false,
     required: false,
     args: undefined,
+    isFor: '',
+    mode: wrap(mode),
 
     // federation
     primary: false,
@@ -71,11 +73,41 @@ function PropertyFactory({
 
     type,
     name,
-    mode: wrap(mode),
     parent,
     of: of!,
     on: on!,
-    isFor: '',
+
+    clone() {
+      const clone : IPropertyUndiscriminated = PropertyFactory({
+        type,
+        name,
+        mode: instance.mode,
+        of,
+        on,
+      }) as IPropertyUndiscriminated
+
+      clone.__configuration = {
+        ...configuration,
+        mode: [...configuration.mode],
+        provides: [...configuration.provides],
+        requires: [...configuration.requires],
+      }
+
+      if (clone.type === 'schema') {
+        const ofSchema = (clone.of as {[key: string]: IProperty})
+        Object.keys(ofSchema).forEach((field) => {
+          ofSchema[field] = ofSchema[field].clone()
+          ofSchema[field].parent = clone as IProperty
+        })
+      }
+
+      if (clone.type === 'array') {
+        const ofProp = (clone.of as IProperty).clone()
+        ofProp.parent = clone as IProperty
+      }
+
+      return clone
+    },
 
     // Modifiers
     get indexed() {
@@ -96,18 +128,21 @@ function PropertyFactory({
       return instance
     },
     withMode(m: PropertyMode|PropertyMode[]) {
-      instance.mode = wrap(m)
+      configuration.mode = wrap(m)
       return instance
     },
     as<O, I = O>() {
       return instance as IProperty
     },
     for(adapter: string) {
-      instance.isFor = adapter
+      configuration.isFor = adapter
       return instance
     },
 
     // Accessors
+    get mode() {
+      return configuration.mode
+    },
     get isIndexed() {
       return configuration.indexed
     },
@@ -116,6 +151,9 @@ function PropertyFactory({
     },
     get isRequired() {
       return configuration.required
+    },
+    get isFor() {
+      return configuration.isFor
     },
 
     // Federation specific modifiers
