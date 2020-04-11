@@ -65,6 +65,7 @@ module.exports = {
     'import/extensions': ['error', { ts: 'never' }],
     'import/no-extraneous-dependencies': 'off',
     'import/no-unresolved': 'error',
+    'import/prefer-default-export': 'off',
 
     'react/forbid-prop-types': 'off',
     'react/no-multi-comp': 'off',

@@ -40,5 +40,8 @@
   },
   "peerDependencies": {
     "mongoose": "^5.9.0"
+  },
+  "dependencies": {
+    "graphql-objectid-scalar": "^1.0.0"
   }
 }

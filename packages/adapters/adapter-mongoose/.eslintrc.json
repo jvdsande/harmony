@@ -3,7 +3,7 @@
   "settings": {
     "import/resolver": {
       "typescript": {
-        "directory": "packages/plugins/adapter-mongoose"
+        "directory": "packages/adapters/adapter-mongoose"
       }
     }
   }

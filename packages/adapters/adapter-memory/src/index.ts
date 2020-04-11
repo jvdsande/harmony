@@ -1,5 +1,7 @@
 import { Adapter } from '@harmonyjs/types-persistence'
 
+export * from 'types'
+
 /* eslint-disable no-param-reassign */
 const AdapterMemory : Adapter<{ store: Record<string, any>}> = function AdapterMemory({ store = {} }) {
   return ({

@@ -1,4 +1,4 @@
-import { ConnectionOptions } from 'mongoose'
+import { ConnectionOptions, SchemaType } from 'mongoose'
 
 export type AdapterMongooseConfiguration = {
   host: string,
@@ -13,4 +13,5 @@ export type AdapterMongooseConfiguration = {
   mongooseConfig?: Omit<ConnectionOptions, 'user'|'pass'|'dbName'|'useNewUrlParser'>,
 
   extractCollectionName?: (name: string) => string
+  extractMongooseType?: (adapter: string) => typeof SchemaType
 }

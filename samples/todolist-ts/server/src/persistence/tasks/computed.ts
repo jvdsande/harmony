@@ -2,7 +2,7 @@ import { Computed, Types } from '@harmonyjs/persistence'
 
 import schemas from '../schemas'
 
-export default <Computed<typeof schemas.Task>> {
+export default <Computed<any, any, typeof schemas.Task>> {
   fields: {
     done: {
       type: Types.Boolean,

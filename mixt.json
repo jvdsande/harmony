@@ -3,8 +3,9 @@
     "packages/external",
     "packages/utils",
     "packages/types",
-    "packages/plugins",
-    "packages/core"
+    "packages/controllers",
+    "packages/core",
+    "packages/adapters"
   ],
   "buildOrder": [
     "pika-ts-resolve-imports",

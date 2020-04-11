@@ -3,7 +3,7 @@
   "settings": {
     "import/resolver": {
       "typescript": {
-        "directory": "packages/plugins/adapter-memory"
+        "directory": "packages/adapters/adapter-couchbase"
       }
     }
   }

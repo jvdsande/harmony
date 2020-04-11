@@ -12,6 +12,7 @@ import {
 } from 'steps/launch'
 import EventsHandler from 'utils/events'
 import { typeIdsAndReferences } from 'utils/model'
+import Types from 'utils/types'
 
 // Export utility types and classes
 export { default as Types } from 'utils/types'
@@ -150,4 +151,31 @@ export function query<
   Return
   >) {
   return f
+}
+
+
+function shallowMerge(...obj : object[]) {
+  const prototype : any = {}
+  const descriptors : any = {}
+
+  obj.forEach((o) => {
+    const p = Object.getPrototypeOf(o)
+    console.log(p)
+    Object.keys(p).forEach((pk) => {
+      prototype[pk] = p[pk]
+    })
+    const d = Object.getOwnPropertyDescriptors(o)
+    Object.keys(d).forEach((dk) => {
+      descriptors[dk] = d[dk]
+    })
+  })
+
+  return Object.create(
+    prototype,
+    descriptors,
+  )
+}
+
+export function extendTypes<T extends object>(types : T) {
+  return shallowMerge(Types, types) as typeof Types & T
 }

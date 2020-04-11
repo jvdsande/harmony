@@ -1,7 +1,9 @@
-import Mongoose, { Connection } from 'mongoose'
+import Mongoose, { Connection, SchemaType, SchemaTypes } from 'mongoose'
 import Voca from 'voca'
+import { GraphQLObjectId } from 'graphql-objectid-scalar'
 
 import { ILogger } from '@harmonyjs/logger'
+
 import {
   Adapter, IAdapter, IEvents, IPropertySchema, SanitizedModel,
 } from '@harmonyjs/types-persistence'
@@ -11,6 +13,8 @@ import { AdapterMongooseConfiguration } from 'configuration'
 import { toMongoDottedObject } from 'utils/query'
 import { toMongooseSchema } from 'utils/schema'
 import { sanitizeFilter, buildPopulatedQuery } from 'utils/sanitize'
+
+export * from 'types'
 
 Mongoose.Promise = global.Promise
 
@@ -36,6 +40,8 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
     models: {},
     connection: Mongoose.createConnection(),
 
+    scalar: GraphQLObjectId,
+
     async initialize({ models, events, logger } : {
       models: SanitizedModel[],
       events: IEvents,
@@ -49,10 +55,20 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
       // Convert Persistence Models to Mongoose Schemas
       const schemas : Record<string, Mongoose.Schema> = {}
 
+      // Retrieve local adapter name from first model
+      const adapterName = models[0] && models[0].adapter
+
       const extractCollectionName = config.extractCollectionName || Voca.kebabCase
+      const extractAdapterType = config.extractMongooseType || ((adapter: string) : typeof SchemaType => {
+        if (adapter === adapterName) {
+          return SchemaTypes.ObjectId
+        }
+
+        return SchemaTypes.String
+      })
 
       models.forEach((model : SanitizedModel) => {
-        const schema = new Mongoose.Schema(toMongooseSchema(model.schemas.main, models))
+        const schema = new Mongoose.Schema(toMongooseSchema(model.schemas.main, extractAdapterType))
         local.schemas[model.name] = model.schemas.main
         local.externals[model.name] = model.external
 
@@ -255,13 +271,21 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
       const mongooseModel = instance.models[model.name]
       const harmonyModel = local.schemas[model.name]
 
+      const recordDotted = toMongoDottedObject(args.record)
+
+      Object.keys(recordDotted).forEach((field) => {
+        if (recordDotted[field] === null) {
+          delete recordDotted[field]
+        }
+      })
+
       return buildPopulatedQuery({
         harmonyModel,
         harmonyExternals: local.externals,
         external: model.external,
         info,
         query: mongooseModel
-          .create(args.record) as any,
+          .create(recordDotted) as any,
       })
     },
 
@@ -289,6 +313,20 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
       const mongooseModel = instance.models[model.name]
       const harmonyModel = local.schemas[model.name]
 
+      const recordDotted = toMongoDottedObject(args.record)
+      const unset : any = {}
+
+      Object.keys(recordDotted).forEach((field) => {
+        if (recordDotted[field] === null) {
+          delete recordDotted[field]
+          unset[field] = true
+        }
+      })
+
+      if (Object.keys(unset).length) {
+        recordDotted.$unset = unset
+      }
+
       return buildPopulatedQuery({
         harmonyModel,
         harmonyExternals: local.externals,
@@ -297,7 +335,7 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
         query: mongooseModel
           .findOneAndUpdate(
             { _id: args.record._id },
-            toMongoDottedObject(args.record),
+            recordDotted,
             { new: true, upsert: false },
           ),
       })

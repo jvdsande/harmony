@@ -3,7 +3,7 @@ import {
 } from 'mongoose'
 
 import {
-  IProperty, IPropertyArray, IPropertySchema, SanitizedModel,
+  IProperty, IPropertyArray, IPropertySchema,
 } from '@harmonyjs/types-persistence'
 
 const MongooseTypeMap : Record<string, typeof SchemaType> = {
@@ -16,18 +16,21 @@ const MongooseTypeMap : Record<string, typeof SchemaType> = {
   string: SchemaTypes.String,
 }
 
-function toMongooseType(prop : IProperty, models : SanitizedModel[]) : SchemaType | SchemaDefinition {
+function toMongooseType(
+  prop : IProperty,
+  extractAdapterType: (adapter: string) => typeof SchemaType,
+) : SchemaType | SchemaDefinition {
   if (['nested', 'array', 'map'].includes(prop.type)) {
-    return toMongooseSchema(prop, models) // eslint-disable-line
+    return toMongooseSchema(prop, extractAdapterType) // eslint-disable-line
   }
 
   if (prop.type === 'reference') {
     return {
-      type: models.find((m) => m.name === prop.of as string) ? SchemaTypes.ObjectId : SchemaTypes.String,
+      type: extractAdapterType(prop.isFor),
       ref: prop.of as string,
       index: prop.isIndexed,
       unique: prop.isUnique,
-    } as SchemaTypeOpts<typeof SchemaTypes.ObjectId>
+    } as SchemaTypeOpts<typeof SchemaType>
   }
 
   return {
@@ -38,22 +41,25 @@ function toMongooseType(prop : IProperty, models : SanitizedModel[]) : SchemaTyp
 }
 
 // eslint-disable-next-line import/prefer-default-export
-export function toMongooseSchema(schema : IProperty, models : SanitizedModel[]) : SchemaDefinition {
+export function toMongooseSchema(
+  schema : IProperty,
+  extractAdapterType: (adapter: string) => typeof SchemaType,
+) : SchemaDefinition {
   const mongooseSchema : SchemaDefinition = {}
 
   if (['schema', 'array'].includes(schema.type)) {
     Object.entries((schema as IPropertySchema|IPropertyArray).of || {})
       .forEach(([key, prop] : [string, IProperty]) => {
         if (prop.type === 'schema') {
-          mongooseSchema[key] = toMongooseSchema(prop, models)
+          mongooseSchema[key] = toMongooseSchema(prop, extractAdapterType)
         } else if (prop.type === 'array') {
-          mongooseSchema[key] = [toMongooseSchema(prop.of as IProperty, models)]
+          mongooseSchema[key] = [toMongooseSchema(prop.of as IProperty, extractAdapterType)]
         } else {
-          mongooseSchema[key] = toMongooseType(prop, models)
+          mongooseSchema[key] = toMongooseType(prop, extractAdapterType)
         }
       })
   } else {
-    return toMongooseType(schema, models) as SchemaDefinition
+    return toMongooseType(schema, extractAdapterType) as SchemaDefinition
   }
 
   return mongooseSchema

@@ -2,7 +2,7 @@ import { Computed, field, query, Types } from '@harmonyjs/persistence'
 
 import schemas from '../schemas'
 
-export default <Computed<typeof schemas.List, any, typeof schemas>> ({
+export default <Computed<any, typeof schemas, typeof schemas.List>> ({
   fields: {
     numberOfTasks: field({
       type: Types.Number,
