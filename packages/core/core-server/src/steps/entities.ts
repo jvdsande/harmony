@@ -1,6 +1,7 @@
 // Import Fastify
 import Fastify, { FastifyInstance } from 'fastify'
 import FastifySensible from 'fastify-sensible'
+import FastifyCookie from 'fastify-cookie'
 
 // Import SocketIO
 import IO from 'socket.io'
@@ -26,6 +27,7 @@ export function createServer({ logger } : CreateServerArgs) {
   })
 
   instance.register(FastifySensible, { errorHandler: false })
+  instance.register(FastifyCookie)
   instance.setErrorHandler((error, request, reply) => {
     if (reply.res.statusCode === 500 && (error as any).explicitInternalServerError !== true) {
       logger.error('Internal Server Error:', error)

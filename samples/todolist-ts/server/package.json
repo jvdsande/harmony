@@ -19,5 +19,8 @@
     "start": "node ./pkg/dist-node/index.js",
     "build": "pika build",
     "watch": "nodemon -e ts,js,tsx,jsx,json,yml --watch src --exec \"npm run mixt:build && npm run mixt:start\""
+  },
+  "dependencies": {
+    "session-file-store": "^1.4.0"
   }
 }

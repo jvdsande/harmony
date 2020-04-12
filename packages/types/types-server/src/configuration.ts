@@ -11,9 +11,6 @@ export type ServerConfig = {
     port: number,
   },
   controllers: IController[],
-  authentication: {
-    secret: string,
-  },
   socket: {
     path: string,
   },

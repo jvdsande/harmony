@@ -21,6 +21,31 @@ export default <Computed<any, typeof schemas, typeof schemas.List>> ({
     }),
   },
 
+  queries: {
+    getContext: {
+      type: Types.JSON,
+      resolve: async ({ context }) => {
+        console.log(context)
+        return Object.keys(context)
+      }
+    },
+    createAuthentication: {
+      type: Types.String,
+      args: {
+        auth: Types.JSON,
+      },
+      resolve: async ({ args, context }) => {
+        return (context.authentication.create(args.auth))
+      }
+    },
+    getAuthentication: {
+      type: Types.JSON,
+      resolve: async ({ context }) => {
+        return (context.authentication.get())
+      }
+    },
+  },
+
   mutations: {
     listCreate: query({
       extends: 'create',

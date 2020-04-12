@@ -1,6 +1,5 @@
-import { ApolloServer, gql, Config } from '@harmonyjs/apollo-fastify'
+import { ApolloServer, gql, Config , ServerRegistration} from '@harmonyjs/apollo-fastify'
 import { PersistenceContext } from '@harmonyjs/types-persistence'
-import { RouteOptions } from 'fastify'
 
 import { buildFederatedSchema } from '@apollo/federation'
 
@@ -20,9 +19,10 @@ const ControllerApollo : Controller<{
   },
 
   context?: PersistenceContext,
+  authentication?: Controller & { validator: string },
 
   apolloConfig?: Omit<Config, 'schema'|'playground'|'introspection'|'mocks'|'mockEntireSchema'|'context'>
-  routeConfig?: Omit<RouteOptions, 'auth'>
+  routeConfig?: ServerRegistration['routeOptions']
 }> = function ControllerApollo(config) {
   return ({
     name: 'ControllerApollo',
@@ -36,6 +36,7 @@ const ControllerApollo : Controller<{
         mock,
 
         context,
+        authentication,
 
         apolloConfig,
         routeConfig,
@@ -52,16 +53,27 @@ const ControllerApollo : Controller<{
         introspection: !!enablePlayground,
         mocks: mock,
         mockEntireSchema: mock,
-        context: (request) => {
-          const reqContext : Record<string, any> = {
-            authentication: request.authentication
+        context: (args) => {
+          const reqContext : Record<string, any> = {}
+
+          if(authentication) {
+            reqContext.authentication = {
+              get() {
+                // @ts-ignore
+                return server[authentication.validator].get(args.request, args.reply)
+              },
+              create(...payload : any) {
+                // @ts-ignore
+                return server[authentication.validator].create(args.request, args.reply, ...payload)
+              },
+            }
           }
 
           const objContext = context || {}
 
           Object.keys(objContext).forEach(key => {
             if(typeof objContext[key] === 'function') {
-              reqContext[key] = (objContext[key] as Function)(request)
+              reqContext[key] = (objContext[key] as Function)(args)
             } else {
               reqContext[key] = objContext[key]
             }
@@ -71,15 +83,36 @@ const ControllerApollo : Controller<{
         },
       })
 
+      const routeOptions : ServerRegistration['routeOptions'] = { ...(routeConfig || {}) }
+      if(authentication) {
+        // @ts-ignore
+        if (!server[authentication.validator]) {
+          logger.error('The provided authentication controller was not initialized')
+          logger.error(`Make sure the authentication controller ${
+            authentication().name
+          } is present in your controllers array and is before ${this.name}`)
+          throw new Error('Missing controller')
+        }
+
+        const preValidation = []
+        if(routeOptions.preValidation) {
+          if(Array.isArray(routeOptions.preValidation)) {
+            preValidation.push(...routeOptions.preValidation)
+          } else {
+            preValidation.push(routeOptions.preValidation)
+          }
+        }
+
+        // @ts-ignore
+        preValidation.push(server[authentication.validator].try)
+
+        routeOptions.preValidation = preValidation
+      }
+
       await server.register(apolloServer.createHandler({
         path,
         cors: true,
-        routeOptions:
-          {
-            ...(routeConfig || {}),
-            // @ts-ignore
-            preValidation: [server.authenticate.try],
-          },
+        routeOptions,
       }))
 
       await apolloServer.installSubscriptionHandlers(server.server)

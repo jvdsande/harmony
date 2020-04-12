@@ -1,5 +1,7 @@
-import { ApolloGateway, GatewayConfig, RemoteGraphQLDataSource, ServiceEndpointDefinition } from '@apollo/gateway'
-import { ApolloServer, Config } from '@harmonyjs/apollo-fastify'
+import {
+  ApolloGateway, GatewayConfig, RemoteGraphQLDataSource, ServiceEndpointDefinition,
+} from '@apollo/gateway'
+import { ApolloServer, Config, ServerRegistration } from '@harmonyjs/apollo-fastify'
 import { GraphQLRequest } from 'apollo-server-types'
 import { RouteOptions } from 'fastify'
 
@@ -18,8 +20,8 @@ let gatewayReference : ApolloGateway|ApolloGatewayExperimental|null = null
 let firstComposition = true
 
 function didUpdateComposition(callback : () => void, serviceNumber : number) {
-  return function(services : any) {
-    if(services.serviceDefinitions.length === serviceNumber && !firstComposition) {
+  return function (services : any) {
+    if (services.serviceDefinitions.length === serviceNumber && !firstComposition) {
       callback()
     }
     firstComposition = false
@@ -33,13 +35,14 @@ const ControllerApolloGateway : Controller<{
   path: string,
   enablePlayground?: boolean,
   services: ServiceEndpointDefinition[],
+  authentication?: Controller & { validator: string },
 
   gatewayConfig?: Omit<GatewayConfig, 'serviceList'|'buildService'>
   apolloConfig?: Omit<Config, 'gateway'|'playground'|'introspection'|'context'|'subscriptions'>
   routeConfig?: Omit<RouteOptions, 'auth'>
 
   servicePoller?: () => void
-}> = function(config) {
+}> = function (config) {
   return ({
     name: 'ControllerApolloGateway',
     async initialize({ server, logger }) {
@@ -48,6 +51,7 @@ const ControllerApolloGateway : Controller<{
         enablePlayground,
 
         services,
+        authentication,
 
         gatewayConfig,
         apolloConfig,
@@ -63,8 +67,8 @@ const ControllerApolloGateway : Controller<{
           return new RemoteGraphQLDataSource({
             url,
             willSendRequest({ request, context } : { request: GraphQLRequest, context: Record<string, any>}) {
-              if(context.headers) {
-                Object.keys(context.headers).forEach(header => {
+              if (context.headers) {
+                Object.keys(context.headers).forEach((header) => {
                   request.http!.headers.set(header, context.headers[header])
                 })
               }
@@ -73,8 +77,8 @@ const ControllerApolloGateway : Controller<{
         },
       })
 
-      if(config.servicePoller) {
-        if(!gatewayReference) {
+      if (config.servicePoller) {
+        if (!gatewayReference) {
           logger.warn('Service polling enabled')
           logger.warn('This is a development feature only. Do not use in production!')
         }
@@ -96,13 +100,37 @@ const ControllerApolloGateway : Controller<{
         gateway,
         playground: !!enablePlayground,
         introspection: !!enablePlayground,
-        context: (request) => {
-          return ({
-            headers: request.headers,
-          })
-        },
+        context: (request) => ({
+          headers: request.headers,
+        }),
         subscriptions: false,
       })
+
+      const routeOptions : ServerRegistration['routeOptions'] = { ...(routeConfig || {}) }
+      if (authentication) {
+        // @ts-ignore
+        if (!server[authentication.validator]) {
+          logger.error('The provided authentication controller was not initialized')
+          logger.error(`Make sure the authentication controller ${
+            authentication().name
+          } is present in your controllers array and is before ${this.name}`)
+          throw new Error('Missing controller')
+        }
+
+        const preValidation = []
+        if (routeOptions.preValidation) {
+          if (Array.isArray(routeOptions.preValidation)) {
+            preValidation.push(...routeOptions.preValidation)
+          } else {
+            preValidation.push(routeOptions.preValidation)
+          }
+        }
+
+        // @ts-ignore
+        preValidation.push(server[authentication.validator].try)
+
+        routeOptions.preValidation = preValidation
+      }
 
       await server.register(apolloServer.createHandler({
         path,

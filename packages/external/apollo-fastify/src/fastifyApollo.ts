@@ -9,10 +9,10 @@ import { ValueOrPromise } from 'apollo-server-types'
 
 // eslint-disable-next-line import/prefer-default-export
 export async function graphqlFastify(
-  options: (
-    req?: FastifyRequest<IncomingMessage>,
-    res?: FastifyReply<OutgoingMessage>,
-  ) => ValueOrPromise<GraphQLOptions>,
+  options: (arg: {
+    request?: FastifyRequest<IncomingMessage>,
+    reply?: FastifyReply<OutgoingMessage>,
+  }) => ValueOrPromise<GraphQLOptions>,
 ): Promise<RequestHandler<IncomingMessage, OutgoingMessage>> {
   if (!options) {
     throw new Error('Apollo Server requires options.')
@@ -24,7 +24,7 @@ export async function graphqlFastify(
   ) => {
     try {
       const { graphqlResponse, responseInit } = await runHttpQuery(
-        [request, reply],
+        [{ request, reply }],
         {
           method: request.req.method as string,
           options,

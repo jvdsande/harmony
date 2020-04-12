@@ -160,7 +160,6 @@ function shallowMerge(...obj : object[]) {
 
   obj.forEach((o) => {
     const p = Object.getPrototypeOf(o)
-    console.log(p)
     Object.keys(p).forEach((pk) => {
       prototype[pk] = p[pk]
     })

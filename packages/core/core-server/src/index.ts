@@ -2,8 +2,6 @@ import Logger from '@harmonyjs/logger'
 
 import { ServerConfig, ServerInstance, IController } from '@harmonyjs/types-server'
 
-import ControllerAuthentication from 'controllers/authentication'
-
 import {
   configureServer,
 } from 'steps/configuration'
@@ -48,7 +46,6 @@ export default function Server() : ServerInstance {
 
       // Register Authentication Controller
       const controllers : IController[] = [
-        ControllerAuthentication(config.authentication),
         ...(config.controllers || []),
       ]
 

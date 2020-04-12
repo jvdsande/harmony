@@ -6,7 +6,6 @@ export function configureServer({ config } : { config: Partial<ServerConfig> }) 
   configuration.endpoint = config.endpoint || { host: 'localhost', port: 3000 }
   configuration.controllers = config.controllers || []
   configuration.log = config.log || {}
-  configuration.authentication = config.authentication || { secret: 'harmony' }
   configuration.socket = config.socket || { path: '/harmonyjs-socket' }
 
   return configuration as ServerConfig

@@ -7,6 +7,7 @@ import Persistence from '@harmonyjs/persistence'
 
 // Require Controllers fro Server
 import ControllerSPA from '@harmonyjs/controller-spa'
+import ControllerAuthenticationJWT from '@harmonyjs/controller-auth-jwt'
 
 // Require Adapters for Persistence
 import AdapterMongoose from '@harmonyjs/adapter-mongoose'
@@ -43,10 +44,24 @@ async function run() {
     },
 
     controllers: [
+      // Add Authentication
+      ControllerAuthenticationJWT({
+        cookie: {
+          cookieName: "auth",
+          expires: (() => {
+            const date = new Date()
+            date.setFullYear(2030, 1, 1)
+            return date
+          })(),
+          httpOnly: true,
+        },
+      }),
+
       // Exposing the GraphQL schema on /graphql
       ControllerGraphQL({
         path: '/graphql',
         enablePlayground: true,
+        authentication: ControllerAuthenticationJWT,
       }),
 
       // Forwarding the Persistence events on SocketIO

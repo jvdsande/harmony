@@ -82,6 +82,7 @@ export async function defineControllers({
     enablePlayground,
     routeConfig,
     apolloConfig,
+    authentication,
   } : Parameters<PersistenceInstance<any>['controllers']['ControllerGraphQL']>[0]) {
     return ({
       ...(ControllerApollo({
@@ -91,6 +92,7 @@ export async function defineControllers({
         schema: instance.schema,
         resolvers: getResolvers({ internalResolvers, models: instance.models, scalars }),
         mock: !instance.configuration.defaultAdapter,
+        authentication,
         routeConfig,
         apolloConfig,
       })),

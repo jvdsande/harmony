@@ -1,4 +1,4 @@
-import { FastifyRequest, RouteOptions } from 'fastify'
+import { FastifyReply, FastifyRequest, RouteOptions } from 'fastify'
 import { Config } from '@harmonyjs/apollo-fastify'
 
 import { ILogger, LoggerConfig } from '@harmonyjs/logger'
@@ -40,7 +40,7 @@ type PersistenceContextValue =
   string | number | boolean | null | { [key: string]: any } | any[]
 
 export type PersistenceContext = {
-  [key: string]: PersistenceContextValue | ((request: FastifyRequest) => any)
+  [key: string]: PersistenceContextValue | ((args: { request: FastifyRequest, reply: FastifyReply<any> }) => any)
 }
 
 export type PersistenceInstance<
@@ -61,6 +61,7 @@ export type PersistenceInstance<
       enablePlayground: boolean
       apolloConfig?: Omit<Config, 'schema'|'playground'|'introspection'|'mocks'|'mockEntireSchema'|'context'>
       routeConfig?: Omit<RouteOptions, 'auth'>
+      authentication?: { validator: string }
     }>
     ControllerEvents: Controller<void>
   }
