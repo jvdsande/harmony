@@ -59,57 +59,31 @@ const AdapterCouchbase : Adapter<AdapterCouchbaseConfiguration> = function Adapt
       await local.bucket.disconnect()
     },
 
-    // References
-    async resolveRef({
-      source, fieldName,
+    // Batch
+    async resolveBatch({
+      model, fieldName, keys,
     }) {
-      if (!source || !source[fieldName]) {
-        return null
-      }
+      const typeClause = local.builders.buildTypeClause(model)
 
-      return new Promise<Record<string, any> | null>((resolve, reject) => {
-        local.bucket.get(source[fieldName], (error, result) => {
-          if (error) {
-            return reject(error)
+      const keyStrings = `[${keys.map((k) => `"${k}"`)}]`
+
+      return new Promise((resolve, reject) => local.bucket.query(
+        Couchbase.N1qlQuery.fromString(
+          local.builders.buildQueryString(
+            `SELECT ${config.bucket}.*, meta().id`,
+            [
+              typeClause,
+              `((${fieldName} IN ${keyStrings}) OR (ANY field IN ${fieldName} SATISFIES field IN ${keyStrings} END))`,
+            ],
+          ),
+        ), (err, rows: any[]) => {
+          if (err) {
+            return reject(err)
           }
 
-          if (!result.value) {
-            return resolve(null)
-          }
-
-          return resolve({
-            _id: source[fieldName],
-            ...result.value,
-          })
-        })
-      })
-    },
-
-    async resolveRefs({
-      source, fieldName,
-    }) {
-      if (!source || !source[fieldName]) {
-        return []
-      }
-
-      const _ids : string[] = Array.isArray(source[fieldName]) ? source[fieldName] : [source[fieldName]]
-
-      return new Promise((resolve, reject) => {
-        local.bucket.getMulti(_ids, (error, result) => {
-          if (error) {
-            return reject(error)
-          }
-
-          if (!result) {
-            return resolve([])
-          }
-
-          return resolve(result.map((value, index) => ({
-            _id: source[fieldName][index],
-            ...value,
-          })))
-        })
-      })
+          return resolve(rows.map((row) => ({ ...row, _id: row.id })))
+        },
+      ))
     },
 
 

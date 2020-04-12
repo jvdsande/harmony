@@ -11,8 +11,8 @@ import './style.scss'
 
 Query.configure()
 
-const ListAccessor = new Accessor('list')
-const TaskAccessor = new Accessor('task')
+const ListAccessor = new Accessor('List')
+const TaskAccessor = new Accessor('Task')
 
 const listSubscribe = ListAccessor.query
   .list

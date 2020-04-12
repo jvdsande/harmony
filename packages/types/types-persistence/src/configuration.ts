@@ -61,7 +61,7 @@ export type PersistenceInstance<
       enablePlayground: boolean
       apolloConfig?: Omit<Config, 'schema'|'playground'|'introspection'|'mocks'|'mockEntireSchema'|'context'>
       routeConfig?: Omit<RouteOptions, 'auth'>
-      authentication?: { validator: string }
+      authentication?: { validator: string } & Controller<any>
     }>
     ControllerEvents: Controller<void>
   }

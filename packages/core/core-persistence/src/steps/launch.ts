@@ -3,8 +3,9 @@ import ControllerPersistenceEvents from '@harmonyjs/controller-persistence-event
 
 import {
   SanitizedModel, PersistenceInstance, IAdapter, InternalResolvers, AliasedResolverEnum,
-  UnscopedModelResolvers, Model,
+  UnscopedModelResolvers, Model, PersistenceContext,
 } from '@harmonyjs/types-persistence'
+import { FastifyReply, FastifyRequest } from 'fastify'
 import { GraphQLScalarType } from 'graphql'
 
 import { printSchema } from 'utils/model'
@@ -70,12 +71,35 @@ export async function defineModelResolvers<Models extends {[model: string]: Mode
   return modelResolvers
 }
 
+function resolveContext({
+  request,
+  reply,
+  context,
+} : {
+  request: FastifyRequest,
+  reply: FastifyReply<any>,
+  context: PersistenceContext,
+}) {
+  const retContext : any = {}
+
+  Object.keys(context).forEach((key) => {
+    if (typeof context[key] === 'function') {
+      retContext[key] = (context[key] as Function)({ request, reply })
+    } else {
+      retContext[key] = context[key]
+    }
+  })
+
+  return retContext
+}
+
 export async function defineControllers({
-  instance, internalResolvers, scalars,
+  instance, internalResolvers, internalContext, scalars,
 } : {
   instance: PersistenceInstance<any>,
   internalResolvers: Record<string, InternalResolvers>,
-  scalars: Record<string, GraphQLScalarType>
+  internalContext: PersistenceContext,
+  scalars: Record<string, GraphQLScalarType>,
 }) {
   function ControllerGraphQL({
     path,
@@ -88,7 +112,10 @@ export async function defineControllers({
       ...(ControllerApollo({
         path,
         enablePlayground,
-        context: instance.context,
+        context: {
+          internal: ({ request, reply }) => resolveContext({ request, reply, context: internalContext }),
+          external: ({ request, reply }) => resolveContext({ request, reply, context: instance.context }),
+        },
         schema: instance.schema,
         resolvers: getResolvers({ internalResolvers, models: instance.models, scalars }),
         mock: !instance.configuration.defaultAdapter,

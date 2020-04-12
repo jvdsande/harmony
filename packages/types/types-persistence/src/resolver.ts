@@ -81,13 +81,16 @@ export type ScopedInternalResolver = (arg: {
   info: GraphQLResolveInfo
 }) => Promise<{[key: string]: any}|null>
 export type UnscopedInternalResolver = (arg: {
-  args: {[key: string]: any}
+  source?: any
+  args: {[key: string]: any},
+  context?: {[key: string]: any}
 }) => Promise<{[key: string]: any}|null>
 export type InternalResolver = ScopedInternalResolver & { unscoped: UnscopedInternalResolver }
 
 export type ReferenceResolver = (params: {
   source: any
   context?: {[key: string]: any}
+  internal: {[key: string]: any}
   info?: GraphQLResolveInfo
 
   fieldName: string,

@@ -170,44 +170,12 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
       }
     },
 
-    // References
-    async resolveRef({
-      source, model, fieldName, foreignFieldName,
+    // Batch
+    async resolveBatch({
+      model, fieldName, keys,
     }) {
-      if (!source || !fieldName || !foreignFieldName) {
-        return null
-      }
-
-      // Check if the ref as already been resolved beforehand
-      if (!Mongoose.Types.ObjectId.isValid(source[fieldName])) {
-        return source[fieldName]
-      }
-
       const mongooseModel = instance.models[model.name]
-      return mongooseModel.findOne({ [foreignFieldName]: source[fieldName] }).lean()
-    },
-
-    async resolveRefs({
-      source, model, fieldName, foreignFieldName,
-    }) {
-      if (!source || !fieldName || !foreignFieldName) {
-        return []
-      }
-
-      // Check if the ref as already been resolved beforehand
-      // Check if the source field is an array or undefined
-      if (!source[fieldName]) {
-        return source[fieldName]
-      }
-      if (Array.isArray(source[fieldName])) {
-        // Check if the first element is not an objectId
-        if (!source[fieldName].length || !(Mongoose.Types.ObjectId.isValid(source[fieldName][0]))) {
-          return source[fieldName]
-        }
-      }
-
-      const mongooseModel = instance.models[model.name]
-      return mongooseModel.find({ [foreignFieldName]: { $in: source[fieldName] } }).lean()
+      return mongooseModel.find({ [fieldName]: { $in: keys } }).lean()
     },
 
 

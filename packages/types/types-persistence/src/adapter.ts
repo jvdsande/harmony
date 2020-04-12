@@ -66,9 +66,8 @@ export interface IAdapter {
   initialize(args : InitArgs) : Promise<void>
   close() : Promise<void>
 
-  // References
-  resolveRef(args : ResolverArgs & { fieldName: string, foreignFieldName: string }) : Promise<Entity>
-  resolveRefs(args : ResolverArgs & { fieldName: string, foreignFieldName: string }) : Promise<Entity[]>
+  // Batch
+  resolveBatch(args : { model: SanitizedModel, fieldName: string, keys: string[] }) : Promise<Entity[]>
 
   // Queries
   read(args : QueryResolverArgs) : Promise<Entity>

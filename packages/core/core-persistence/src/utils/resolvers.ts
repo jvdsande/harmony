@@ -7,6 +7,7 @@ import {
 } from '@harmonyjs/types-persistence'
 import { ApolloError, ValidationError } from 'apollo-server-core'
 import { GraphQLResolveInfo, GraphQLScalarType } from 'graphql'
+import DataLoader from 'dataloader'
 
 import GraphQLLong from 'graphql-type-long'
 import GraphQLJson from 'graphql-type-json'
@@ -96,10 +97,12 @@ function computeFieldResolver({
             const wrappedResolver = (nArgs : ResolverArgs) => internalResolver[alias]({
               args: nArgs,
               ...cArgs,
+              context: context.external,
             })
             wrappedResolver.unscoped = (nArgs : ResolverArgs) => internalResolver[alias].unscoped({
               args: nArgs,
               ...cArgs,
+              context: context.external,
             })
 
             wrappedResolvers[mod][alias] = wrappedResolver as any
@@ -109,7 +112,7 @@ function computeFieldResolver({
     return resolver({
       source,
       args,
-      context,
+      context: context.external,
       info,
       resolvers: wrappedResolvers,
       field,
@@ -157,7 +160,7 @@ export function getResolvers({
           context: ResolverContext,
           info: ResolverInfo,
         ) => internalResolvers[model][res.type]({
-          source, args, context, info,
+          source, args, context: context.external, info,
         })
       })
       mutationResolvers.forEach((res) => {
@@ -167,7 +170,7 @@ export function getResolvers({
           context: ResolverContext,
           info: ResolverInfo,
         ) => internalResolvers[model][res.type]({
-          source, args, context, info,
+          source, args, context: context.external, info,
         })
       })
     })
@@ -193,7 +196,12 @@ export function getResolvers({
         context: ResolverContext,
         info: ResolverInfo,
       ) => (resolver as ReferenceResolver)({
-        source, context, info, fieldName, foreignFieldName: '_id',
+        source,
+        context: context.external,
+        info,
+        fieldName,
+        foreignFieldName: '_id',
+        internal: context.internal,
       })
     }
     if (field.type === 'reversed-reference') {
@@ -219,7 +227,12 @@ export function getResolvers({
         context: ResolverContext,
         info: ResolverInfo,
       ) => resolver({
-        source, context, info, foreignFieldName: field.on, fieldName: '_id',
+        source,
+        context: context.external,
+        info,
+        foreignFieldName: field.on,
+        fieldName: '_id',
+        internal: context.internal,
       })
     }
     if (field.type === 'schema') {
@@ -398,22 +411,59 @@ function makeResolver({
   }
 }
 
+/* eslint-disable no-param-reassign */
+function initializeLoader({
+  internal,
+  model,
+  adapter,
+  field,
+  type,
+} : {
+  internal: ResolverContext,
+  model: SanitizedModel,
+  adapter: IAdapter,
+  field: string,
+  type: 'single'|'multi',
+}) {
+  internal.loaders = internal.loaders || {}
+  internal.loaders[model.name] = internal.loaders[model.name] || {}
+  internal.loaders[model.name][type] = internal.loaders[model.name][type] || {}
+  internal.loaders[model.name][type][field] = internal.loaders[model.name][type][field]
+    || new DataLoader(async (keys: readonly string[]) => {
+      const docs = await adapter.resolveBatch({
+        model,
+        fieldName: field,
+        keys: keys as string[],
+      })
+
+      if (type === 'single') {
+        return keys.map((k) => docs.find((doc) => doc && String(doc[field]) === String(k)))
+      }
+
+      return keys.map((k) => docs.filter((doc) => doc && String(doc[field]) === String(k)))
+    })
+
+  return internal.loaders[model.name][type][field]
+}
+/* eslint-enable no-param-reassign */
+
 function makeReferenceResolver({
   adapter, model, type,
 } : {
-  adapter?: IAdapter, model: SanitizedModel, type: 'resolveRef'|'resolveRefs', scope?: Function
+  adapter?: IAdapter, model: SanitizedModel, type: 'resolveRef'|'resolveRefs', scope?: Function,
 }) : ReferenceResolver {
   if (!adapter) {
     return async () => null
   }
 
   return async ({
-    source, fieldName, foreignFieldName, context, info,
+    source, fieldName, foreignFieldName, internal, context, info,
   } : {
     fieldName: string,
     foreignFieldName: string,
     source?: ResolverSource,
     context?: ResolverContext,
+    internal: ResolverContext,
     info?: ResolverInfo,
   }) => {
     if (model.external) {
@@ -450,14 +500,55 @@ function makeReferenceResolver({
       return null
     }
 
-    return adapter[type]({
-      fieldName,
-      foreignFieldName,
-      source,
-      context,
-      info: info || {} as ResolverInfo,
-      model,
-    })
+    if (fieldName !== '_id' && type === 'resolveRef') {
+      const loader = initializeLoader({
+        internal,
+        model,
+        adapter,
+        field: '_id',
+        type: 'single',
+      })
+
+      return loader.load(String(source[fieldName]))
+    }
+
+    if (fieldName !== '_id' && type === 'resolveRefs') {
+      const loader = initializeLoader({
+        internal,
+        model,
+        adapter,
+        field: '_id',
+        type: 'single',
+      })
+
+      return loader.loadMany(source[fieldName].map((s: string) => String(s)))
+    }
+
+    if (fieldName === '_id' && type === 'resolveRef') {
+      const loader = initializeLoader({
+        internal,
+        model,
+        adapter,
+        field: foreignFieldName,
+        type: 'single',
+      })
+
+      return loader.load(String(source[fieldName]))
+    }
+
+    if (fieldName === '_id' && type === 'resolveRefs') {
+      const loader = initializeLoader({
+        internal,
+        model,
+        adapter,
+        field: foreignFieldName,
+        type: 'multi',
+      })
+
+      return loader.load(String(source[fieldName]))
+    }
+
+    return null
   }
 }
 

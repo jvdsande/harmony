@@ -15,23 +15,17 @@ const AdapterMemory : Adapter<{ store: Record<string, any>}> = function AdapterM
       // Nothing to close
     },
 
-    // Reference
-    async resolveRef({
-      source, model, fieldName,
+    // Batch
+    async resolveBatch({
+      model, fieldName, keys,
     }) {
-      store[model.name] = store[model.name] || {}
-      return store[model.name][source[fieldName]]
-    },
+      return Object.keys(store[model.name]).filter((id) => {
+        const doc = store[model.name][id]
 
-    async resolveRefs({
-      source, model, fieldName,
-    }) {
-      store[model.name] = store[model.name] || {}
-
-      const _ids: string[] = Array.isArray(source[fieldName]) ? source[fieldName] : [source[fieldName]]
-
-      return Object.keys(store[model.name])
-        .filter((k) => _ids.includes(k))
+        return Array.isArray(doc[fieldName])
+          ? (doc[fieldName].filter((key) => keys.includes(key)).length > 0)
+          : (keys.includes(doc[fieldName]))
+      })
         .map((k) => store[model.name][k])
     },
 

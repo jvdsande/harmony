@@ -56,19 +56,6 @@ const ControllerApollo : Controller<{
         context: (args) => {
           const reqContext : Record<string, any> = {}
 
-          if(authentication) {
-            reqContext.authentication = {
-              get() {
-                // @ts-ignore
-                return server[authentication.validator].get(args.request, args.reply)
-              },
-              create(...payload : any) {
-                // @ts-ignore
-                return server[authentication.validator].create(args.request, args.reply, ...payload)
-              },
-            }
-          }
-
           const objContext = context || {}
 
           Object.keys(objContext).forEach(key => {
@@ -78,6 +65,30 @@ const ControllerApollo : Controller<{
               reqContext[key] = objContext[key]
             }
           })
+
+
+
+          if(authentication) {
+            const authenticationContext = {
+              get() {
+                // @ts-ignore
+                return server[authentication.validator].get(args.request, args.reply)
+              },
+              create(...payload : any) {
+                // @ts-ignore
+                return server[authentication.validator].create(args.request, args.reply, ...payload)
+              },
+            }
+
+            // Check if we are dealing with an internal/external context, used by Persistence
+            if(Object.keys(objContext).length === 2 && objContext.internal && objContext.external) {
+              // If so, inject authentication to external
+              reqContext.external.authentication = authenticationContext
+            } else {
+              // Else, inject authentication to the root
+              reqContext.authentication = authenticationContext
+            }
+          }
 
           return reqContext
         },
