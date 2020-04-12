@@ -1,6 +1,6 @@
 {
   "name": "@harmonyjs/adapter-mongoose",
-  "version": "1.0.0-rc2.13",
+  "version": "1.0.0-rc2.14",
   "publishConfig": {
     "access": "public"
   },

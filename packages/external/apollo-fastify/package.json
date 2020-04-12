@@ -1,6 +1,6 @@
 {
   "name": "@harmonyjs/apollo-fastify",
-  "version": "1.0.0-rc2.3",
+  "version": "1.0.0-rc2.4",
   "publishConfig": {
     "access": "public"
   },
