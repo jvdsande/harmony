@@ -73,10 +73,8 @@ const ControllerAuthenticationJWT : Controller<AuthenticationJWTConfig> & {
           // Ignore, just decoding
         }
       },
-      get: async (request: FastifyRequest) => {
-        return request.user
-      },
-      create: async (request: FastifyRequest, reply: FastifyReply<any>, payload : any, opts : any) => {
+      get: (request: FastifyRequest) => request.user,
+      create: (request: FastifyRequest, reply: FastifyReply<any>, payload : any, opts : any) => {
         const token = server.jwt.sign(payload, opts)
         if (configuration.cookie && configuration.cookie.cookieName) {
           reply.setCookie(configuration.cookie.cookieName, token, configuration.cookie)

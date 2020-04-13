@@ -55,8 +55,8 @@ const ControllerAuthenticationSession : Controller<AuthenticationSessionConfig> 
       try: async () => {
         // Do nothing
       },
-      get: async (request : FastifyRequest) => request.session && request.session.payload,
-      create: async (request : FastifyRequest, reply: FastifyReply<any>, payload : any) => {
+      get: (request : FastifyRequest) => request.session && request.session.payload,
+      create: (request : FastifyRequest, reply: FastifyReply<any>, payload : any) => {
         request.session.payload = payload
       },
     })
