@@ -80,14 +80,11 @@ const AdapterMemory : Adapter<{ store: Record<string, any>}> = function AdapterM
     },
 
     async createMany({
-      source, args, context, info, model,
+      args, model,
     }) {
       store[model.name] = store[model.name] || {}
       const records = Array.isArray(args.records) ? args.records : [args.records]
       const created: Array<any> = await Promise.all(records.map((record) => this.create({
-        source,
-        context,
-        info,
         model,
         args: {
           record,
@@ -110,14 +107,11 @@ const AdapterMemory : Adapter<{ store: Record<string, any>}> = function AdapterM
     },
 
     async updateMany({
-      source, args, context, info, model,
+      args, model,
     }) {
       store[model.name] = store[model.name] || {}
       const records = Array.isArray(args.records) ? args.records : [args.records]
       const updated: Array<any> = await Promise.all(records.map((record) => this.update({
-        source,
-        context,
-        info,
         model,
         args: {
           record,
@@ -137,16 +131,13 @@ const AdapterMemory : Adapter<{ store: Record<string, any>}> = function AdapterM
     },
 
     async deleteMany({
-      source, args, context, info, model,
+      args, model,
     }) {
       store[model.name] = store[model.name] || {}
 
       const _ids = Array.isArray(args._ids) ? args._ids : [args._ids]
 
       const deleted: Array<any> = await Promise.all(_ids.map((_id) => this.delete({
-        source,
-        context,
-        info,
         model,
         args: {
           _id,

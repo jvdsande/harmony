@@ -249,14 +249,11 @@ const AdapterCouchbase : Adapter<AdapterCouchbaseConfiguration> = function Adapt
     },
 
     async createMany({
-      source, args, context, info, model,
+      args, model,
     }) {
       const records = Array.isArray(args.records) ? args.records : [args.records]
 
       const created : Array<any> = await Promise.all(records.map((record : any) => instance.create({
-        source,
-        context,
-        info,
         model,
         args: {
           record,
@@ -309,14 +306,11 @@ const AdapterCouchbase : Adapter<AdapterCouchbaseConfiguration> = function Adapt
     },
 
     async updateMany({
-      source, args, context, info, model,
+      args, model,
     }) {
       const records = Array.isArray(args.records) ? args.records : [args.records]
 
       const updated : Array<any> = await Promise.all(records.map((record : any) => instance.update({
-        source,
-        context,
-        info,
         model,
         args: {
           record,
@@ -354,14 +348,11 @@ const AdapterCouchbase : Adapter<AdapterCouchbaseConfiguration> = function Adapt
     },
 
     async deleteMany({
-      source, args, context, info, model,
+      args, model,
     }) {
       const _ids = Array.isArray(args._ids) ? args._ids : [args._ids]
 
       const deleted : Array<any> = await Promise.all(_ids.map((_id) => instance.delete({
-        source,
-        context,
-        info,
         model,
         args: {
           _id,

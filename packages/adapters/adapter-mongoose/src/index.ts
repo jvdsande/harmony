@@ -35,7 +35,7 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
     externals: {},
   } as LocalVariables
 
-  const instance : IAdapter & ExposedVariables = ({
+  const instance : IAdapter<Mongoose.Types.ObjectId> & ExposedVariables = ({
     name: 'AdapterMongoose',
     models: {},
     connection: Mongoose.createConnection(),
@@ -181,19 +181,14 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
 
     // Queries
     async read({
-      args, info, model,
+      args, model,
     }) {
       const mongooseModel = instance.models[model.name]
-      const harmonyModel = local.schemas[model.name]
 
       const filter = Object.keys(args.filter || {}).length ? sanitizeFilter(args.filter) : undefined
 
       // TODO add sort support
       return buildPopulatedQuery({
-        harmonyModel,
-        harmonyExternals: local.externals,
-        external: model.external,
-        info,
         query: mongooseModel
           .findOne(filter || {})
           .skip(args.skip || 0),
@@ -201,19 +196,14 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
     },
 
     async readMany({
-      args, info, model,
+      args, model,
     }) {
       const mongooseModel = instance.models[model.name]
-      const harmonyModel = local.schemas[model.name]
 
       const filter = Object.keys(args.filter || {}).length ? sanitizeFilter(args.filter) : undefined
 
       // TODO add sort support
       return buildPopulatedQuery({
-        harmonyModel,
-        harmonyExternals: local.externals,
-        external: model.external,
-        info,
         query: mongooseModel
           .find(filter || {})
           .limit(args.limit || 0)
@@ -234,10 +224,9 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
 
     // Mutations
     async create({
-      args, info, model,
+      args, model,
     }) {
       const mongooseModel = instance.models[model.name]
-      const harmonyModel = local.schemas[model.name]
 
       const recordDotted = toMongoDottedObject(args.record)
 
@@ -248,24 +237,17 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
       })
 
       return buildPopulatedQuery({
-        harmonyModel,
-        harmonyExternals: local.externals,
-        external: model.external,
-        info,
         query: mongooseModel
           .create(recordDotted) as any,
       })
     },
 
     async createMany({
-      source, args, context, info, model,
+      args, model,
     }) {
       const records = Array.isArray(args.records) ? args.records : [args.records]
 
       const created : Array<any> = await Promise.all(records.map((record) => instance.create({
-        source,
-        context,
-        info,
         model,
         args: {
           record,
@@ -276,10 +258,9 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
     },
 
     async update({
-      args, info, model,
+      args, model,
     }) {
       const mongooseModel = instance.models[model.name]
-      const harmonyModel = local.schemas[model.name]
 
       const recordDotted = toMongoDottedObject(args.record)
       const unset : any = {}
@@ -296,10 +277,6 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
       }
 
       return buildPopulatedQuery({
-        harmonyModel,
-        harmonyExternals: local.externals,
-        external: model.external,
-        info,
         query: mongooseModel
           .findOneAndUpdate(
             { _id: args.record._id },
@@ -310,14 +287,11 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
     },
 
     async updateMany({
-      source, args, context, info, model,
+      args, model,
     }) {
       const records = Array.isArray(args.records) ? args.records : [args.records]
 
       const updated : Array<any> = await Promise.all(records.map((record) => instance.update({
-        source,
-        context,
-        info,
         model,
         args: {
           record,
@@ -328,16 +302,11 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
     },
 
     async delete({
-      args, info, model,
+      args, model,
     }) {
       const mongooseModel = instance.models[model.name]
-      const harmonyModel = local.schemas[model.name]
 
       return buildPopulatedQuery({
-        harmonyModel,
-        harmonyExternals: local.externals,
-        external: model.external,
-        info,
         query: mongooseModel
           .findOneAndDelete(
             { _id: args._id },
@@ -346,14 +315,11 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
     },
 
     async deleteMany({
-      source, args, context, info, model,
+      args, model,
     }) {
       const _ids = Array.isArray(args._ids) ? args._ids : [args._ids]
 
       const deleted : Array<any> = await Promise.all(_ids.map((_id) => instance.delete({
-        source,
-        context,
-        info,
         model,
         args: {
           _id,

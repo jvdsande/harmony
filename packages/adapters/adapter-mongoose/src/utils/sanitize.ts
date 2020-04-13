@@ -147,32 +147,9 @@ function extractPopulatePaths({ model, info } : { model: IPropertySchema, info: 
 }
 
 export function buildPopulatedQuery({
-  harmonyModel,
-  harmonyExternals,
-  external,
-  info,
   query,
 } : {
-  harmonyModel: IPropertySchema,
-  harmonyExternals: Record<string, boolean>,
-  external: boolean,
-  info?: GraphQLResolveInfo,
   query: Query<any>
 }) {
-  if (external) {
-    return query.lean ? query.lean() : query
-  }
-
   return query.lean ? query.lean() : query
-
-  /*
-  const populatePaths = extractPopulatePaths({ model: harmonyModel, info })
-    .filter((field) => !harmonyExternals[field.of])
-
-  return populatePaths
-    .reduce((q, field) => q.populate({
-      path: field.path,
-      options: { lean: true },
-    }), query.lean ? query.lean() : query)
-   */
 }

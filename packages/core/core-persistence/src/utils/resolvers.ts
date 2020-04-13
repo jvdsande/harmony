@@ -372,10 +372,7 @@ function makeResolver({
       }))) || args)
 
       value = await adapter[type]({
-        source,
         args: scopedArgs as any,
-        context,
-        info: info || {} as ResolverInfo,
         model,
       })
     } catch (err) {
@@ -457,14 +454,12 @@ function makeReferenceResolver({
   }
 
   return async ({
-    source, fieldName, foreignFieldName, internal, context, info,
+    source, fieldName, foreignFieldName, internal,
   } : {
     fieldName: string,
     foreignFieldName: string,
     source?: ResolverSource,
-    context?: ResolverContext,
     internal: ResolverContext,
-    info?: ResolverInfo,
   }) => {
     if (model.external) {
       if (foreignFieldName !== '_id') {

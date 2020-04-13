@@ -1,65 +1,54 @@
 import { ILogger } from '@harmonyjs/logger'
-import { GraphQLResolveInfo, GraphQLScalarType } from 'graphql'
+import { GraphQLScalarType } from 'graphql'
 
 import { SanitizedModel } from 'model'
+import { StringSerializable } from 'property'
 import { IEvents } from './events'
 
 
 type InitArgs = { models: SanitizedModel[], events: IEvents, logger: ILogger }
-type ResolverArgs = {
-  source?: any,
-  context?: {[key: string]: any},
-  info?: GraphQLResolveInfo,
-  model: SanitizedModel,
-}
 type Entity = {[key: string]: any} | null
 
-type QueryResolverArgs = ResolverArgs & {
-  args: {
-    filter?: {[key: string]: any}
-    limit?: number,
-    skip?: number,
-    sort?: any,
-  }
+
+type CountResolverArgs = {
+  filter?: {[key: string]: any}
+}
+type ReadResolverArgs = CountResolverArgs & {
+  skip?: number
+  sort?: any
+}
+type ReadManyResolverArgs = ReadResolverArgs & {
+  limit?: number
 }
 
-type CreateResolverArgs = ResolverArgs & {
-  args: {
-    record: {[key: string]: any}
-  }
+type RecordArg = {[key: string]: any}
+type RecordArgWithId<T> = RecordArg & { _id: T }
+
+type CreateResolverArgs = {
+  record: RecordArg
 }
 
-type CreateManyResolverArgs = ResolverArgs & {
-  args: {
-    records: {[key: string]: any}[] | {[key: string]: any}
-  }
+type CreateManyResolverArgs = {
+  records: RecordArg[]
 }
 
-type UpdateResolverArgs = ResolverArgs & {
-  args: {
-    record: {[key: string]: any} & { _id: string }
-  }
+type UpdateResolverArgs<T> = {
+  record: RecordArgWithId<T>
 }
 
-type UpdateManyResolverArgs = ResolverArgs & {
-  args: {
-    records: ({[key: string]: any} & { _id: string })[] | ({[key: string]: any} & { _id: string })
-  }
+type UpdateManyResolverArgs<T> = {
+  records: RecordArgWithId<T>[]
 }
 
-type DeleteResolverArgs = ResolverArgs & {
-  args: {
-    _id: string,
-  }
+type DeleteResolverArgs<T> = {
+  _id: T
 }
 
-type DeleteManyResolverArgs = ResolverArgs & {
-  args: {
-    _ids: string | string[],
-  }
+type DeleteManyResolverArgs<T> = {
+  _ids: T[]
 }
 
-export interface IAdapter {
+export interface IAdapter<T = string> {
   name: string
   scalar?: GraphQLScalarType
 
@@ -70,17 +59,17 @@ export interface IAdapter {
   resolveBatch(args : { model: SanitizedModel, fieldName: string, keys: string[] }) : Promise<Entity[]>
 
   // Queries
-  read(args : QueryResolverArgs) : Promise<Entity>
-  readMany(args : QueryResolverArgs) : Promise<Entity[]>
-  count(args : QueryResolverArgs) : Promise<number>
+  read(args : { model: SanitizedModel, args: ReadResolverArgs }) : Promise<Entity>
+  readMany(args : { model: SanitizedModel, args: ReadManyResolverArgs }) : Promise<Entity[]>
+  count(args : { model: SanitizedModel, args: CountResolverArgs }) : Promise<number>
 
   // Mutations
-  create(args : CreateResolverArgs) : Promise<Entity>
-  createMany(args : CreateManyResolverArgs) : Promise<Entity[]>
-  update(args : UpdateResolverArgs) : Promise<Entity>
-  updateMany(args : UpdateManyResolverArgs) : Promise<Entity[]>
-  delete(args : DeleteResolverArgs) : Promise<Entity>
-  deleteMany(args : DeleteManyResolverArgs) : Promise<Entity[]>
+  create(args : { model: SanitizedModel, args: CreateResolverArgs }) : Promise<Entity>
+  createMany(args : { model: SanitizedModel, args: CreateManyResolverArgs }) : Promise<Entity[]>
+  update(args : { model: SanitizedModel, args: UpdateResolverArgs<T> }) : Promise<Entity>
+  updateMany(args : { model: SanitizedModel, args: UpdateManyResolverArgs<T> }) : Promise<Entity[]>
+  delete(args : { model: SanitizedModel, args: DeleteResolverArgs<T> }) : Promise<Entity>
+  deleteMany(args : { model: SanitizedModel, args: DeleteManyResolverArgs<T> }) : Promise<Entity[]>
 }
 
-export type Adapter<T = void, U = {}> = ((args: T) => IAdapter & U)
+export type Adapter<T = void, U = {}> = ((args: T) => IAdapter<any> & U)
