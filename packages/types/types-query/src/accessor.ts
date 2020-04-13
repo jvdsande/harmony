@@ -5,7 +5,7 @@ export interface IAccessorBuilderBase<T> {
 
   then<R>(callback: (value: T) => R): Promise<R>
 
-  catch<R>(callback: (error: Error) => R): Promise<R>
+  catch(callback: (error: Error) => any): Promise<any>
 
   finally(callback: () => void): any
 }
