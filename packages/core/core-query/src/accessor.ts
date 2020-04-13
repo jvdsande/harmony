@@ -284,7 +284,7 @@ function AccessorMutationBuilder<T>(
   return instance
 }
 
-export function Accessor<T>(model: string, client?: IClient) : IAccessor<T> {
+export function Accessor<T = any>(model: string, client?: IClient) : IAccessor<T> {
   const name = extractModelName(model)
 
   const instance : IAccessor<T> = {

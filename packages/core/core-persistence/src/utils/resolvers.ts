@@ -491,7 +491,7 @@ function makeReferenceResolver({
       }[type]()
     }
 
-    if (!adapter) {
+    if (!adapter || !source[fieldName]) {
       return null
     }
 
@@ -516,7 +516,7 @@ function makeReferenceResolver({
         type: 'single',
       })
 
-      return loader.loadMany(source[fieldName].map((s: string) => String(s)))
+      return loader.loadMany(source[fieldName].filer((s) => !!s).map((s: string) => String(s)))
     }
 
     if (fieldName === '_id' && type === 'resolveRef') {

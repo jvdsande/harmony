@@ -3,11 +3,11 @@ import { QuerySelect } from 'query'
 export interface IAccessorBuilderBase<T> {
   select(selection: QuerySelect): this
 
-  then(callback: (value: T) => Promise<any>): Promise<any>
+  then<R>(callback: (value: T) => R): Promise<R>
 
-  catch(callback: (error: Error) => Promise<any>): Promise<any>
+  catch<R>(callback: (error: Error) => R): Promise<R>
 
-  finally(callback: () => void): Promise<any>
+  finally(callback: () => void): any
 }
 
 export interface IAccessorSubscribableBuilderBase<T> extends IAccessorBuilderBase<T> {
