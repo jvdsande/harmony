@@ -1,6 +1,6 @@
 {
   "name": "@harmonyjs/adapter-memory",
-  "version": "1.0.0-rc2.5",
+  "version": "1.0.0-rc2.6",
   "publishConfig": {
     "access": "public"
   },
