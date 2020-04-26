@@ -2,7 +2,7 @@ import createError from 'http-errors'
 
 type Errors =
   'BadRequest' |
-'Unauthorized' |
+  'Unauthorized' |
   'PaymentRequired' |
   'Forbidden' |
   'NotFound' |

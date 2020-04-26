@@ -1,10 +1,7 @@
 ---
-name: "@harmonyjs/query"
-route: /api/query
-menu: API
+title: HarmonyJS Query
+sidebar_label: "@harmonyjs/query"
 ---
-
-# HarmonyJS Query
 
 `@harmonyjs/query` is a helper for building frontend backed by an HarmonyJS server. It handles creating and running
 GraphQL queries through simple-to-use builders, as well as subscribing to Socket.IO events for reactivity.
@@ -117,9 +114,9 @@ interface IClient {
 }
 ```
 > Jump to:
-[ClientConfiguration](#clientconfiguration),
-[QueryDefinition](#querydefinition),
-[IQueryBuilder](#iquerybuilder)
+[`ClientConfiguration`](#clientconfiguration),
+[`QueryDefinition`](#querydefinition),
+[`IQueryBuilder`](#iquerybuilder)
 
 #### `IClient::configure`
 
@@ -217,9 +214,9 @@ interface IQueryBuilder {
 }
 ```
 > Jump to:
-[QueryArgs](#querydefinition),
-[QuerySelect](#querydefinition),
-[QueryDefinition](#querydefinition)
+[`QueryArgs`](#querydefinition),
+[`QuerySelect`](#querydefinition),
+[`QueryDefinition`](#querydefinition)
 
 ### `IAccessor`
 ```ts
@@ -229,8 +226,8 @@ interface IAccessor {
 }
 ```
 > Jump to:
-[ModelQueryBuilders](#modelquerybuilders),
-[ModelMutationBuilders](#modelmutationbuilders)
+[`ModelQueryBuilders`](#modelquerybuilders),
+[`ModelMutationBuilders`](#modelmutationbuilders)
 
 ### `ModelQueryBuilders`
 ```ts
@@ -246,9 +243,9 @@ type ModelQueryBuilders = {
 }
 ```
 > Jump to:
-[IAccessorReadBuilder](#iaccessorreadbuilder),
-[IAccessorManyReadBuilder](#iaccessormanyreadbuilder),
-[IAccessorCountBuilder](#iaccessorcountbuilder)
+[`IAccessorReadBuilder`](#iaccessorreadbuilder),
+[`IAccessorManyReadBuilder`](#iaccessormanyreadbuilder),
+[`IAccessorCountBuilder`](#iaccessorcountbuilder)
 
 ### `ModelMutationBuilders`
 ```ts
@@ -264,9 +261,9 @@ type ModelMutationBuilders = {
 }
 ```
 > Jump to:
-[IAccessorCreationBuilder](#iaccessorcreationbuilder),
-[IAccessorManyCreationBuilder](#iaccessormanycreationbuilder),
-[IAccessorUpdateBuilder](#iaccessorupdatebuilder),
-[IAccessorManyUpdateBuilder](#iaccessormanyupdatebuilder),
-[IAccessorDeletionBuilder](#iaccessordeletionbuilder),
-[IAccessorManyDeletionBuilder](#iaccessormanydeletionbuilder),
+[`IAccessorCreationBuilder`](#iaccessorcreationbuilder),
+[`IAccessorManyCreationBuilder`](#iaccessormanycreationbuilder),
+[`IAccessorUpdateBuilder`](#iaccessorupdatebuilder),
+[`IAccessorManyUpdateBuilder`](#iaccessormanyupdatebuilder),
+[`IAccessorDeletionBuilder`](#iaccessordeletionbuilder),
+[`IAccessorManyDeletionBuilder`](#iaccessormanydeletionbuilder),

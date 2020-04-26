@@ -2,8 +2,8 @@ import ControllerApollo from '@harmonyjs/controller-apollo'
 import ControllerPersistenceEvents from '@harmonyjs/controller-persistence-events'
 
 import {
-  SanitizedModel, PersistenceInstance, IAdapter, InternalResolvers, AliasedResolverEnum,
-  UnscopedModelResolvers, Model, PersistenceContext,
+  SanitizedModel, PersistenceInstance, IAdapter, InternalResolvers, AliasCrudEnum,
+  ModelResolvers, Model, PersistenceContext,
 } from '@harmonyjs/types-persistence'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { GraphQLScalarType } from 'graphql'
@@ -54,7 +54,7 @@ export async function defineModelResolvers<Models extends {[model: string]: Mode
 } : {
   internalResolvers: Record<string, InternalResolvers>
 }) {
-  const modelResolvers : Record<keyof Models, UnscopedModelResolvers> = {} as any
+  const modelResolvers : Record<keyof Models, ModelResolvers> = {} as any
 
   Object.keys(internalResolvers)
     .forEach((model) => {
@@ -62,9 +62,9 @@ export async function defineModelResolvers<Models extends {[model: string]: Mode
       modelResolvers[model as keyof Models] = {} as any
       Object.keys(internalResolver)
         .forEach((res) => {
-          modelResolvers[model as keyof Models][res as AliasedResolverEnum] = (args: { [key: string]: any }) => (
-            internalResolver[res as AliasedResolverEnum].unscoped({ args })
-          )
+          modelResolvers[model as keyof Models][res as AliasCrudEnum] = (args: { [key: string]: any }) => (
+            internalResolver[res as AliasCrudEnum].unscoped({ args })
+          ) as any
         })
     })
 
@@ -94,12 +94,13 @@ function resolveContext({
 }
 
 export async function defineControllers({
-  instance, internalResolvers, internalContext, scalars,
+  schema, instance, internalResolvers, internalContext, scalars,
 } : {
-  instance: PersistenceInstance<any>,
-  internalResolvers: Record<string, InternalResolvers>,
-  internalContext: PersistenceContext,
-  scalars: Record<string, GraphQLScalarType>,
+  schema: string
+  instance: PersistenceInstance<any>
+  internalResolvers: Record<string, InternalResolvers>
+  internalContext: PersistenceContext
+  scalars: Record<string, GraphQLScalarType>
 }) {
   function ControllerGraphQL({
     path,
@@ -116,7 +117,7 @@ export async function defineControllers({
           internal: ({ request, reply }) => resolveContext({ request, reply, context: internalContext }),
           external: ({ request, reply }) => resolveContext({ request, reply, context: instance.context }),
         },
-        schema: instance.schema,
+        schema,
         resolvers: getResolvers({ internalResolvers, models: instance.models, scalars }),
         mock: !instance.configuration.defaultAdapter,
         authentication,

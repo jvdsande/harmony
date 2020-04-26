@@ -1,11 +1,11 @@
-import { PersistenceConfig, PersistenceInitializedConfig } from '@harmonyjs/types-persistence'
+import { PersistenceConfig } from '@harmonyjs/types-persistence'
 
 // eslint-disable-next-line import/prefer-default-export
 export function configurePersistence({
   config,
 } : {
-  config: PersistenceConfig
-}) : PersistenceInitializedConfig {
+  config: Partial<PersistenceConfig>
+}) : PersistenceConfig {
   const configuration = config
   configuration.models = config.models || {}
   configuration.adapters = config.adapters || {}
@@ -13,5 +13,5 @@ export function configurePersistence({
   configuration.log = config.log || {}
   configuration.strict = !!config.strict
 
-  return configuration as PersistenceInitializedConfig
+  return configuration as PersistenceConfig
 }

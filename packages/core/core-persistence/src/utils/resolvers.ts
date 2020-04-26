@@ -1,9 +1,9 @@
 import {
-  AliasedResolverEnum, ResolverEnum,
+  AliasCrudEnum, CrudEnum,
   InternalResolvers,
   ScopedInternalResolver, UnscopedInternalResolver, InternalResolver, Resolver, ReferenceResolver, Scope, Transform,
   IAdapter, IProperty, IPropertySchema,
-  SanitizedModel, ModelResolvers,
+  SanitizedModel, ScopedModelResolvers,
 } from '@harmonyjs/types-persistence'
 import { ApolloError, ValidationError } from 'apollo-server-core'
 import { GraphQLResolveInfo, GraphQLScalarType } from 'graphql'
@@ -16,9 +16,9 @@ import GraphQLDate from 'graphql-date'
 import { extractModelName } from 'utils/property/utils'
 
 export type ResolverDefinition = {
-  type: ResolverEnum,
+  type: CrudEnum,
   suffix: string,
-  alias?: AliasedResolverEnum[],
+  alias?: AliasCrudEnum[],
 }
 
 // Query
@@ -78,7 +78,7 @@ function computeFieldResolver({
     context: ResolverContext,
     info: ResolverInfo,
   ) => {
-    const wrappedResolvers : {[model: string]: ModelResolvers } = {}
+    const wrappedResolvers : {[model: string]: ScopedModelResolvers } = {}
 
     Object.keys(internalResolvers)
       .forEach((mod) => {
@@ -86,7 +86,7 @@ function computeFieldResolver({
 
         Object.keys(internalResolver)
           .forEach((res) => {
-            const alias = res as AliasedResolverEnum
+            const alias = res as AliasCrudEnum
 
             wrappedResolvers[mod] = wrappedResolvers[mod] || {}
 
@@ -308,13 +308,15 @@ export function getResolvers({
     // Create federation resolver
     if (!model.external) {
       resolvers[extractModelName(model.name)] = resolvers[extractModelName(model.name)] || {}
-      resolvers[extractModelName(model.name)].__resolveReference = (reference: { _id: string }) => (
-        internalResolvers[extractModelName(model.name)].read.unscoped({
-          args: {
-            filter: {
-              _id: reference._id,
-            },
-          },
+      resolvers[extractModelName(model.name)].__resolveReference = (
+        reference: { _id: string }, context: ResolverContext, info: GraphQLResolveInfo,
+      ) => (
+        internalResolvers[extractModelName(model.name)].reference({
+          fieldName: '_id',
+          foreignFieldName: '_id',
+          source: reference,
+          info,
+          internal: context.internal,
         })
       )
     }
@@ -338,7 +340,7 @@ function makeResolver({
   field: string,
   adapter?: IAdapter,
   model: SanitizedModel,
-  type: ResolverEnum,
+  type: CrudEnum,
   scope?: Scope<any, any, any, any, false>,
   transform?: Transform<any, any, any, any, any, false>,
 }) : ScopedInternalResolver {
@@ -425,20 +427,38 @@ function initializeLoader({
   internal.loaders = internal.loaders || {}
   internal.loaders[model.name] = internal.loaders[model.name] || {}
   internal.loaders[model.name][type] = internal.loaders[model.name][type] || {}
-  internal.loaders[model.name][type][field] = internal.loaders[model.name][type][field]
-    || new DataLoader(async (keys: readonly string[]) => {
-      const docs = await adapter.resolveBatch({
-        model,
-        fieldName: field,
-        keys: keys as string[],
-      })
 
-      if (type === 'single') {
-        return keys.map((k) => docs.find((doc) => doc && String(doc[field]) === String(k)))
-      }
+  if (!internal.loaders[model.name][type][field]) {
+    const customerLoader = {
+      dataLoader: new DataLoader(async (keys: readonly string[]) => {
+        const docs = await adapter.resolveBatch({
+          model,
+          fieldName: field,
+          keys: keys as string[],
+        })
 
-      return keys.map((k) => docs.filter((doc) => doc && String(doc[field]) === String(k)))
-    })
+        if (type === 'single') {
+          return keys.map((k) => docs.find((doc) => doc && String(doc[field]) === String(k)))
+        }
+
+        return keys.map((k) => docs.filter((doc) => doc && String(doc[field]) === String(k)))
+      }),
+      async load(key: any) {
+        const stringified = String(key)
+
+        if (stringified === '[object Object]') {
+          return key
+        }
+
+        return customerLoader.dataLoader.load(key)
+      },
+      async loadMany(keys: any[]) {
+        return Promise.all(keys.map((key) => customerLoader.load(key)))
+      },
+    }
+
+    internal.loaders[model.name][type][field] = customerLoader
+  }
 
   return internal.loaders[model.name][type][field]
 }
@@ -549,7 +569,7 @@ function makeReferenceResolver({
 
 export function makeResolvers({ adapter, model } : { adapter?: IAdapter, model: SanitizedModel }) {
   const resolvers :
-    Record<AliasedResolverEnum, InternalResolver> &
+    Record<AliasCrudEnum, InternalResolver> &
     Record<'reference'|'references', ReferenceResolver> = {} as any
 
   const rootResolvers = [...queryResolvers, ...mutationResolvers]

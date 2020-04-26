@@ -1,7 +1,7 @@
 import Logger, { ILogger } from '@harmonyjs/logger'
 import {
   SanitizedModel, Model,
-  PersistenceInitializedConfig,
+  PersistenceConfig,
   IEvents, IAdapter,
 } from '@harmonyjs/types-persistence'
 import { GraphQLID, GraphQLScalarType } from 'graphql'
@@ -29,7 +29,7 @@ export async function importModels({
 
 
 type InitializeAdaptersArgs = {
-  config: PersistenceInitializedConfig
+  config: PersistenceConfig
   adapters: { [key: string]: IAdapter }
   models: SanitizedModel[]
   events: IEvents

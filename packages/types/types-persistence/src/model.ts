@@ -6,7 +6,7 @@ import {
 } from 'property'
 
 import {
-  ResolverEnum,
+  CrudEnum,
   Resolver, Resolvers,
   Scope, Scopes,
   Transform, Transforms,
@@ -18,7 +18,7 @@ export type TypedComputedQuery<
   Context extends any,
   Schemas extends { [key: string]: Schema },
   CurrentSchema extends Schema,
-  Extension extends ResolverEnum,
+  Extension extends CrudEnum,
   Args extends Schema,
   Return extends SchemaField,
   > = (
@@ -27,8 +27,6 @@ export type TypedComputedQuery<
   { extends?: never, type: Return, args?: Args }
 )
   & {
-  mode?: PropertyMode | PropertyMode[]
-
   scopes?: Scope<
     Context,
     Schemas,
@@ -71,7 +69,7 @@ export type ComputedQuery<Context extends any = any,
   Schemas extends { [key: string]: Schema } = any,
   CurrentSchema extends Schema = any,
 > =
-  TypedComputedQuery<Context, Schemas, CurrentSchema, ResolverEnum, any, any>
+  TypedComputedQuery<Context, Schemas, CurrentSchema, CrudEnum, any, any>
 
 export type TypedComputedField<
   Context extends any,

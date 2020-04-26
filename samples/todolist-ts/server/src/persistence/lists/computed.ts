@@ -19,6 +19,11 @@ export default <Computed<any, typeof schemas, typeof schemas.List>> ({
     tasks: field({
       type: [Types.ReversedReference.of('task').on('list')],
     }),
+
+    tasksPreFilled: field({
+      type: [Types.Reference.of('task')],
+      resolve: async ({ source, resolvers }) => resolvers.Task.list({ filter: { list: source._id } }),
+    }),
   },
 
   queries: {

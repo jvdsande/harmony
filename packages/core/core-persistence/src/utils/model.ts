@@ -1,21 +1,18 @@
 import {
-  Resolvers, Scopes,
-  Resolver,
-  ComputedField, ComputedQuery,
-  IProperty, PropertyMode,
-  Model, SanitizedModel, Schema, IPropertyUndiscriminated, IPropertyID,
+  ComputedField, ComputedQuery, IProperty, IPropertyID, IPropertyUndiscriminated, Model, PropertyMode, Resolver,
+  Resolvers, SanitizedModel, Schema, Scopes,
 } from '@harmonyjs/types-persistence'
 
 import { ApolloError } from 'apollo-server-core'
 
+import PropertyFactory from 'utils/property/factory'
+
 import { createOperatorType } from 'utils/property/operators'
-import { queryResolvers, ResolverDefinition, mutationResolvers } from 'utils/resolvers'
+import { sanitizeSchema, sanitizeSchemaField } from 'utils/property/sanitation'
+import { extractModelName, wrap } from 'utils/property/utils'
+import { mutationResolvers, queryResolvers, ResolverDefinition } from 'utils/resolvers'
 
 import Types from 'utils/types'
-
-import PropertyFactory from 'utils/property/factory'
-import { extractModelName, wrap } from 'utils/property/utils'
-import { sanitizeSchemaField, sanitizeSchema } from 'utils/property/sanitation'
 
 function extendField(field: ComputedQuery, modelName: string): { type?: IProperty, args?: Schema } {
   switch (field.extends) {
@@ -201,7 +198,7 @@ function extractRootSchema({
       property.withArgs(field.args || args || {})
     }
 
-    property.withMode(wrap(field.mode))
+    property.withMode([PropertyMode.OUTPUT])
 
     schema[queryName] = property
   })
@@ -213,7 +210,6 @@ function extractResolvers({ fields }: {
   fields: {[key: string]:ComputedQuery}|{[key: string]:ComputedField}
 }): Resolvers {
   const resolvers: Resolvers = {}
-
 
   Object.keys(fields).forEach((field) => {
     if (fields[field].resolve) {

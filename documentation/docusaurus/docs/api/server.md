@@ -1,10 +1,7 @@
 ---
-name: "@harmonyjs/server"
-route: /api/server
-menu: API
+title: HarmonyJS Server
+sidebar_label: "@harmonyjs/server"
 ---
-
-# HarmonyJS Server
 
 `@harmonyjs/server` handles the creation and runtime of a Node webserver. Under the hood, it uses Fastify, but there is no
 need to know Fastify in order to start using HarmonyJS.
@@ -14,13 +11,13 @@ _**Note:** [Fastify](https://www.fastify.io/docs/latest/Getting-Started/) knowle
 
 ## Default export
 
-`@harmonyjs/server` only exports one JavaScript element, its default export: the `Server() : ServerInstance` factory.
+`@harmonyjs/server` default export is the `Server() : ServerInstance` factory.
 
 This factory allows us to create a [`ServerInstance`](#serverinstance) object, which can be configured to expose our application's webserver.
 
 <b style={{display: "block", marginBottom: "-1.5rem" }}>Sample usage</b>
 
-```js
+```typescript
 import Server from '@harmonyjs/server'
 
 async function run() {
@@ -49,6 +46,28 @@ async function run() {
 run()
 ```
 
+## Other exports
+
+### `HttpErrors`
+
+`@harmonyjs/server` only exports one other object: the `HttpErrors` helper.
+
+This helpers allows throwing HTTP-compliant errors from inside custom routes or resolvers. All standard HTTP error codes
+are supported, with the following syntax:
+
+```typescript
+import { HttpErrors } from '@harmonyjs/server'
+
+// Example throwing an Unauthorized error:
+throw HttpErrors.Unauthorized('Some custom message')
+
+// Example throwing a NotImplemented error:
+throw HttpErrors.NotImplemented('Some custom message')
+```
+
+All thrown `HttpErrors` are gracefully caught by the underlying server, and the correct status code is return for the
+current request, along with the given custom message.
+
 ## Exported types
 
 Here is the list of all types exported by the `@harmonyjs/server` package, related to the server instance itself.
@@ -58,18 +77,15 @@ Here is the list of all types exported by the `@harmonyjs/server` package, relat
 ### `ServerConfig`
 
 The `ServerConfig` object allows us to configure the server before running it. Here are the available options:
-```ts
+```typescript
 type ServerConfig = {
   endpoint: {
     host: string
     port: number
   }
-  authentication: {
-    secret: string
-  }
   socket: {
     path: string
-  },
+  }
   cluster?: {
     redis: {
       key?: string
@@ -82,8 +98,8 @@ type ServerConfig = {
 }
 ```
 > Jump to:
-[IController](/plugins/controllers#icontroller),
-[LoggerConfig](/api/logger#loggerconfig)
+[`IController`](/plugins/controllers#icontroller),
+[`LoggerConfig`](/api/logger#loggerconfig)
 
 #### `ServerConfig::endpoint`
 
@@ -94,11 +110,6 @@ This field takes two subfields, `endpoint.host` and `endpoint.port`
 
 To expose the server to the outside world, for instance when running inside Docker, `endpoint.host` should be set
 to `'0.0.0.0'`
-
-#### `ServerConfig::authentication`
-
-This optional field handles the built-in JWT-authentication scheme. It allows to set the `secret`, which is used
-to sign the JWT tokens emitted from the application.
 
 #### `ServerConfig::socket`
 
@@ -137,29 +148,35 @@ To find more information about Controllers, refer to [their documentation](/plug
 
 Configuration of the way the server instance logs its actions. Refer to the [Log util documentation](/api/logger#loggerconfig)
 
+<br />
+
+---
 
 ### `ServerInstance`
 
 The `ServerInstance` type represents the object returned when instantiating an `@harmonyjs/server`. It mostly exposes
 lifecycle functions, as well as underlying elements such as the Fastify server for advanced customization.
 
-```ts
-type ServerInstance = {
-  configuration: ServerConfig
-  logger: ILogger
+After creating a new `ServerInstance`, only the `initialize` field is available. Accessing any other field will throw.
+Other fields become available _after_ calling `ServerInstance::initialize`.
 
-  server: FastifyInstance
-  socket: SocketIO.Server
+```typescript
+type ServerInstance = {
+  readonly configuration: ServerConfig
+  readonly logger: ILogger
+
+  readonly server: FastifyInstance
+  readonly socket: SocketIO.Server
 
   initialize(configuration: Partial<ServerConfig>): Promise<void>
   close(): Promise<void>
 }
 ```
 > Jump to:
-[ServerConfig](#serverconfig),
-[ILogger](/api/logger#ilogger),
-[FastifyInstance](https://www.fastify.io/docs/latest/Server/#server-methods),
-[SocketIO.Server](https://socket.io/docs/server-api/)
+[`ServerConfig`](#serverconfig),
+[`ILogger`](/api/logger#ilogger),
+[`FastifyInstance`](https://www.fastify.io/docs/latest/Server/#server-methods),
+[`SocketIO.Server`](https://socket.io/docs/server-api/)
 
 #### `ServerInstance::configuration`
 
@@ -172,11 +189,11 @@ Expose the underlying logger, in order to be able to add custom logs using the S
 
 #### `ServerInstance::server`
 
-Expose the underlying Fastify instance, of needed for advanced customization.
+Expose the underlying Fastify instance, if needed for advanced customization.
 
 #### `ServerInstance::socket`
 
-Expose the underlying Scoket.IO instance, of needed for advanced customization.
+Expose the underlying Socket.IO instance, if needed for advanced customization.
 
 #### `ServerInstance::initialize`
 
@@ -192,4 +209,3 @@ Returns a Promise resolving once everything has finished booting.
 Function for cleanly closing all the components of the server instance.
 
 Returns a Promise resolving once everything has finished closing.
-

@@ -1,6 +1,6 @@
 import Logger from '@harmonyjs/logger'
 
-import { ServerConfig, ServerInstance, IController } from '@harmonyjs/types-server'
+import { ServerInstance, IController } from '@harmonyjs/types-server'
 
 import {
   configureServer,
@@ -20,67 +20,90 @@ export {
 } from 'utils/errors'
 
 export default function Server() : ServerInstance {
+  const internal : {
+    -readonly [T in keyof ServerInstance]?: ServerInstance[T]
+  } = {}
+
+  const getInternalField = <F extends keyof ServerInstance>(f: F) : ServerInstance[F] => {
+    if (internal[f]) {
+      return internal[f] as ServerInstance[F]
+    }
+
+    throw new Error('You must call ServerInstance::initialize before accessing any other field!')
+  }
+
   // Create an instance
-  const instance : Partial<ServerInstance> = {}
+  const instance : ServerInstance = {
+    get configuration() {
+      return getInternalField('configuration')
+    },
+    get logger() {
+      return getInternalField('logger')
+    },
+    get server() {
+      return getInternalField('server')
+    },
+    get socket() {
+      return getInternalField('socket')
+    },
 
-  instance.initialize = async (configuration: Partial<ServerConfig>) => {
-    // Initialize properties and create logger
-    instance.configuration = configureServer({ config: configuration || {} })
-    instance.logger = Logger({ name: 'Server', configuration: instance.configuration.log })
+    async initialize(configuration) {
+      // Initialize properties and create logger
+      internal.configuration = configureServer({ config: configuration || {} })
+      internal.logger = Logger({ name: 'Server', configuration: internal.configuration.log })
 
-    const { logger, configuration: config } = instance
+      const { logger, configuration: config } = internal
 
+      try {
+        // Log Harmony banner
+        await logBanner({ logger })
 
-    try {
-      // Log Harmony banner
-      await logBanner({ logger })
+        // Create server instance (Fastify)
+        internal.server = createServer({ logger })
 
-      // Create server instance (Fastify)
-      instance.server = createServer({ logger })
+        // Create socketIO instance
+        internal.socket = createSocket({ config, logger, server: internal.server })
 
-      // Create socketIO instance
-      instance.socket = createSocket({ config, logger, server: instance.server })
+        // Start the server
+        const { server, socket } = internal
 
-      // Start the server
-      const { server, socket } = instance
+        // Register Authentication Controller
+        const controllers : IController[] = [
+          ...(config.controllers || []),
+        ]
 
-      // Register Authentication Controller
-      const controllers : IController[] = [
-        ...(config.controllers || []),
-      ]
+        // Register controllers
+        await registerControllers({
+          server, socket, controllers, logger, config,
+        })
 
-      // Register controllers
-      await registerControllers({
-        server, socket, controllers, logger, config,
-      })
+        // Separate upgrade listeners
+        await separateUpgradeListeners({ server, config })
 
-      // Separate upgrade listeners
-      await separateUpgradeListeners({ server, config })
+        // Start listening
+        await startListening({ server, logger, config })
+      } catch (err) {
+        logger.error(err)
+        throw new Error('Error while creating server')
+      }
+    },
 
-      // Start listening
-      await startListening({ server, logger, config })
-    } catch (err) {
-      logger.error(err)
-      throw new Error('Error while creating server')
-    }
+    async close() {
+      if (instance.configuration.cluster && instance.configuration.cluster.redis) {
+        // Close redis connection
+        instance.socket.adapter().pubClient.quit()
+        instance.socket.adapter().subClient.quit()
+      }
+
+      // Close Socket.IO connection
+      instance.socket.close()
+
+      // Close Fastify server
+      return instance.server.close()
+        .then(() => {})
+        .catch(() => {})
+    },
   }
 
-  instance.close = async () => {
-    const inst = (instance as ServerInstance)
-    if (inst.configuration.cluster && inst.configuration.cluster.redis) {
-      // Close redis connection
-      inst.socket.adapter().pubClient.quit()
-      inst.socket.adapter().subClient.quit()
-    }
-
-    // Close Socket.IO connection
-    inst.socket.close()
-
-    // Close Fastify server
-    return inst.server.close()
-      .then(() => {})
-      .catch(() => {})
-  }
-
-  return instance as ServerInstance
+  return instance
 }

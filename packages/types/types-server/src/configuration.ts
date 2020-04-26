@@ -7,29 +7,29 @@ import { IController } from 'controller'
 
 export type ServerConfig = {
   endpoint: {
-    host: string,
-    port: number,
-  },
-  controllers: IController[],
+    host: string
+    port: number
+  }
+  controllers: IController[]
   socket: {
-    path: string,
-  },
+    path: string
+  }
   cluster?: {
     redis: {
-      key?: string,
-      host?: string,
-      port?: number,
-    },
-  },
-  log: LoggerConfig,
+      key?: string
+      host?: string
+      port?: number
+    }
+  }
+  log: LoggerConfig
 }
 
 export type ServerInstance = {
-  configuration: ServerConfig,
-  logger: ILogger,
+  readonly configuration: ServerConfig
+  readonly logger: ILogger
 
-  server: FastifyInstance,
-  socket: SocketIO,
+  readonly server: FastifyInstance
+  readonly socket: SocketIO
 
   initialize(configuration: Partial<ServerConfig>): Promise<void>
   close(): Promise<void>

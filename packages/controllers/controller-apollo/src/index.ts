@@ -1,7 +1,8 @@
-import { ApolloServer, gql, Config , ServerRegistration} from '@harmonyjs/apollo-fastify'
+import { ApolloServer, gql, Config , ServerRegistration } from '@harmonyjs/apollo-fastify'
 import { PersistenceContext } from '@harmonyjs/types-persistence'
 
 import { buildFederatedSchema } from '@apollo/federation'
+import { GraphQLResolverMap } from 'apollo-graphql'
 
 import { Controller } from '@harmonyjs/types-server'
 
@@ -9,17 +10,15 @@ import { Controller } from '@harmonyjs/types-server'
  * The Apollo Controller exposes a GraphQL endpoint through an Apollo Server
  */
 const ControllerApollo : Controller<{
-  path: string,
-  enablePlayground?: boolean,
-  mock?: boolean,
+  path: string
+  enablePlayground?: boolean
+  mock?: boolean
 
-  schema: string,
-  resolvers: {
-    [key: string]: any
-  },
+  schema: string
+  resolvers: GraphQLResolverMap
 
-  context?: PersistenceContext,
-  authentication?: Controller & { validator: string },
+  context?: PersistenceContext
+  authentication?: Controller & { validator: string }
 
   apolloConfig?: Omit<Config, 'schema'|'playground'|'introspection'|'mocks'|'mockEntireSchema'|'context'>
   routeConfig?: ServerRegistration['routeOptions']

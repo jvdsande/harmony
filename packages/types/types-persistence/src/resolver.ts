@@ -1,11 +1,12 @@
 // Resolver enums
 import { GraphQLResolveInfo } from 'graphql'
+import { Model } from 'model'
 import {
   Schema, SchemaInputType, SchemaOperatorType, SchemaOutputType,
 } from 'property'
 
-export type ResolverEnum = 'read'|'readMany'|'count'|'create'|'createMany'|'update'|'updateMany'|'delete'|'deleteMany'
-export type AliasedResolverEnum = ResolverEnum|'get'|'list'|'edit'|'editMany'
+export type CrudEnum = 'read'|'readMany'|'count'|'create'|'createMany'|'update'|'updateMany'|'delete'|'deleteMany'
+export type AliasCrudEnum = CrudEnum|'get'|'list'|'edit'|'editMany'
 
 // Helpers
 type FilterArgs<CurrentSchema extends Schema> = Partial<SchemaInputType<CurrentSchema> & {
@@ -27,10 +28,10 @@ type OutputType<CurrentSchema extends Schema> = SchemaOutputType<CurrentSchema> 
 
 
 export type ExtendedArgs<
-  Extension extends AliasedResolverEnum,
+  Extension extends AliasCrudEnum,
   CurrentSchema extends Schema
   > = (
-  ResolverEnum extends Extension ? any :
+  CrudEnum extends Extension ? any :
   'count' extends Extension ? { filter?: FilterArgs<CurrentSchema> } :
   'read' extends Extension ? { filter?: FilterArgs<CurrentSchema>, skip?: number } :
   'get' extends Extension ? { filter?: FilterArgs<CurrentSchema>, skip?: number } :
@@ -47,13 +48,13 @@ export type ExtendedArgs<
   'delete' extends Extension ? { _id: string } :
   'deleteMany' extends Extension ? { _ids: string[] } :
   any
-  )
+)
 
 export type ExtendedType<
-  Extension extends AliasedResolverEnum,
+  Extension extends AliasCrudEnum,
   CurrentSchema extends Schema
   > = (
-  ResolverEnum extends Extension ? any :
+  CrudEnum extends Extension ? any :
   'count' extends Extension ? number :
   'read' extends Extension ? OutputType<CurrentSchema>|null :
   'get' extends Extension ? OutputType<CurrentSchema>|null :
@@ -98,29 +99,31 @@ export type ReferenceResolver = (params: {
 }) => Promise<{[key: string]: any}|null>
 
 export type InternalResolvers =
-  Record<AliasedResolverEnum, InternalResolver> &
+  Record<AliasCrudEnum, InternalResolver> &
   Record<'reference'|'references', ReferenceResolver>
 
 
 // Model Resolvers
-export type ScopedModelResolver<
-  Args extends {[key: string]: any} = {[key: string]: any},
-  Return extends any = any
-> = ((args: Args) => Promise<Return>)
-export type UnscopedModelResolver<
-  Args extends {[key: string]: any} = {[key: string]: any},
-  Return extends any = any
-  > = ((args: Args) => Promise<Return>)
 export type ModelResolver<
   Args extends {[key: string]: any} = {[key: string]: any},
   Return extends any = any
-> = ScopedModelResolver<Args, Return> & { unscoped: UnscopedModelResolver<Args, Return> }
+> = ((args: Args) => Promise<Return>)
+export type ScopedModelResolver<
+  Args extends {[key: string]: any} = {[key: string]: any},
+  Return extends any = any
+> = ModelResolver<Args, Return> & { unscoped: ModelResolver<Args, Return> }
 
-export type ModelResolvers<CurrentSchema extends Schema = Schema> = {
-  [key in AliasedResolverEnum]: ModelResolver<ExtendedArgs<key, CurrentSchema>, ExtendedType<key, CurrentSchema>>
+export type ScopedModelResolvers<CurrentSchema extends Schema = Schema> = {
+  [key in AliasCrudEnum]: ScopedModelResolver<
+    ExtendedArgs<key, CurrentSchema>,
+    ExtendedType<key, CurrentSchema>
+  >
 }
-export type UnscopedModelResolvers<CurrentSchema extends Schema = Schema> = {
-  [key in AliasedResolverEnum]: UnscopedModelResolver<ExtendedArgs<key, CurrentSchema>>
+export type ModelResolvers<CurrentModel extends Model = Model> = {
+  [key in AliasCrudEnum]: ModelResolver<
+    ExtendedArgs<key, Model['schema']>,
+    ExtendedType<key, Model['schema']>
+  >
 }
 
 
@@ -137,7 +140,7 @@ export type Resolver<
   context: Context
   info: GraphQLResolveInfo
 
-  resolvers: {[schema in keyof Schemas]: ModelResolvers<Schemas[schema]>}
+  resolvers: {[schema in keyof Schemas]: ScopedModelResolvers<Schemas[schema]>}
   field: string
 }) => Promise<Return>
 
@@ -166,7 +169,7 @@ export type Scope<
 } & (false extends HasResolvers ? {
 
 } : {
-  resolvers: {[schema in keyof Schemas]: ModelResolvers<NonNullable<Schemas>[schema]>}
+  resolvers: {[schema in keyof Schemas]: ScopedModelResolvers<NonNullable<Schemas>[schema]>}
 })) => Promise<(Args|undefined|void)>
 
 export type Scopes<
@@ -174,7 +177,7 @@ export type Scopes<
   Schemas extends { [key: string]: Schema }|undefined = any,
   CurrentSchema extends Schema = any,
   > = {
-  [R in ResolverEnum]?: Scope<
+  [R in CrudEnum]?: Scope<
     Context, Schemas, CurrentSchema, ExtendedArgs<R, CurrentSchema>, false
   >
 }
@@ -200,7 +203,7 @@ export type Transform<
 } & (false extends HasResolvers ? {
 
 } : {
-  resolvers: {[schema in keyof Schemas]: ModelResolvers<NonNullable<Schemas>[schema]>}
+  resolvers: {[schema in keyof Schemas]: ScopedModelResolvers<NonNullable<Schemas>[schema]>}
 })) => Promise<(Return|undefined|void)>
 
 export type Transforms<
@@ -208,7 +211,7 @@ export type Transforms<
   Schemas extends { [key: string]: Schema }|undefined = any,
   CurrentSchema extends Schema = any,
   > = {
-  [R in ResolverEnum]?: Transform<
+  [R in CrudEnum]?: Transform<
     Context, Schemas, CurrentSchema, ExtendedArgs<R, CurrentSchema>, ExtendedType<R, CurrentSchema>, false
   >
 }

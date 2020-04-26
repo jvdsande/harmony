@@ -1,8 +1,8 @@
 import Logger from '@harmonyjs/logger'
 // Import helpers and types
 import {
-  TypedComputedField, TypedComputedQuery, IAdapter, PersistenceConfig, PersistenceInstance,
-  Schema, SchemaField, ResolverEnum, Model, PersistenceContext,
+  TypedComputedField, TypedComputedQuery, IAdapter, PersistenceInstance,
+  Schema, SchemaField, CrudEnum, Model, PersistenceContext,
 } from '@harmonyjs/types-persistence'
 
 import { configurePersistence } from 'steps/configuration'
@@ -17,20 +17,27 @@ import Types from 'utils/types'
 // Export utility types and classes
 export { default as Types } from 'utils/types'
 export {
-  PersistenceConfig, PersistenceInstance, Adapter, IAdapter,
-  Model, Schema, Computed, Scopes, Transforms, PropertyMode,
-  Scope, Transform,
+  // Needed to type a Persistence instance
+  PersistenceConfig, PersistenceInstance,
+
+  // Needed to type adapters
+  Adapter, IAdapter,
+
+  // Needed to type a Model instance
+  Model,
+  Schema, Computed, Scopes, Transforms,
+
+  // Needed to type a ComputedField or ComputedQuery instance
+  Scope, Transform, Resolver, PropertyMode,
+
+  // Useful helpers
   SchemaOutputType, SchemaInputType,
 } from '@harmonyjs/types-persistence'
 
 export default function Persistence<
   Models extends {[key in string]: Model} = any,
 >() {
-  // Create an instance
   const events = EventsHandler()
-  const instance : Partial<PersistenceInstance<Models>> = {
-    events,
-  }
 
   const local : {
     adapters : Record<string, IAdapter>
@@ -40,69 +47,106 @@ export default function Persistence<
     internalContext: {},
   }
 
-  instance.initialize = async (
-    configuration: PersistenceConfig<Models>,
-  ) => {
-    instance.configuration = configurePersistence({ config: configuration })
-    instance.logger = Logger({ name: 'Persistence', configuration: instance.configuration.log })
+  const internal : {
+    -readonly [T in keyof PersistenceInstance<Models>]?: PersistenceInstance<Models>[T]
+  } = {
+    events,
+  }
 
-    const { logger, configuration: config } = instance
-
-    if (!config.defaultAdapter) {
-      logger.warn(`No default adapter was specified. Will fallback to adapter '${
-        Object.keys(config.adapters || { mock: null })[0] || 'mock'
-      }'`)
-      // eslint-disable-next-line no-param-reassign
-      config.defaultAdapter = Object.keys(config.adapters)[0] || 'mock'
+  const getInternalField = <F extends keyof PersistenceInstance<Models>>(f: F) : PersistenceInstance<Models>[F] => {
+    if (internal[f]) {
+      return internal[f] as PersistenceInstance<Models>[F]
     }
 
-    const {
-      scalars, adapters, models, strict, defaultAdapter,
-    } = config
-
-    // Import models
-    instance.models = await importModels({
-      models, logger, strict, defaultAdapter,
-    })
-
-    await typeIdsAndReferences({ models: instance.models })
-
-    // Initialize adapters
-    await initializeAdapters({
-      config, adapters, logger, models: instance.models, events, scalars,
-    })
-    local.adapters = adapters
-
-    // Finish preparing instance
-    instance.context = {}
-    instance.schema = await defineSchema({
-      models: instance.models,
-      scalars: Object.keys(scalars),
-    })
-    const internalResolvers = await defineResolvers({
-      models: instance.models,
-      adapters,
-      defaultAdapterName: configuration.defaultAdapter,
-    })
-    instance.resolvers = await defineModelResolvers<Models>({
-      internalResolvers,
-    })
-    instance.controllers = await defineControllers({
-      internalResolvers,
-      internalContext: local.internalContext,
-      scalars,
-      instance: instance as PersistenceInstance<Models>,
-    })
+    throw new Error('You must call PersistenceInstance::initialize before accessing any other field!')
   }
 
-  instance.close = async () => {
-    await events.close()
-    await Promise.all(Object.values(local.adapters).map(async (adapter) => {
-      await adapter.close()
-    }))
-  }
+  // Create an instance
+  const instance : PersistenceInstance<Models> = {
+    get configuration() {
+      return getInternalField('configuration')
+    },
+    get logger() {
+      return getInternalField('logger')
+    },
+    get models() {
+      return getInternalField('models')
+    },
+    get events() {
+      return getInternalField('events')
+    },
+    get context() {
+      return getInternalField('context')
+    },
+    get resolvers() {
+      return getInternalField('resolvers')
+    },
+    get controllers() {
+      return getInternalField('controllers')
+    },
 
-  return instance as PersistenceInstance<Models>
+    async initialize(configuration) {
+      internal.configuration = configurePersistence({ config: configuration })
+      internal.logger = Logger({ name: 'Persistence', configuration: internal.configuration.log })
+
+      const { logger, configuration: config } = internal
+
+      if (!config.defaultAdapter) {
+        logger.warn(`No default adapter was specified. Will fallback to adapter '${
+          Object.keys(config.adapters || { mock: null })[0] || 'mock'
+        }'`)
+        // eslint-disable-next-line no-param-reassign
+        config.defaultAdapter = Object.keys(config.adapters)[0] || 'mock'
+      }
+
+      const {
+        scalars, adapters, models, strict, defaultAdapter,
+      } = config
+
+      // Import models
+      internal.models = await importModels({
+        models, logger, strict, defaultAdapter,
+      })
+
+      await typeIdsAndReferences({ models: internal.models })
+
+      // Initialize adapters
+      await initializeAdapters({
+        config, adapters, logger, models: internal.models, events, scalars,
+      })
+      local.adapters = adapters
+
+      // Finish preparing instance
+      internal.context = {}
+      const schema = await defineSchema({
+        models: internal.models,
+        scalars: Object.keys(scalars),
+      })
+      const internalResolvers = await defineResolvers({
+        models: internal.models,
+        adapters,
+        defaultAdapterName: configuration.defaultAdapter,
+      })
+      internal.resolvers = await defineModelResolvers<Models>({
+        internalResolvers,
+      })
+      internal.controllers = await defineControllers({
+        schema,
+        internalResolvers,
+        internalContext: local.internalContext,
+        scalars,
+        instance,
+      })
+    },
+
+    async close() {
+      await events.close()
+      await Promise.all(Object.values(local.adapters).map(async (adapter) => {
+        await adapter.close()
+      }))
+    },
+  }
+  return instance
 }
 
 
@@ -140,7 +184,7 @@ export function query<
   CurrentSchema extends Schema,
 
   // Extension
-  Extension extends ResolverEnum,
+  Extension extends CrudEnum,
 
   // Args and return
   Return extends SchemaField,

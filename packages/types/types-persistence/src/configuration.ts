@@ -1,3 +1,4 @@
+import { GraphQLResolverMap } from 'apollo-graphql'
 import { FastifyReply, FastifyRequest, RouteOptions } from 'fastify'
 import { Config } from '@harmonyjs/apollo-fastify'
 
@@ -6,7 +7,7 @@ import { Controller } from '@harmonyjs/types-server'
 import { GraphQLScalarType } from 'graphql'
 import { Schema } from 'property'
 
-import { UnscopedModelResolvers } from 'resolver'
+import { ModelResolvers } from 'resolver'
 import {
   Model, SanitizedModel,
 } from 'model'
@@ -17,17 +18,6 @@ import { IEvents } from './events'
 export type PersistenceConfig<
   Models extends {[model: string]: Model} = any
 > = {
-  models?: Models
-  adapters?: {[name: string]: IAdapter}
-  scalars?: {[name: string]: GraphQLScalarType}
-  defaultAdapter?: string
-  log?: LoggerConfig
-  strict?: boolean
-}
-
-export type PersistenceInitializedConfig<
-  Models extends {[model: string]: Model} = any,
-  > = {
   models: Models
   adapters: {[name: string]: IAdapter}
   scalars: {[name: string]: GraphQLScalarType}
@@ -45,16 +35,18 @@ export type PersistenceContext = {
 
 export type PersistenceInstance<
   Models extends {[model: string]: Model} = any,
-  Schemas extends { [key in keyof Models]: Schema } = { [key in keyof Models]: Models[key]['schema'] }
 > = {
-  configuration: PersistenceInitializedConfig<Models>
+  configuration: PersistenceConfig<Models>
   logger: ILogger
 
   models: SanitizedModel[]
+
   events: IEvents
   context: PersistenceContext
+  resolvers: {
+    [model in keyof Models]: ModelResolvers<Models[model]>
+  }
 
-  schema: string
   controllers: {
     ControllerGraphQL: Controller<{
       path: string
@@ -65,9 +57,7 @@ export type PersistenceInstance<
     }>
     ControllerEvents: Controller<void>
   }
-  resolvers: {
-    [model in keyof Schemas]: UnscopedModelResolvers<Schemas[model]>
-  }
-  initialize(configuration: PersistenceConfig<Models>): Promise<void>
+
+  initialize(configuration: Partial<PersistenceConfig<Models>>): Promise<void>
   close(): Promise<void>
 }
