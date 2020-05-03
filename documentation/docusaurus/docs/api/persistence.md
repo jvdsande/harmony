@@ -129,7 +129,7 @@ type PersistenceConfig = {
 [`Model`](#model),
 [`IAdapter`](/plugins/adapters#iadapter),
 [`GraphQLScalarType`](https://graphql.org/graphql-js/type/#graphqlscalartype),
-[`LoggerConfig`](/api/logger#loggerconfig)
+[`LoggerConfig`](/docs/api/logger#loggerconfig)
 
 #### `PersistenceConfig::models`
 
@@ -153,7 +153,7 @@ if a `Scope` has been provided. See [`Scope`](#scope) for more details.
 
 #### `PersistenceConfig::log`
 
-Configuration of the way the persistence instance logs its actions. Refer to the [Log util documentation](/api/logger#loggerconfig)
+Configuration of the way the persistence instance logs its actions. Refer to the [Log util documentation](/docs/api/logger#loggerconfig)
 
 <br />
 
@@ -199,7 +199,7 @@ type PersistenceInstance<
 ```
 > Jump to:
 [`PersistenceConfig`](#persistenceconfig),
-[`ILogger`](/api/logger#ilogger),
+[`ILogger`](/docs/api/logger#ilogger),
 [`Model`](#model)
 [`SanitizedModel`](#sanitizedmodel),
 [`IEvents`](#ievents),
@@ -349,8 +349,8 @@ default CRUD resolvers for this model which is handled by another service.
 The `Schema` type is used to define the `schema` field of a `Model`. It follows the following structure:
 
 ```ts
-export type SchemaField = IProperty | Schema | SchemaField[]
-export type Schema = {
+type SchemaField = IProperty | Schema | SchemaField[]
+type Schema = {
   [field: string]: SchemaField
 }
 ```
@@ -446,7 +446,7 @@ internally.
 The `Scopes` typing is as follows:
 
 ```typescript
-export type Scopes<
+type Scopes<
   Context = any,
   Schemas extends { [key: string]: Schema }|undefined = any,
   CurrentSchema extends Schema = any,
@@ -480,7 +480,7 @@ when called through the `resolvers` map of `Resolver` function, see [`ScopedMode
 The `Transforms` typing is as follows:
 
 ```typescript
-export type Transforms<
+type Transforms<
   Context = any,
   Schemas extends { [key: string]: Schema }|undefined = any,
   CurrentSchema extends Schema = any,
@@ -512,7 +512,7 @@ and `source` arguments of the `Transform` functions.
 The `Resolvers` typing is as follows:
 
 ```typescript
-export type Resolvers<
+type Resolvers<
   Context extends any = any,
   Schemas extends { [key: string]: Schema } = any,
 > = {
@@ -699,7 +699,7 @@ resolver function across several fields but still needing to known _which_ field
 Enumeration defining whether a field should be used in the _output_ or _input_ types.
 
 ```ts
-export enum PropertyMode {
+enum PropertyMode {
   INPUT = 'INPUT',
   OUTPUT = 'OUTPUT',
 }
@@ -825,7 +825,7 @@ The `PersistenceContext` type represents the Context provider object used for Gr
 type PersistenceContextValue =
   string | number | boolean | null | { [key: string]: any } | any[]
 
-export type PersistenceContext = {
+type PersistenceContext = {
   [key: string]: PersistenceContextValue | ((args: { request: FastifyRequest, reply: FastifyReply<any> }) => any)
 }
 ```
@@ -917,7 +917,7 @@ the field's arguments, its type, the `Schema` it belongs to... However the final
 Here is the definition of the definitely typed `ComputedField`:
 
 ```ts
-export type TypedComputedField<
+type TypedComputedField<
   Context extends any,
   Schemas extends { [key: string]: Schema },
   CurrentSchema extends Schema,
@@ -950,7 +950,7 @@ export type TypedComputedField<
   >
 }
 
-export type ComputedField<
+type ComputedField<
   Context extends any = any,
   Schemas extends { [key: string]: Schema } = any,
   CurrentSchema extends Schema = any,
@@ -1090,7 +1090,7 @@ type TypedComputedQuery<
     Schemas>
 }
 
-export type ComputedQuery<Context extends any = any,
+type ComputedQuery<Context extends any = any,
   Schemas extends { [key: string]: Schema } = any,
   CurrentSchema extends Schema = any,
 > =

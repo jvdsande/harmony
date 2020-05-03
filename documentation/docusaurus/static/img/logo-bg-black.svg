@@ -3,9 +3,10 @@
    xmlns="http://www.w3.org/2000/svg"
    id="f0862836-4e64-470e-8684-783773d4b1d8"
    width="1000"
-   height="1000"
-   viewBox="-10 -80 980 980"
+   height="3000"
+   viewBox="-10 -1080 980 980"
    version="1.1">
+  <rect x="-10" y="-2080" width="100%" height="400%" />
   <ellipse
      cx="500"
      cy="820"

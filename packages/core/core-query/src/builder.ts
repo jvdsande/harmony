@@ -33,8 +33,8 @@ export default function Builder<T>(Client: IClient) : IQueryBuilder<T> {
         throw new Error('Cannot build a query without a name. Use withName(name)')
       }
       return ({
-        [local.name]: (local.selection || local.args) ? ({
-          alias: local.alias,
+        [local.alias || local.name]: (local.selection || local.args || local.alias) ? ({
+          alias: local.alias ? local.name : undefined,
           args: local.args,
           select: local.selection,
         }) : true,

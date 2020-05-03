@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import classnames from 'classnames';
 import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';
@@ -9,7 +9,7 @@ import styles from './styles.module.css';
 const features = [
   {
     title: <>Data-centric</>,
-    imageUrl: 'img/undraw_data_first.svg',
+    imageUrl: 'img/undraw_data-centric.svg',
     description: (
       <>
         HarmonyJS is a data-first framework: define your models, we take care of the rest
@@ -18,7 +18,7 @@ const features = [
   },
   {
     title: <>Fully JavaScript</>,
-    imageUrl: 'img/undraw_web_development.svg',
+    imageUrl: 'img/undraw_web-development.svg',
     description: (
       <>
         JavaScript in the backend, JavaScript in the frontend: one language to rule them all
@@ -51,16 +51,36 @@ function Feature({imageUrl, title, description}) {
   );
 }
 
+function useDarkThemeDetector() {
+  const [isDarkTheme, setIsDarkTheme] = useState(false)
+
+  const onClickListener = useCallback(() => {
+    const html = document.getElementsByTagName("html")[0]
+    setIsDarkTheme(html.getAttribute('data-theme') === 'dark')
+  })
+
+  useEffect(() => {
+    onClickListener()
+    window.addEventListener("click", onClickListener)
+    return () => window.removeEventListener("click", onClickListener)
+  }, [])
+
+  return isDarkTheme
+}
+
 function Home() {
   const context = useDocusaurusContext();
+  const isDarkTheme = useDarkThemeDetector();
   const {siteConfig = {}} = context;
   return (
     <Layout
       description="Description will go into a meta tag in <head />">
       <header className={classnames('hero hero--primary', styles.heroBanner)}>
         <div className="container">
-          <h1 className="hero__title">{siteConfig.title}</h1>
-          <p className="hero__subtitle">{siteConfig.tagline}</p>
+          <h1 style={{marginBottom: 0}} className="hero__title">
+            <img alt="HarmonyJS" src={isDarkTheme ? "/img/logo-type-black.svg" : "/img/logo-type-white.svg"} height="140px" />
+          </h1>
+          <p className="hero__subtitle">{siteConfig.tagline}{isDarkTheme ? "true" : "false"}</p>
           <div className={styles.buttons}>
             <Link
               className={classnames(
@@ -69,6 +89,7 @@ function Home() {
               to={useBaseUrl('docs/guides')}>
               Get Started
             </Link>
+            &nbsp;&nbsp;
             <Link
               className={classnames(
                 'button button--lg',

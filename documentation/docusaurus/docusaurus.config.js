@@ -8,11 +8,16 @@ module.exports = {
   projectName: 'docusaurus', // Usually your repo name.
   stylesheets: ['https://fonts.googleapis.com/css2?family=Source+Code+Pro&family=Source+Sans+Pro&display=swap'],
   themeConfig: {
+    algolia: {
+      apiKey: '7485e281400e40178252f56e111b14cb',
+      indexName: 'harmonyjs',
+    },
     navbar: {
       title: 'HarmonyJS',
       logo: {
         alt: 'HarmonyJS',
-        src: 'img/logo.svg'
+        src: 'img/logo.svg',
+        srcDark: 'img/logo-white.svg'
       },
       links: [
         {

@@ -99,7 +99,7 @@ type ServerConfig = {
 ```
 > Jump to:
 [`IController`](/plugins/controllers#icontroller),
-[`LoggerConfig`](/api/logger#loggerconfig)
+[`LoggerConfig`](/docs/api/logger#loggerconfig)
 
 #### `ServerConfig::endpoint`
 
@@ -146,7 +146,7 @@ To find more information about Controllers, refer to [their documentation](/plug
 
 #### `ServerConfig::log`
 
-Configuration of the way the server instance logs its actions. Refer to the [Log util documentation](/api/logger#loggerconfig)
+Configuration of the way the server instance logs its actions. Refer to the [Log util documentation](/docs/api/logger#loggerconfig)
 
 <br />
 
@@ -174,7 +174,7 @@ type ServerInstance = {
 ```
 > Jump to:
 [`ServerConfig`](#serverconfig),
-[`ILogger`](/api/logger#ilogger),
+[`ILogger`](/docs/api/logger#ilogger),
 [`FastifyInstance`](https://www.fastify.io/docs/latest/Server/#server-methods),
 [`SocketIO.Server`](https://socket.io/docs/server-api/)
 

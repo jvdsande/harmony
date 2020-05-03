@@ -7,7 +7,10 @@ export type LogLevel = 'error' | 'warn' | 'info' | 'debug' | 'verbose' | 'silly'
 export type LoggerConfig = {
   disabled?: boolean,
   level?: LogLevel,
-  filename?: string,
+  file?: false | string | {
+    filename: string,
+    timestamp?: boolean,
+  },
   console?: boolean | {
     colors?: boolean,
     timestamp?: boolean,
@@ -41,13 +44,14 @@ function Logger({ name, configuration } : { name: string, configuration: LoggerC
   const instance : Partial<ILogger> = ({
     configure(config) {
       const {
-        disabled = false, level = 'info', filename = undefined, console = (process.env.NODE_ENV !== 'production'),
+        disabled = false, level = 'info', file = undefined, console = (process.env.NODE_ENV !== 'production'),
       } = config
 
       NAME_LENGTH = Math.max(NAME_LENGTH, name.length)
 
       const timeFormat = 'YY/MM/DD HH:mm:ss.SSS'
       const useTimestamps = (console && ((typeof console === 'boolean') || console.timestamp !== false))
+      const useFileTimestamps = (file && ((typeof file === 'string') || file.timestamp !== false))
       const useColors = (console && ((typeof console === 'boolean') || console.colors !== false))
 
       const pass = (s: string) => s
@@ -103,7 +107,13 @@ function Logger({ name, configuration } : { name: string, configuration: LoggerC
             .join(' ')
 
           return (
-            `${moment(i.timestamp).format(timeFormat)} ${cut} ${padded} [${fileType[i.level as LogLevel]}] ${i.message}`
+            [
+              useFileTimestamps ? `${moment(i.timestamp).format(timeFormat)} ` : '',
+              `${cut} ${padded}[`,
+              fileType[i.level as LogLevel],
+              `] ${i.message}`,
+            ]
+              .join('')
           )
         },
       )
@@ -117,11 +127,15 @@ function Logger({ name, configuration } : { name: string, configuration: LoggerC
         })
       }
 
-      if (filename || process.env.NODE_ENV === 'production') {
+      if (file !== false && (file || process.env.NODE_ENV === 'production')) {
         local.fileLogger.configure({
           silent: disabled,
           level: level || 'info',
-          transports: [new Winston.transports.File({ filename: filename || 'harmony.log' })],
+          transports: [
+            new Winston.transports.File({
+              filename: ((typeof file === 'string') ? file : (file && file.filename)) || 'harmony.log',
+            }),
+          ],
           format: Winston.format.combine(Winston.format.timestamp(), fileFormat),
         })
       }
@@ -133,7 +147,7 @@ function Logger({ name, configuration } : { name: string, configuration: LoggerC
     log(message: string|(() => string), ...meta: any[]) {
       local.logger.warn('Avoid using the \'log\' command, prefer \'info\', \'debug\' or \'warn\'')
 
-      const levelPass = modes.indexOf(instance.level!) >= modes.indexOf('info')
+      const levelPass = modes.indexOf(instance.level!) >= modes.indexOf('debug')
 
       // eslint-disable-next-line no-nested-ternary
       const messageToLog = typeof message === 'function'

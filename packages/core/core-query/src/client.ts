@@ -26,38 +26,37 @@ const transformJSQ = (q: QueryDefinition, noWrap: boolean = false) => {
         query[name] = content
       } else if (content.select && typeof content.select !== 'object') {
         query[name] = content
-      } else if (content.alias && typeof content.alias !== 'object') {
+      } else if (content.alias && typeof content.alias !== 'string') {
         query[name] = content
       } else {
-        const aliased = content.alias || name
-        query[aliased] = {}
+        query[name] = {}
 
         if (content.alias) {
-          query[aliased].__aliasFor = name
+          query[name].__aliasFor = content.alias
         }
 
         if (content.args) {
-          query[aliased].__args = content.args
-          Object.keys(query[aliased].__args)
+          query[name].__args = content.args
+          Object.keys(query[name].__args)
             .forEach((key) => {
-              if (query[aliased].__args[key] === undefined) {
-                delete query[aliased].__args[key]
+              if (query[name].__args[key] === undefined) {
+                delete query[name].__args[key]
               }
             })
 
-          if (Object.keys(query[aliased].__args).length < 1) {
-            delete query[aliased].__args
+          if (Object.keys(query[name].__args).length < 1) {
+            delete query[name].__args
           }
         }
 
         if (content.select) {
           Object.keys(content.select)
             .forEach((key) => {
-              query[aliased][key] = transformJSQ(content.select![key] as QueryDefinition, true)
-              Object.keys(query[aliased][key])
+              query[name][key] = transformJSQ(content.select![key] as QueryDefinition, true)
+              Object.keys(query[name][key])
                 .forEach((k) => {
-                  if (query[aliased][key][k] === undefined) {
-                    delete query[aliased][key][k]
+                  if (query[name][key][k] === undefined) {
+                    delete query[name][key][k]
                   }
                 })
             })
@@ -70,6 +69,36 @@ const transformJSQ = (q: QueryDefinition, noWrap: boolean = false) => {
   }
 
   return JSQ(query)
+}
+
+const constructUri = ({
+  host,
+  port,
+  path,
+  defaultPath,
+  usePath = true,
+} : {
+  host?: string
+  port?: string|number
+  path?: string
+  defaultPath: string
+  usePath?: boolean
+}) => {
+  const uriHostRaw = host || ''
+  const uriHost = uriHostRaw.endsWith('/') ? uriHostRaw.slice(0, -1) : uriHostRaw
+
+  const uriPort = String(port || '')
+
+  const uriPathRaw = path || defaultPath
+  const uriPath = uriPathRaw.startsWith('/') ? uriPathRaw : `/${uriPathRaw}`
+
+  const uriBase = [uriHost, uriPort].filter((s) => !!s).join(':')
+
+  if (usePath) {
+    return { uri: uriBase + uriPath, path: uriPath }
+  }
+
+  return { uri: uriBase, path: uriPath }
 }
 
 function ClientMaker() : IClient {
@@ -108,33 +137,22 @@ function ClientMaker() : IClient {
   const instance : IClient = ({
     configure(config?: ClientConfiguration) {
       const {
-        endpoint, path, token, fetchPolicy,
+        graphql, socket,
       } = config || {}
-
-      const headers : { authorization?: string } = {}
-      if (token) {
-        headers.authorization = `Bearer ${token}`
-      }
-
-      const host = (endpoint && endpoint.host) || ''
-      const port = (endpoint && endpoint.port)
-
-      const graphql = (path && path.graphql) || '/graphql'
-      const socket = (path && path.socket) || '/harmonyjs-socket'
-
-      const graphqlPath = (graphql.startsWith('/') ? '' : '/') + graphql
-      const socketPath = (socket.startsWith('/') ? '' : '/') + socket
-
-      const portPath = (port ? `:${port}` : '')
-      const hostPath = (host.endsWith('/') ? host.slice(0, -1) : host)
-
-      const clientUri : string = hostPath + portPath + graphqlPath
-      const socketUri = hostPath + portPath
-
-      local.fetchPolicy = fetchPolicy || 'network-only'
 
       instance.close()
 
+      const { uri: clientUri } = constructUri({
+        ...(graphql || {}),
+        defaultPath: '/graphql',
+      })
+      const { uri: socketUri, path: socketPath } = constructUri({
+        ...(socket || {}),
+        defaultPath: '/harmonyjs-socket',
+        usePath: false,
+      })
+
+      local.fetchPolicy = (graphql && graphql.fetchPolicy) || 'network-only'
       local.socket = SocketIO(socketUri, { path: socketPath })
 
       // Restore subscriptions
@@ -147,7 +165,7 @@ function ClientMaker() : IClient {
 
       local.client = new ApolloBoost({
         uri: clientUri,
-        headers,
+        headers: (graphql && graphql.headers) || {},
       })
 
       return instance

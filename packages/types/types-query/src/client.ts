@@ -2,16 +2,20 @@ import { IQueryBuilder } from 'builder'
 import { QueryDefinition } from 'query'
 
 export type ClientConfiguration = {
-  token?: string | null
-  endpoint?: {
-    port?: string
+  graphql?: {
     host: string
+    port?: string|number
+    path?: string
+    headers?: {
+      [key: string]: string
+    }
+    fetchPolicy?: 'network-only' | 'cache-first'
   }
-  path?: {
-    graphql?: string
-    socket?: string
+  socket?: {
+    host: string
+    port?: string|number
+    path?: string
   }
-  fetchPolicy?: 'network-only' | 'cache-first'
 }
 
 export interface IClient {

@@ -25,3 +25,15 @@
   margin: 0 calc(-1 * var(--ifm-pre-padding));
   padding: 0 var(--ifm-pre-padding);
 }
+
+.navbar__logo {
+  margin-bottom: 0.5rem;
+}
+
+.contents .contents__link {
+  white-space: nowrap;
+}
+
+.tableOfContents_node_modules-\@docusaurus-theme-classic-src-theme-DocItem- {
+  overflow-x: hidden;
+}
