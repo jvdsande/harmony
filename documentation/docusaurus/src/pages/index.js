@@ -74,7 +74,7 @@ function Home() {
   const {siteConfig = {}} = context;
   return (
     <Layout
-      description="Description will go into a meta tag in <head />">
+      description="HarmonyJS Documentation Website">
       <header className={classnames('hero hero--primary', styles.heroBanner)}>
         <div className="container">
           <h1 style={{marginBottom: 0}} className="hero__title">
