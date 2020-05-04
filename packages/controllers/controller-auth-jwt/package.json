@@ -1,6 +1,6 @@
 {
   "name": "@harmonyjs/controller-auth-jwt",
-  "version": "1.0.0-rc2.4",
+  "version": "1.0.0-rc2.5",
   "description": "Authentication controller for Harmony using JWT",
   "main": "index.js",
   "publishConfig": {
