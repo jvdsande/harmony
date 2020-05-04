@@ -39,12 +39,11 @@
   "author": "Jérémie van der Sande <jeremie.vandersande@gmail.com>",
   "license": "ISC",
   "devDependencies": {
-    "@types/cookie": "^0.3.3",
-    "@types/cookies": "^0.7.4",
-    "@types/http-proxy": "^1.17.3",
     "typescript": "^3.7.5"
   },
   "dependencies": {
+    "@types/cookie": "^0.3.3",
+    "@types/http-proxy": "^1.17.3",
     "fastify-http-proxy": "^3.0.0",
     "fastify-static": "^2.6.0",
     "hapi-react-views": "^10.1.1",
