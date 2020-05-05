@@ -1,9 +1,8 @@
 import { ILogger } from '@harmonyjs/logger'
-import { GraphQLScalarType } from 'graphql'
 
 import { SanitizedModel } from 'model'
-import { StringSerializable } from 'property'
 import { IEvents } from './events'
+import { Scalar } from './configuration'
 
 
 type InitArgs = { models: SanitizedModel[], events: IEvents, logger: ILogger }
@@ -50,7 +49,7 @@ type DeleteManyResolverArgs<T> = {
 
 export interface IAdapter<T = string> {
   name: string
-  scalar?: GraphQLScalarType
+  scalar?: Scalar
 
   initialize(args : InitArgs) : Promise<void>
   close() : Promise<void>

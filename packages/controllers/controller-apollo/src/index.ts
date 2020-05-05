@@ -13,6 +13,7 @@ const ControllerApollo : Controller<{
   path: string
   enablePlayground?: boolean
   mock?: boolean
+  mocks?: Config['mocks']
 
   schema: string
   resolvers: GraphQLResolverMap
@@ -33,6 +34,7 @@ const ControllerApollo : Controller<{
         schema,
         resolvers,
         mock,
+        mocks,
 
         context,
         authentication,
@@ -50,7 +52,7 @@ const ControllerApollo : Controller<{
         schema: buildFederatedSchema([{ typeDefs, resolvers }]),
         playground: !!enablePlayground,
         introspection: !!enablePlayground,
-        mocks: mock,
+        mocks: mocks || mock,
         mockEntireSchema: mock,
         context: (args) => {
           const reqContext : Record<string, any> = {}

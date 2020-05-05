@@ -4,6 +4,7 @@ import {
   ScopedInternalResolver, UnscopedInternalResolver, InternalResolver, Resolver, ReferenceResolver, Scope, Transform,
   IAdapter, IProperty, IPropertySchema,
   SanitizedModel, ScopedModelResolvers,
+  Scalar,
 } from '@harmonyjs/types-persistence'
 import { ApolloError, ValidationError } from 'apollo-server-core'
 import { GraphQLResolveInfo, GraphQLScalarType } from 'graphql'
@@ -126,7 +127,7 @@ export function getResolvers({
   models,
 } : {
   internalResolvers: { [model: string]: InternalResolvers },
-  scalars: { [model: string]: GraphQLScalarType },
+  scalars: { [model: string]: Scalar },
   models: SanitizedModel[]
 }) {
   const resolvers: { [key: string]: any } = {}
@@ -323,8 +324,11 @@ export function getResolvers({
   })
 
   resolvers.JSON = GraphQLJson
+  resolvers.JSON.name = 'JSON'
   resolvers.Date = GraphQLDate
+  resolvers.Date.name = 'Date'
   resolvers.Number = GraphQLLong
+  resolvers.Number.name = 'Number'
 
   return resolvers
 }

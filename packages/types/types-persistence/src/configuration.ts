@@ -1,11 +1,9 @@
-import { GraphQLResolverMap } from 'apollo-graphql'
 import { FastifyReply, FastifyRequest, RouteOptions } from 'fastify'
 import { Config } from '@harmonyjs/apollo-fastify'
 
 import { ILogger, LoggerConfig } from '@harmonyjs/logger'
 import { Controller } from '@harmonyjs/types-server'
 import { GraphQLScalarType } from 'graphql'
-import { Schema } from 'property'
 
 import { ModelResolvers } from 'resolver'
 import {
@@ -15,12 +13,14 @@ import {
 import { IAdapter } from 'adapter'
 import { IEvents } from './events'
 
+export type Scalar = GraphQLScalarType & { mock?(): any }
+
 export type PersistenceConfig<
   Models extends {[model: string]: Model} = any
 > = {
   models: Models
   adapters: {[name: string]: IAdapter}
-  scalars: {[name: string]: GraphQLScalarType}
+  scalars: {[name: string]: Scalar}
   defaultAdapter: string
   log: LoggerConfig
   strict: boolean

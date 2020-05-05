@@ -60,10 +60,10 @@ run()
 If we now start up our application again, we will see our Persistence instance being initialized:
 
 ```shell script {1-3}
-20/05/05 14:59:02.300 Persistence      [WARNING] No default adapter was specified. Will fallback to adapter 'mock'
-20/05/05 14:59:02.303 Persistence      [INFO   ] Initializing Persistence instance with 0 models
-20/05/05 14:59:02.304 Persistence      [INFO   ] Adapters: [] - default: mock
-20/05/05 14:59:02.305 Server           [INFO   ] Powered by
+20/01/01 12:00:00:000 Persistence      [WARNING] No default adapter was specified. Will fallback to adapter 'mock'
+20/01/01 12:00:00:000 Persistence      [INFO   ] Initializing Persistence instance with 0 models
+20/01/01 12:00:00:000 Persistence      [INFO   ] Adapters: [] - default: mock
+20/01/01 12:00:00:000 Server           [INFO   ] Powered by
    _    _
   | |  | |
   | |__| | __ _ _ __ _ __ ___   ___  _ __  _   _
@@ -72,9 +72,9 @@ If we now start up our application again, we will see our Persistence instance b
   |_|  |_|\__,_|_|  |_| |_| |_|\___/|_| |_|\__, |
                                             __/ |
                                            |___/
-20/05/05 14:59:02.305 Server           [INFO   ] Initializing Fastify Server
-20/05/05 14:59:02.309 Server           [INFO   ] Initializing Socket.IO layer
-20/05/05 14:59:02.324 Server           [INFO   ] Main server created on port localhost:3000
+20/01/01 12:00:00:000 Server           [INFO   ] Initializing Fastify Server
+20/01/01 12:00:00:000 Server           [INFO   ] Initializing Socket.IO layer
+20/01/01 12:00:00:000 Server           [INFO   ] Main server created on port localhost:3000
 ```
 
 During its initialization, `Persistence` gives us a bunch of information about what it accomplishes
@@ -127,10 +127,10 @@ add it to our server by adding it to the `controllers` array in its config:
 If we now restart our application:
 
 ```shell script {15-17}
-20/05/05 15:31:56.007 Persistence      [WARNING] No default adapter was specified. Will fallback to adapter 'mock'
-20/05/05 15:31:56.011 Persistence      [INFO   ] Initializing Persistence instance with 0 models
-20/05/05 15:31:56.012 Persistence      [INFO   ] Adapters: [] - default: mock
-20/05/05 15:31:56.013 Server           [INFO   ] Powered by
+20/01/01 12:00:00:000 Persistence      [WARNING] No default adapter was specified. Will fallback to adapter 'mock'
+20/01/01 12:00:00:000 Persistence      [INFO   ] Initializing Persistence instance with 0 models
+20/01/01 12:00:00:000 Persistence      [INFO   ] Adapters: [] - default: mock
+20/01/01 12:00:00:000 Server           [INFO   ] Powered by
    _    _
   | |  | |
   | |__| | __ _ _ __ _ __ ___   ___  _ __  _   _
@@ -139,12 +139,12 @@ If we now restart our application:
   |_|  |_|\__,_|_|  |_| |_| |_|\___/|_| |_|\__, |
                                             __/ |
                                            |___/
-20/05/05 15:31:56.013 Server           [INFO   ] Initializing Fastify Server
-20/05/05 15:31:56.017 Server           [INFO   ] Initializing Socket.IO layer
-20/05/05 15:31:56.031 ControllerGraphQL [INFO   ] Registering GraphQL endpoint...
-20/05/05 15:31:56.065 ControllerGraphQL [INFO   ] GraphQL endpoint at /
-20/05/05 15:31:56.065 ControllerGraphQL [INFO   ] GraphQL playground at /
-20/05/05 15:31:56.092 Server            [INFO   ] Main server created on port localhost:3000
+20/01/01 12:00:00:000 Server           [INFO   ] Initializing Fastify Server
+20/01/01 12:00:00:000 Server           [INFO   ] Initializing Socket.IO layer
+20/01/01 12:00:00:000 ControllerGraphQL [INFO   ] Registering GraphQL endpoint...
+20/01/01 12:00:00:000 ControllerGraphQL [INFO   ] GraphQL endpoint at /
+20/01/01 12:00:00:000 ControllerGraphQL [INFO   ] GraphQL playground at /
+20/01/01 12:00:00:000 Server            [INFO   ] Main server created on port localhost:3000
 ```
 
 We can see that the newly added controller added two new endpoints, both at path `'/'`.
@@ -235,4 +235,13 @@ async function run() {
       console: true,
     }
   })
+```
+
+If we now relaunch our server, we will see the model being imported by Persistence:
+
+```shell script {3}
+20/01/01 12:00:00:000 Persistence      [WARNING] No default adapter was specified. Will fallback to adapter 'mock'
+20/01/01 12:00:00:000 Persistence      [INFO   ] Initializing Persistence instance with 1 models
+20/01/01 12:00:00:000 Persistence      [INFO   ] Model 'User' imported.
+20/01/01 12:00:00:000 Persistence      [INFO   ] Adapters: [] - default: mock
 ```

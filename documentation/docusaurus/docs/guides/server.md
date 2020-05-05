@@ -112,7 +112,7 @@ npm start
 > server@1.0.0 start /.../harmony-todolist/server
 > node -r esm src/index.js
 
-20/05/05 14:41:15.862 Server           [INFO   ] Powered by
+20/01/01 12:00:00:000 Server           [INFO   ] Powered by
    _    _
   | |  | |
   | |__| | __ _ _ __ _ __ ___   ___  _ __  _   _
@@ -121,9 +121,9 @@ npm start
   |_|  |_|\__,_|_|  |_| |_| |_|\___/|_| |_|\__, |
                                             __/ |
                                            |___/
-20/05/05 14:41:15.865 Server           [INFO   ] Initializing Fastify Server
-20/05/05 14:41:15.869 Server           [INFO   ] Initializing Socket.IO layer
-20/05/05 14:41:15.884 Server           [INFO   ] Main server created on port localhost:3000
+20/01/01 12:00:00:000 Server           [INFO   ] Initializing Fastify Server
+20/01/01 12:00:00:000 Server           [INFO   ] Initializing Socket.IO layer
+20/01/01 12:00:00:000 Server           [INFO   ] Main server created on port localhost:3000
 ```
 
 And just like that, we have our server up and running, ready to be configured to serve our

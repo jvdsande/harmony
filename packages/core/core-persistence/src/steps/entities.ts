@@ -3,8 +3,9 @@ import {
   SanitizedModel, Model,
   PersistenceConfig,
   IEvents, IAdapter,
+  Scalar,
 } from '@harmonyjs/types-persistence'
-import { GraphQLID, GraphQLScalarType } from 'graphql'
+import { GraphQLID } from 'graphql'
 
 import { sanitizeModel } from 'utils/model'
 import { extractModelName } from 'utils/property/utils'
@@ -33,7 +34,7 @@ type InitializeAdaptersArgs = {
   adapters: { [key: string]: IAdapter }
   models: SanitizedModel[]
   events: IEvents
-  scalars: { [key: string]: GraphQLScalarType }
+  scalars: { [key: string]: Scalar }
   logger: ILogger
 }
 export async function initializeAdapters({
@@ -47,6 +48,8 @@ export async function initializeAdapters({
   if (!scalars[`${extractModelName(defaultAdapter)}ID`]) {
     // eslint-disable-next-line no-param-reassign
     scalars[`${extractModelName(defaultAdapter)}ID`] = GraphQLID
+    // eslint-disable-next-line no-param-reassign
+    scalars[`${extractModelName(defaultAdapter)}ID`].mock = () => 'mocked-id'
   }
 
   // Initialize adapters
@@ -60,11 +63,18 @@ export async function initializeAdapters({
           if (!scalars[`${extractModelName(adapterName)}ID`]) {
             // eslint-disable-next-line no-param-reassign
             scalars[`${extractModelName(adapterName)}ID`] = GraphQLID
+            // eslint-disable-next-line no-param-reassign
+            scalars[`${extractModelName(adapterName)}ID`].mock = () => 'mocked-id'
           }
 
           if (adapter.scalar) {
             // eslint-disable-next-line no-param-reassign
             scalars[`${extractModelName(adapterName)}ID`] = adapter.scalar
+
+            if (!adapter.scalar.mock) {
+              // eslint-disable-next-line no-param-reassign
+              scalars[`${extractModelName(adapterName)}ID`].mock = () => 'mocked-id'
+            }
           }
 
           return adapter.initialize({

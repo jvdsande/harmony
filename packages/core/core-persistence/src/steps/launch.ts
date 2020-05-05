@@ -3,10 +3,9 @@ import ControllerPersistenceEvents from '@harmonyjs/controller-persistence-event
 
 import {
   SanitizedModel, PersistenceInstance, IAdapter, InternalResolvers, AliasCrudEnum,
-  ModelResolvers, Model, PersistenceContext,
+  ModelResolvers, Model, PersistenceContext, Scalar,
 } from '@harmonyjs/types-persistence'
 import { FastifyReply, FastifyRequest } from 'fastify'
-import { GraphQLScalarType } from 'graphql'
 
 import { printSchema } from 'utils/model'
 import {
@@ -17,7 +16,7 @@ export async function defineSchema({ models, scalars } : { models: SanitizedMode
   return `# Harmony Scalars
 scalar Date
 scalar JSON
-scalar Number
+scalar Long
 
 # Custom Scalars
 ${scalars.map((s) => `scalar ${s}`).join('\n')}
@@ -100,8 +99,21 @@ export async function defineControllers({
   instance: PersistenceInstance<any>
   internalResolvers: Record<string, InternalResolvers>
   internalContext: PersistenceContext
-  scalars: Record<string, GraphQLScalarType>
+  scalars: Record<string, Scalar>
 }) {
+  const mocks : {[key: string]: any} = {}
+  const resolvers = getResolvers({ internalResolvers, models: instance.models, scalars })
+
+  // Add mock function for each custom scalar
+  Object.keys(scalars).forEach((s) => {
+    mocks[s] = scalars[s].mock || (() => '')
+  })
+
+  // Add mock function for default scalars
+  mocks.Date = () => new Date().toISOString()
+  mocks.JSON = () => ({ hello: 'world' })
+  mocks.Number = () => 42
+
   function ControllerGraphQL({
     path,
     enablePlayground,
@@ -118,8 +130,9 @@ export async function defineControllers({
           external: ({ request, reply }) => resolveContext({ request, reply, context: instance.context }),
         },
         schema,
-        resolvers: getResolvers({ internalResolvers, models: instance.models, scalars }),
-        mock: !instance.configuration.defaultAdapter,
+        resolvers,
+        mock: Object.keys(instance.configuration.adapters).length < 1,
+        mocks,
         authentication,
         routeConfig,
         apolloConfig,

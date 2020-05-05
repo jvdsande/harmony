@@ -119,7 +119,7 @@ The `PersistenceConfig` object allows us to configure a Persistence instance. He
 type PersistenceConfig = {
   models: {[name: string]: Model}
   adapters: {[name: string]: IAdapter}
-  scalars: {[name: string]: GraphQLScalarType}
+  scalars: {[name: string]: Scalar}
   defaultAdapter: string
   strict: boolean
   log: LoggerConfig
@@ -128,7 +128,7 @@ type PersistenceConfig = {
 > Jump to:
 [`Model`](#model),
 [`IAdapter`](/plugins/adapters#iadapter),
-[`GraphQLScalarType`](https://graphql.org/graphql-js/type/#graphqlscalartype),
+[`Scalar`](#scalar),
 [`LoggerConfig`](/docs/api/logger#loggerconfig)
 
 #### `PersistenceConfig::models`
@@ -1316,3 +1316,19 @@ extended with a few aliases for some CRUD actions.
 - `updateMany` (aliased `editMany`): update an array of documents based on their IDs
 - `delete`: delete a document based on its ID
 - `deleteMany`: delete an array of documents based on their IDs
+
+
+<br />
+
+---
+
+### `Scalar`
+
+This last type is a variation of the default `GraphQLScalarType`, with an added optional `mock` function for mocking
+the schema during test and early development:
+
+```ts
+type Scalar = GraphQLScalarType & { mock?(): any }
+```
+> Jump to:
+[`GraphQLScalarType`](https://graphql.org/graphql-js/type/#graphqlscalartype)
