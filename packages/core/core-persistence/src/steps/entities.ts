@@ -43,6 +43,12 @@ export async function initializeAdapters({
 
   logger.info(`Adapters: [${Object.keys(adapters)}] - default: ${defaultAdapter || 'mock'}`)
 
+  // Create the scalar type for defaultAdapter -- useful especially for 'mock'
+  if (!scalars[`${extractModelName(defaultAdapter)}ID`]) {
+    // eslint-disable-next-line no-param-reassign
+    scalars[`${extractModelName(defaultAdapter)}ID`] = GraphQLID
+  }
+
   // Initialize adapters
   try {
     await Promise.all(
