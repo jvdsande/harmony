@@ -1,6 +1,6 @@
 {
   "name": "@harmonyjs/controller-auth-session",
-  "version": "1.0.0-rc2.5",
+  "version": "1.0.0-rc2.6",
   "description": "Authentication controller for Harmony using Session",
   "main": "index.js",
   "publishConfig": {
