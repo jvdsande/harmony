@@ -110,7 +110,7 @@ export async function defineControllers({
   })
 
   // Add mock function for default scalars
-  mocks.Date = () => new Date().toISOString()
+  mocks.Date = () => new Date()
   mocks.JSON = () => ({ hello: 'world' })
   mocks.Number = () => 42
 
