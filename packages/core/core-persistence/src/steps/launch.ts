@@ -16,7 +16,7 @@ export async function defineSchema({ models, scalars } : { models: SanitizedMode
   return `# Harmony Scalars
 scalar Date
 scalar JSON
-scalar Long
+scalar Number
 
 # Custom Scalars
 ${scalars.map((s) => `scalar ${s}`).join('\n')}
