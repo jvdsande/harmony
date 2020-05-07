@@ -395,7 +395,11 @@ export function printSchema({ model }: { model: SanitizedModel }) {
         if (mode.includes(PropertyMode.INPUT) || mode.length < 1) {
           inputFilterSchema[key] = schema[key].clone()
           inputCreateSchema[key] = schema[key].clone()
-          inputUpdateSchema[key] = schema[key].clone()
+          inputUpdateSchema[key] = schema[key].clone();
+
+          // Mark all inputUpdate and inputFilter fields as optional
+          (inputFilterSchema[key] as IPropertyUndiscriminated).__configuration.required = false;
+          (inputUpdateSchema[key] as IPropertyUndiscriminated).__configuration.required = false
         }
       })
   }

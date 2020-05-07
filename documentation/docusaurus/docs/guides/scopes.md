@@ -311,7 +311,7 @@ const todoEditScope = async ({ args, context: { authentication }, resolvers: { L
   const list = await List.read({
     filter: {
       _id: args.record.list,
-      _and: [
+      _or: [
         // Either I'm the owner
         { owner: connected.user },
         // Or the list was shared with me (at least one value of "sharedTo" is me)

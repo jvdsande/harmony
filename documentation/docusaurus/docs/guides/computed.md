@@ -88,7 +88,7 @@ import {Types} from '@harmonyjs/persistence'
 export default {
   fields: {
     todos: {
-      type: Types.ReversedReference.of('Todo').on('list'),
+      type: [Types.ReversedReference.of('Todo').on('list')],
     },
   },
 }
@@ -96,6 +96,8 @@ export default {
 
 And just like that, we now have a `todos` field on each of our `List` element, actively fetching the
 corresponding todos every time it's requested.
+
+We used here an _array_ of `ReversedReference` to allow for a one-to-many relationship.
 
 As usual, don't forget to inject the computed fields into your model:
 
@@ -168,7 +170,7 @@ import {Types} from '@harmonyjs/persistence'
 export default {
   fields: {
     todos: {
-      type: Types.ReversedReference.of('Todo').on('list'),
+      type: [Types.ReversedReference.of('Todo').on('list')],
     },
     info: {
       type: {
@@ -196,7 +198,7 @@ import {Types} from '@harmonyjs/persistence'
 export default {
   fields: {
     todos: {
-      type: Types.ReversedReference.of('Todo').on('list'),
+      type: [Types.ReversedReference.of('Todo').on('list')],
     },
     info: {
       type: {
@@ -278,7 +280,7 @@ import { HttpErrors } from '@harmonyjs/server'
 export default {
   fields: {
     todos: {
-      type: Types.ReversedReference.of('Todo').on('list'),
+      type: [Types.ReversedReference.of('Todo').on('list')],
     },
     info: {
       type: {
