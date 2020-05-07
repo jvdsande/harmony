@@ -1,6 +1,6 @@
 ---
 title: Creating a web server
-sidebar_label: Creating a web server
+sidebar_label: Tutorial - Creating a web server
 ---
 
 The first step into building a web application is creating our web-server.
@@ -56,7 +56,7 @@ Go ahead and create both the folder and the file:
 
 ```shell script
 mkdir src
-touch index.js
+touch src/index.js
 ```
 
 ## Step 2 - Add `@harmonyjs/server`
@@ -128,6 +128,8 @@ npm start
 
 And just like that, we have our server up and running, ready to be configured to serve our
 data.
+
+## Going further
 
 The next step will now be to add a _persistence layer_, in other terms configure our data by 
 describing their format and how to access them.

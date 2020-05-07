@@ -14,6 +14,15 @@
   --ifm-color-primary-light: #8d86ff;
   --ifm-color-primary-lighter: #9e98ff;
   --ifm-color-primary-lightest: #d0cdff;
+
+  --ifm-color-danger: #eb6b5a;
+  --ifm-color-danger-dark: #e7513d;
+  --ifm-color-danger-darker: #e6442f;
+  --ifm-color-danger-darkest: #cb2e19;
+  --ifm-color-danger-light: #ef8577;
+  --ifm-color-danger-lighter: #f09285;
+  --ifm-color-danger-lightest: #f6b9b1;
+
   --ifm-code-font-size: 95%;
   --ifm-font-family-base: 'Source Sans Pro', sans-serif;
   --ifm-font-family-monospace: 'Source Code Pro', sans-serif;
@@ -35,5 +44,6 @@
 }
 
 .tableOfContents_node_modules-\@docusaurus-theme-classic-src-theme-DocItem- {
-  overflow-x: hidden;
+  width: auto;
+  overflow-y: visible;
 }

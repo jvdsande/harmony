@@ -15,7 +15,7 @@ Typescript types used in the framework.
 
 ## `@harmonyjs/server`
 
-The `@harmonyjs/server` package exposes the API needed to bootstrap an Harmony application. It's the cornerstone of the
+The `@harmonyjs/server` package exposes the API needed to bootstrap a Harmony application. It's the cornerstone of the
 server part. Find its full API [here](/docs/api/server).
 
 

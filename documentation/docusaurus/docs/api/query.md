@@ -3,7 +3,7 @@ title: HarmonyJS Query
 sidebar_label: "@harmonyjs/query"
 ---
 
-`@harmonyjs/query` is a helper for building frontend backed by an HarmonyJS server. It handles creating and running
+`@harmonyjs/query` is a helper for building frontend backed by a HarmonyJS server. It handles creating and running
 GraphQL queries through simple-to-use builders, as well as subscribing to Socket.IO events for reactivity.
 
 ## Default export

@@ -15,7 +15,10 @@ The logs are formatted using timestamps and a prefix specific to each logger.
 
 This factory creates a new `ILogger` instance. 
 
-_Note: `@harmonyjs/logger` is intended for server-side use only._
+
+:::note
+`@harmonyjs/logger` is intended for server-side use only.
+:::
 
 ```ts
 Logger({ 

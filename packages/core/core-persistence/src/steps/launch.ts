@@ -101,6 +101,7 @@ export async function defineControllers({
   internalContext: PersistenceContext
   scalars: Record<string, Scalar>
 }) {
+  const mock = Object.keys(instance.configuration.adapters).length < 1
   const mocks : {[key: string]: any} = {}
   const resolvers = getResolvers({ internalResolvers, models: instance.models, scalars })
 
@@ -131,8 +132,8 @@ export async function defineControllers({
         },
         schema,
         resolvers,
-        mock: Object.keys(instance.configuration.adapters).length < 1,
-        mocks,
+        mock,
+        mocks: mock ? mocks : undefined,
         authentication,
         routeConfig,
         apolloConfig,

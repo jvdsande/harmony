@@ -80,7 +80,7 @@ function Home() {
           <h1 style={{marginBottom: 0}} className="hero__title">
             <img alt="HarmonyJS" src={isDarkTheme ? "/img/logo-type-black.svg" : "/img/logo-type-white.svg"} height="140px" />
           </h1>
-          <p className="hero__subtitle">{siteConfig.tagline}{isDarkTheme ? "true" : "false"}</p>
+          <p className="hero__subtitle">{siteConfig.tagline}</p>
           <div className={styles.buttons}>
             <Link
               className={classnames(
@@ -92,7 +92,7 @@ function Home() {
             &nbsp;&nbsp;
             <Link
               className={classnames(
-                'button button--lg',
+                'button button--primary button--lg',
               )}
               to={useBaseUrl('docs/api')}>
               API Reference

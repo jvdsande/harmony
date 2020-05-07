@@ -1,11 +1,12 @@
 import Mongoose, { Connection, SchemaType, SchemaTypes } from 'mongoose'
 import Voca from 'voca'
 import { GraphQLObjectId } from 'graphql-objectid-scalar'
+import { GraphQLScalarType } from 'graphql'
 
 import { ILogger } from '@harmonyjs/logger'
 
 import {
-  Adapter, IAdapter, IEvents, IPropertySchema, SanitizedModel,
+  Adapter, IAdapter, IEvents, IPropertySchema, SanitizedModel, Scalar,
 } from '@harmonyjs/types-persistence'
 
 import { AdapterMongooseConfiguration } from 'configuration'
@@ -29,6 +30,9 @@ type ExposedVariables = {
   connection: Connection
 }
 
+const scalar : Scalar = new GraphQLScalarType(GraphQLObjectId.toConfig())
+scalar.mock = () => '1234567890abcdef12345678'
+
 const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> = function AdapterMongoose(config) {
   const local : LocalVariables = {
     schemas: {},
@@ -40,7 +44,7 @@ const AdapterMongoose : Adapter<AdapterMongooseConfiguration, ExposedVariables> 
     models: {},
     connection: Mongoose.createConnection(),
 
-    scalar: GraphQLObjectId,
+    scalar,
 
     async initialize({ models, events, logger } : {
       models: SanitizedModel[],

@@ -1,6 +1,6 @@
 ---
 title: Adding a persistence layer
-sidebar_label: Adding a persistence layer
+sidebar_label: Tutorial - Adding a persistence layer
 ---
 
 Now that our server is starting, we need to configure our persistence layer in order to start
@@ -202,7 +202,7 @@ In our case, it will look as follows:
 import { Types, PropertyMode } from '@harmonyjs/persistence'
 
 export default {
-  email: Types.String.required,
+  email: Types.String.required.indexed.unique,
   password: Types.String.required.withMode(PropertyMode.INPUT)
 }
 ```
@@ -211,8 +211,8 @@ We start by importing the `Types` helper, alongside the `PropertyMode` enum that
 the password as write-only.
 
 Then we define our schema:
-* An `email` field of type `String`, marked as required
-* A `password` field also of type `String` and marker as required, specifically marked as `INPUT` only.
+* An `email` field of type `String`, marked as required, indexed and unique
+* A `password` field also of type `String` and marked as required, specifically marked as `INPUT` only.
 
 Now that our model is ready, we still need to inject it to our Persistence instance. This is done
 through the `models` map of the Persistence configuration object, in `index.js`:
@@ -245,3 +245,180 @@ If we now relaunch our server, we will see the model being imported by Persisten
 20/01/01 12:00:00:000 Persistence      [INFO   ] Model 'User' imported.
 20/01/01 12:00:00:000 Persistence      [INFO   ] Adapters: [] - default: mock
 ```
+
+We can already see our new model appearing in the Playground. We can even play around with
+some sample queries. For instance, try running the following query in the Playground:
+
+```graphql
+query {
+  userList {
+    _id
+    email
+  }
+}
+```
+
+You should get the following output:
+
+```json
+{
+  "data": {
+    "userList": [
+      {
+        "_id": "mocked-id",
+        "email": "Hello World"
+      },
+      {
+        "_id": "mocked-id",
+        "email": "Hello World"
+      }
+    ]
+  }
+}
+```
+
+> _But wait! Where is that data coming from?_
+
+When starting a Persistence instance with no database adapter, HarmonyJS automatically _mocks_
+the schema, returning default values for each type. This way, it is possible to validate the
+schema as early as possible, without needing actual data - nor even an actual database!
+
+Feel free to look into the various queries, mutations and types Harmony has generated based on 
+the `User` model. All the basics CRUD operations are there: Read, List, Count, Create, Update, Delete.
+
+## Step 5 - Adding the rest of our models
+
+Now that we have our first model, let's apply the same logic to add our three other models.
+
+**List model**
+
+A list uses the following fields:
+ * A name
+ * A description
+ * A link to its owner
+ * A list of users it was shared to
+ 
+And here is how we would create this as a Harmony schema:
+
+```js title="models/list/schema.js"
+import { Types } from '@harmonyjs/persistence'
+
+export default {
+  name: Types.String.required,
+  description: Types.String,
+  owner: Types.Reference.of('User').required,
+  sharedTo: [Types.Reference.of('User')],
+}
+```
+
+Notice how we used the `Types.Reference` special type to create a link between our two models.
+
+The `sharedTo` field also uses the array shorthand syntax to describe a field holding an
+array of references.
+
+
+**Todo model**
+
+A todo is made of the following fields:
+ * A description
+ * A status (done/not done)
+ * A link to the list it is part of
+
+Its Harmony schema is as follows:
+
+```js title="models/todo/schema.js"
+import { Types } from '@harmonyjs/persistence'
+
+export default {
+  description: Types.String.required,
+  status: Types.Boolean,
+  list: Types.Reference.of('List').required,
+}
+```
+
+
+**Comment model**
+
+Lastly, we want to be able to comment on todos. Comments have the following structure:
+ * The content of the comment
+ * The date of the comment
+ * A link to the author
+ * A link to the todo
+
+Or, written in Harmony:
+
+```js title="model/comment/schema.js"
+import { Types } from '@harmonyjs/persistence'
+
+export default {
+  content: Types.String.required,
+  date: Types.Date.required,
+  author: Types.Reference.of('User'),
+  todo: Types.Reference.of('Todo'),
+}
+```
+
+
+And now that we have all our models, we simply add them all to the Persistence initialization:
+
+```js title="index.js" {5-7,16-18}
+import Server from '@harmonyjs/server'
+import Persistence from '@harmonyjs/persistence'
+
+import User from './models/user'
+import List from './models/list'
+import Todo from './models/todo'
+import Comment from './models/comment'
+
+async function run() {
+  const persistence = new Persistence()
+  const server = Server()
+
+  await persistence.initialize({
+    models: {
+      User,
+      List,
+      Todo,
+      Comment,
+    },
+    log: {
+      console: true,
+    }
+  })
+```
+
+Back to the Playground, we can now have access to our complete data-structure.
+
+Thanks to the _reference_ fields we used to build our models, we can access deeply-linked
+data easily through one query using GraphQL. Try the following query, for instance:
+
+```graphql
+query {
+  comment {
+    content
+    author {
+      email
+    }
+    todo {
+      description
+      list {
+        name
+        owner {
+          email
+        }
+      }
+    }
+  }
+}
+```
+
+This query spans our four models, following various links that we defined.
+
+## Going further 
+
+Now that our data structure is complete, we need to polish our API before starting developing
+the client. Here are the elements still missing:
+
+ * Authentication logic
+ * Database connection
+ * A few computed fields to enrich our data
