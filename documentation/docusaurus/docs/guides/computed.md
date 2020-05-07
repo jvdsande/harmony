@@ -88,7 +88,7 @@ import {Types} from '@harmonyjs/persistence'
 export default {
   fields: {
     todos: {
-      type: Types.ReversedReference.of('List').on('list'),
+      type: Types.ReversedReference.of('Todo').on('list'),
     },
   },
 }
@@ -168,7 +168,7 @@ import {Types} from '@harmonyjs/persistence'
 export default {
   fields: {
     todos: {
-      type: Types.ReversedReference.of('List').on('list'),
+      type: Types.ReversedReference.of('Todo').on('list'),
     },
     info: {
       type: {
@@ -196,7 +196,7 @@ import {Types} from '@harmonyjs/persistence'
 export default {
   fields: {
     todos: {
-      type: Types.ReversedReference.of('List').on('list'),
+      type: Types.ReversedReference.of('Todo').on('list'),
     },
     info: {
       type: {
@@ -278,7 +278,7 @@ import { HttpErrors } from '@harmonyjs/server'
 export default {
   fields: {
     todos: {
-      type: Types.ReversedReference.of('List').on('list'),
+      type: Types.ReversedReference.of('Todo').on('list'),
     },
     info: {
       type: {

@@ -4,7 +4,7 @@ import {
   ScopedInternalResolver, UnscopedInternalResolver, InternalResolver, Resolver, ReferenceResolver, Scope, Transform,
   IAdapter, IProperty, IPropertySchema,
   SanitizedModel, ScopedModelResolvers,
-  Scalar,
+  Scalar, ModelResolvers,
 } from '@harmonyjs/types-persistence'
 import { ApolloError, ValidationError } from 'apollo-server-core'
 import { GraphQLResolveInfo, GraphQLScalarType } from 'graphql'
@@ -340,6 +340,7 @@ function makeResolver({
   type,
   scope,
   transform,
+  resolvers,
 } : {
   field: string,
   adapter?: IAdapter,
@@ -347,6 +348,7 @@ function makeResolver({
   type: CrudEnum,
   scope?: Scope<any, any, any, any, false>,
   transform?: Transform<any, any, any, any, any, false>,
+  resolvers: {[model: string]: ModelResolvers<any>},
 }) : ScopedInternalResolver {
   if (!adapter) {
     return async () => null
@@ -375,6 +377,7 @@ function makeResolver({
         source,
         info,
         field,
+        resolvers,
       }))) || args)
 
       value = await adapter[type]({
@@ -395,6 +398,7 @@ function makeResolver({
           info: info || {} as ResolverInfo,
           value,
           error,
+          resolvers,
         })
       }
     } catch (err) {
@@ -571,7 +575,13 @@ function makeReferenceResolver({
   }
 }
 
-export function makeResolvers({ adapter, model } : { adapter?: IAdapter, model: SanitizedModel }) {
+export function makeResolvers({
+  adapter, model, modelResolvers,
+} : {
+  adapter?: IAdapter
+  model: SanitizedModel
+  modelResolvers: Record<string, ModelResolvers>
+}) {
   const resolvers :
     Record<AliasCrudEnum, InternalResolver> &
     Record<'reference'|'references', ReferenceResolver> = {} as any
@@ -586,6 +596,7 @@ export function makeResolvers({ adapter, model } : { adapter?: IAdapter, model: 
       scope: model.scopes[res.type],
       transform: model.transforms[res.type],
       field: extractModelName(model.name) + res.suffix,
+      resolvers: modelResolvers,
     }) as InternalResolver
 
     resolvers[res.type].unscoped = makeResolver({
@@ -593,6 +604,7 @@ export function makeResolvers({ adapter, model } : { adapter?: IAdapter, model: 
       adapter,
       model,
       field: extractModelName(model.name) + res.suffix,
+      resolvers: modelResolvers,
     }) as UnscopedInternalResolver
 
     if (res.alias) {

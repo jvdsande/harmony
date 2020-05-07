@@ -44,7 +44,7 @@ export type PersistenceInstance<
   events: IEvents
   context: PersistenceContext
   resolvers: {
-    [model in keyof Models]: ModelResolvers<Models[model]>
+    [model in keyof Models]: ModelResolvers<Models[model]['schema']>
   }
 
   controllers: {

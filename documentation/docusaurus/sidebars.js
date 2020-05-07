@@ -15,6 +15,7 @@ module.exports = {
       // Client tutorial
       'guides/client',
       'guides/login',
+      'guides/main',
     ],
     'API Reference': ['api', 'api/server', 'api/persistence', 'api/query', 'api/logger'],
     'Plugins': [],

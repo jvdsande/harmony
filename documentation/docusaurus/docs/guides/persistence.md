@@ -103,12 +103,13 @@ for data access - this is more the `Persistence` instance's role. Instead, they 
 _plugins_ for the `Server` instance: ways for the user to interact with the underlying Fastify
 server and add routes.
 
-In our case, we will be using a controller that is already mostly pre-configured: the `ControllerGraphQL`
-object exposed by our `Persistence` instance. This controller adds a GraphQL endpoint to our Server,
-configured to expose a schema made from our Persistence models.
+In our case, we will be using controllers that are already mostly pre-configured: the `ControllerGraphQL` and `ControllerEvents`
+object exposed by our `Persistence` instance. The first controller adds a GraphQL endpoint to our Server,
+configured to expose a schema made from our Persistence models, while the second transfers
+internal `Persistence` events to the Socket.IO layer for the clients to subscribe to.
 
-This controller can be found as a child of our `Persistence` instance's `controllers` property. We
-add it to our server by adding it to the `controllers` array in its config:
+These controllers can be found as children of our `Persistence` instance's `controllers` property. We
+add them to our server by adding them to the `controllers` array in its config:
 
 ```js {2-7}  title="index.js"
   await server.initialize({
@@ -116,7 +117,8 @@ add it to our server by adding it to the `controllers` array in its config:
       persistence.controllers.ControllerGraphQL({
         path: '/',
         enablePlayground: true,
-      })
+      }),
+      persistence.controllers.ControllerEvents(),
     ],
     log: {
       console: true,
@@ -126,7 +128,7 @@ add it to our server by adding it to the `controllers` array in its config:
 
 If we now restart our application:
 
-```shell script {15-17}
+```shell script {15-18}
 20/01/01 12:00:00:000 Persistence      [WARNING] No default adapter was specified. Will fallback to adapter 'mock'
 20/01/01 12:00:00:000 Persistence      [INFO   ] Initializing Persistence instance with 0 models
 20/01/01 12:00:00:000 Persistence      [INFO   ] Adapters: [] - default: mock
@@ -144,10 +146,11 @@ If we now restart our application:
 20/01/01 12:00:00:000 ControllerGraphQL [INFO   ] Registering GraphQL endpoint...
 20/01/01 12:00:00:000 ControllerGraphQL [INFO   ] GraphQL endpoint at /
 20/01/01 12:00:00:000 ControllerGraphQL [INFO   ] GraphQL playground at /
+20/01/01 12:00:00.000 ControllerEvents  [INFO   ] Persistence events are forwarded to Socket.IO
 20/01/01 12:00:00:000 Server            [INFO   ] Main server created on port localhost:3000
 ```
 
-We can see that the newly added controller added two new endpoints, both at path `'/'`.
+We can see that the newly-added controllers added two new endpoints, both at path `'/'`.
 
 The first one is in fact a `POST` endpoint serving the GraphQL API, while the second one is a `GET`
 endpoint used for accessing the GraphQL Playground, which we enabled previously in the
@@ -306,7 +309,7 @@ import { Types } from '@harmonyjs/persistence'
 export default {
   name: Types.String.required,
   description: Types.String,
-  owner: Types.Reference.of('User').required,
+  owner: Types.Reference.of('User'),
   sharedTo: [Types.Reference.of('User')],
 }
 ```

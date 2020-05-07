@@ -26,11 +26,12 @@ ${models.map((model) => printSchema({ model })).join('\n')}`
 }
 
 export async function defineResolvers<Models extends string|number|symbol>({
-  models, adapters, defaultAdapterName,
+  models, adapters, defaultAdapterName, modelResolvers,
 } : {
   models: SanitizedModel[]
   adapters: {[key:string]: IAdapter}
   defaultAdapterName?: string
+  modelResolvers: Record<keyof Models, ModelResolvers>
 }) {
   const resolvers: Record<Models, InternalResolvers> = {} as any
 
@@ -42,6 +43,7 @@ export async function defineResolvers<Models extends string|number|symbol>({
     resolvers[name] = makeResolvers({
       adapter: model.adapter ? adapters[model.adapter] : defaultAdapter,
       model,
+      modelResolvers,
     })
   })
 
@@ -49,25 +51,24 @@ export async function defineResolvers<Models extends string|number|symbol>({
 }
 
 export async function defineModelResolvers<Models extends {[model: string]: Model}>({
-  internalResolvers,
+  internalResolvers, modelResolvers,
 } : {
   internalResolvers: Record<string, InternalResolvers>
+  modelResolvers: Record<keyof Models, ModelResolvers>
 }) {
-  const modelResolvers : Record<keyof Models, ModelResolvers> = {} as any
-
   Object.keys(internalResolvers)
     .forEach((model) => {
       const internalResolver : InternalResolvers = internalResolvers[model]
+      // eslint-disable-next-line no-param-reassign
       modelResolvers[model as keyof Models] = {} as any
       Object.keys(internalResolver)
         .forEach((res) => {
+          // eslint-disable-next-line no-param-reassign
           modelResolvers[model as keyof Models][res as AliasCrudEnum] = (args: { [key: string]: any }) => (
             internalResolver[res as AliasCrudEnum].unscoped({ args })
           ) as any
         })
     })
-
-  return modelResolvers
 }
 
 function resolveContext({

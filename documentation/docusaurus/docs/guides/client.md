@@ -31,14 +31,16 @@ template, we get rid of any boilerplate code Create-React-App usually gives us.
 ## Step 2 - Adding dependencies
 
 You can now navigate to the newly-created `client` directory and install the two missing
-pieces: `infima` for the styling and `@harmonyjs/query` to communicate with our backend.
+pieces: `infima` for the styling and `@harmonyjs/query` to communicate with our backend. 
+In top of that, we'll use the awesome `react-icons` package to easily gain access to icons
+libraries such as FontAwesome or Material Icons.
 
 We'll also install `cross-env` as a development dependency to allow changing the running
 port of our client.
 
 ```shell script
 cd client
-npm install infima @harmonyjs/query
+npm install infima react-icons @harmonyjs/query
 npm install -D cross-env
 ```
 

@@ -82,7 +82,7 @@ run()
 And at our next application startup, the following log should appear:
 
 ```shell script {12}
-20/05/05 19:55:56.096 Server           [INFO   ] Powered by
+20/01/01 12:00:00.000 Server           [INFO   ] Powered by
    _    _
   | |  | |
   | |__| | __ _ _ __ _ __ ___   ___  _ __  _   _
@@ -91,13 +91,14 @@ And at our next application startup, the following log should appear:
   |_|  |_|\__,_|_|  |_| |_| |_|\___/|_| |_|\__, |
                                             __/ |
                                            |___/
-20/05/05 19:55:56.096 Server           [INFO   ] Initializing Fastify Server
-20/05/05 19:55:56.100 Server           [INFO   ] Initializing Socket.IO layer
-20/05/05 19:55:56.113 ControllerAuthenticationJWT [INFO   ] Authentication system initialized
-20/05/05 19:55:56.114 ControllerGraphQL           [INFO   ] Registering GraphQL endpoint...
-20/05/05 19:55:56.199 ControllerGraphQL           [INFO   ] GraphQL endpoint at /
-20/05/05 19:55:56.200 ControllerGraphQL           [INFO   ] GraphQL playground at /
-20/05/05 19:55:56.227 Server                      [INFO   ] Main server created on port localhost:3000
+20/01/01 12:00:00.000 Server           [INFO   ] Initializing Fastify Server
+20/01/01 12:00:00.000 Server           [INFO   ] Initializing Socket.IO layer
+20/01/01 12:00:00.000 ControllerAuthenticationJWT [INFO   ] Authentication system initialized
+20/01/01 12:00:00.000 ControllerGraphQL           [INFO   ] Registering GraphQL endpoint...
+20/01/01 12:00:00.000 ControllerGraphQL           [INFO   ] GraphQL endpoint at /
+20/01/01 12:00:00.000 ControllerGraphQL           [INFO   ] GraphQL playground at /
+20/01/01 12:00:00.000 ControllerEvents            [INFO   ] Persistence events are forwarded to Socket.IO
+20/01/01 12:00:00.000 Server                      [INFO   ] Main server created on port localhost:3000
 ```
 
 We can now build our authentication logic, using the provided authentication controller and its

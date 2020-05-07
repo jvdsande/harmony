@@ -1,6 +1,5 @@
 // Resolver enums
 import { GraphQLResolveInfo } from 'graphql'
-import { Model } from 'model'
 import {
   Schema, SchemaInputType, SchemaOperatorType, SchemaOutputType,
 } from 'property'
@@ -119,10 +118,10 @@ export type ScopedModelResolvers<CurrentSchema extends Schema = Schema> = {
     ExtendedType<key, CurrentSchema>
   >
 }
-export type ModelResolvers<CurrentModel extends Model = Model> = {
+export type ModelResolvers<CurrentSchema extends Schema = Schema> = {
   [key in AliasCrudEnum]: ModelResolver<
-    ExtendedArgs<key, Model['schema']>,
-    ExtendedType<key, Model['schema']>
+    ExtendedArgs<key, Schema>,
+    ExtendedType<key, Schema>
   >
 }
 
@@ -158,7 +157,7 @@ export type Scope<
   Schemas extends { [key: string]: Schema }|undefined = any,
   Source extends any = any,
   Args extends {[key: string]: any}|undefined = {[key: string]: any},
-  HasResolvers extends boolean = true,
+  FullResolvers extends boolean = true,
   > = (params: {
   source: Source
   args: Args
@@ -166,8 +165,8 @@ export type Scope<
   info: GraphQLResolveInfo
 
   field: string
-} & (false extends HasResolvers ? {
-
+} & (false extends FullResolvers ? {
+  resolvers: {[schema in keyof Schemas]: ModelResolvers<NonNullable<Schemas>[schema]>}
 } : {
   resolvers: {[schema in keyof Schemas]: ScopedModelResolvers<NonNullable<Schemas>[schema]>}
 })) => Promise<(Args|undefined|void)>
@@ -190,7 +189,7 @@ export type Transform<
   Source extends any = any,
   Args extends {[key: string]: any}|undefined = {[key: string]: any},
   Return extends any = any,
-  HasResolvers extends boolean = true,
+  FullResolvers extends boolean = true,
   > = (params: {
   source: Source
   args: Args
@@ -200,8 +199,8 @@ export type Transform<
   field: string
   value: Return|null
   error: Error|null
-} & (false extends HasResolvers ? {
-
+} & (false extends FullResolvers ? {
+  resolvers: {[schema in keyof Schemas]: ModelResolvers<NonNullable<Schemas>[schema]>}
 } : {
   resolvers: {[schema in keyof Schemas]: ScopedModelResolvers<NonNullable<Schemas>[schema]>}
 })) => Promise<(Return|undefined|void)>
