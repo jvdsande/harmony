@@ -45,4 +45,4 @@ npm i @harmonyjs/query
 
 
 ## Going further
-You can jump into exploring the [API](/docs/api), or continue with one of our [guides](/docs/guides/server).
+You can jump into exploring the [API](/docs/api), or continue with one of our [guides](/docs/guides).

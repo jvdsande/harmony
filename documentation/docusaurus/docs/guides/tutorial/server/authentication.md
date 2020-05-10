@@ -1,6 +1,6 @@
 ---
 title: Adding an authentication service
-sidebar_label: Tutorial - Adding an authentication service
+sidebar_label: Adding an authentication service
 ---
 
 If you've followed the previous two guides, you should have at this point:

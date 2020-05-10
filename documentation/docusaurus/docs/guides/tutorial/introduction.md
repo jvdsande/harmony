@@ -1,6 +1,6 @@
 ---
 title: Building a HarmonyJS application
-sidebar_label: Tutorial - Building an app
+sidebar_label: Tutorial - Introduction
 ---
 
 In this guide, we will be building a web application from the ground up using all the tools
@@ -36,4 +36,4 @@ Here is a quick preview of what the final output will look like:
 [TODO: Add image]
 ```
 
-You can grab the full, finished code here: [Github Repository]().
+You can grab the full, finished code here: [Github Repository](https://github.com/harmony-js/tutorial).

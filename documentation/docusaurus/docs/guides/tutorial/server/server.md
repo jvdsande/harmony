@@ -1,6 +1,6 @@
 ---
 title: Creating a web server
-sidebar_label: Tutorial - Creating a web server
+sidebar_label: Creating a web server
 ---
 
 The first step into building a web application is creating our web-server.

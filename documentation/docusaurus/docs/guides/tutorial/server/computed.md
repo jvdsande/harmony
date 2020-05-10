@@ -1,6 +1,6 @@
 ---
 title: Adding computed fields
-sidebar_label: Tutorial - Adding computed fields
+sidebar_label: Adding computed fields
 ---
 
 While schemas are a great way to define our model, sometimes we want just a bit more power
@@ -113,7 +113,36 @@ export default {
 }
 ```
 
-## Step 3 - Add todo statistics
+## Step 3 - Check if the connected user is the owner
+
+A user will get two types of lists when fetching: their own lists, and lists shared with them.
+
+It will be helpful to add a `isOwner` boolean directly to the `List` schema to quickly
+determine whether this is a shared list or not.
+
+Here is the `isOwner` computed field:
+
+```js title="models/list/computed.js" {8-15}
+import {Types} from '@harmonyjs/persistence'
+
+export default {
+  fields: {
+    todos: {
+      type: [Types.ReversedReference.of('Todo').on('list')],
+    },
+    isOwner: {
+      type: Types.Boolean,
+      async resolve({ source, context: { authentication } }) {
+        const connected = authentication.get()
+
+        return String(connected && connected.user) === String(source.owner)
+      }
+    },
+  },
+}
+```
+
+## Step 4 - Add todo statistics
 
 This next modification will help us easily improve our UI. It's again some `computed` fields
 to add to our `List` schema. However this time, we will make them into a _nested_ field, to see some
@@ -163,14 +192,21 @@ from the Playground) will be known as the `ListInfo` type.
 The first step is to create the resolver in the `fields` field as usual, but this time we won't compute
 the value. Instead, we'll simply forward the `source` arguments downstream:
 
-
-```js title="models/list/computed.js {8-18}
+```js title="models/list/computed.js {16-26}
 import {Types} from '@harmonyjs/persistence'
 
 export default {
   fields: {
     todos: {
       type: [Types.ReversedReference.of('Todo').on('list')],
+    },
+    isOwner: {
+      type: Types.Boolean,
+      async resolve({ source, context: { authentication } }) {
+        const connected = authentication.get()
+
+        return String(connected && connected.user) === String(source.owner)
+      }
     },
     info: {
       type: {
@@ -185,8 +221,14 @@ export default {
     },
   },
 }
-
 ```
+
+This forwarding is needed because each field's `resolve` function receives as `source` argument
+the value of its parent field - or in other term, the return value of it's parent field's `resolve`
+function.
+
+In our case, we'll be needing the `List` object in the `ListInfo` subfields resolvers. As such,
+we forward the object as the return value of `ListInfo`.
 
 **Adding the custom resolvers**
 

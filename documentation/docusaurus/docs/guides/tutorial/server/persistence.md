@@ -1,6 +1,6 @@
 ---
 title: Adding a persistence layer
-sidebar_label: Tutorial - Adding a persistence layer
+sidebar_label: Adding a persistence layer
 ---
 
 Now that our server is starting, we need to configure our persistence layer in order to start

@@ -1,12 +1,12 @@
 ---
 title: Creating a web client
-sidebar_label: Tutorial - Creating a web client
+sidebar_label: Creating a web client
 ---
 
 If you've followed the previous guides, you should now have a working API server.
 
 If you've come here to follow the client-side tutorial only, you can grab the server code
-in the [Github Repository]().
+in the [Github Repository](https://github.com/harmony-js/tutorial/tree/master/server).
 
 The client code we'll build will use [React](https://reactjs.org/) as a UI library,
 and [Infima](https://facebookincubator.github.io/infima/docs/getting-started/introduction)
@@ -60,7 +60,7 @@ react-scripts and HarmonyJS, is already used by our server.
 
 Finally, edit the created `src/index.js` file to inject the Infima styling:
 
-```js {4}
+```jsx {4}
 import React from 'react'
 import ReactDOM from 'react-dom'
 

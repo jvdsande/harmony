@@ -1,9 +1,9 @@
 ---
 title: Connecting a database
-sidebar_label: Tutorial - Connecting a database
+sidebar_label: Connecting a database
 ---
 
-As discussed in the [Getting started](/docs/guides/introduction#server-side-technologies) chapter,
+As discussed in the [Getting started](/docs/guides/tutorial/introduction#server-side-technologies) chapter,
 this sample application will be using MongoDb as a storing database.
 
 At this point, we have a fully defined API complete with access rights and allowing complex

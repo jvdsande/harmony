@@ -1,6 +1,6 @@
 ---
 title: Securing and scoping the API
-sidebar_label: Tutorial - Securing and scoping the API
+sidebar_label: Securing and scoping the API
 ---
 
 If you've played a bit with the Playground by now, you might have detected one big
@@ -70,7 +70,7 @@ export default {
 
 And create the newly-needed `models/user/scopes.js` file with the following content:
 
-```js title="models/user/scopes.js
+```js title="models/user/scopes.js"
 import { HttpErrors } from '@harmonyjs/server'
 
 export default {
@@ -247,7 +247,7 @@ export default {
     // Fetch the list
     const list = await List.read({ _id: args.record._id, owner: connected.user })
 
-    if(!list || list.owner !== connected.user) {
+    if(!list || String(list.owner) !== String(connected.user)) {
       throw HttpErrors.Unauthorized('You are not the owner of that list')
     }
   },
@@ -261,9 +261,9 @@ export default {
     }
 
     // Fetch the list
-    const list = await List.read({ _id: args.record._id, owner: connected.user })
+    const list = await List.read({ _id: args._id, owner: connected.user })
 
-    if(!list || list.owner !== connected.user) {
+    if(!list || String(list.owner) !== String(connected.user)) {
       throw HttpErrors.Unauthorized('You are not the owner of that list')
     }
   }
@@ -338,13 +338,13 @@ export default {
     }
 
     // Fetch the todo
-    const todo = Todo.read({ filter: { _id: args._id } })
+    const todo = await Todo.read({ filter: { _id: args._id } })
 
     // Fetch the list
     const list = await List.read({
       filter: {
         _id: todo.list,
-        _and: [
+        _or: [
           // Either I'm the owner
           { owner: connected.user },
           // Or the list was shared with me (at least one value of "sharedTo" is me)
@@ -374,17 +374,39 @@ export default {
 
 ## Step 6 - Adding scopes to `Comment`
 
-Finally, we need to scope our comments. For comments, we need four things:
+Finally, we need to scope our comments. For comments, we need only two things:
 
 * I can list comments for a todo I have access to
 * I can create comments on todos I have access to
-* I can update comments I created
-* I can delete comments I created
+
+We could also allow editing/deleting comments, but this is out of the scope of this tutorial.
 
 Our scopes will look as follows:
 
-```js title="models/comment/scopes.js
+```js title="models/comment/scopes.js"
 import { HttpErrors } from '@harmonyjs/server'
+
+async function fetchListForTodo(todoId, { Todo, List }, connected) {
+    // Fetch the todo
+    const todo = await Todo.read({ filter: { _id: todoId } })
+
+    // Fetch the list
+    const list = List.read({
+      filter: {
+        _id: todo.list,
+        _or: [
+          // Either I'm the owner
+          { owner: connected.user },
+          // Or the list was shared with me (at least one value of "sharedTo" is me)
+          { _operators: { sharedTo: { some: { eq: connected.user } } } }
+        ]
+      }
+    })
+
+    if(!list) {
+      throw HttpErrors.Unauthorized('You don\'t have access to this todo')
+    }
+}
 
 export default {
   // Queries
@@ -401,29 +423,14 @@ export default {
       throw HttpErrors.BadRequest('A todo is needed to list comments')
     }
 
-    // Fetch the todo
-    const todo = Todo.read({ filter: { _id: args.filter.todo } })
-
-    // Fetch the list
-    const list = await List.read({
-      filter: {
-        _id: todo.list,
-        _and: [
-          // Either I'm the owner
-          { owner: connected.user },
-          // Or the list was shared with me (at least one value of "sharedTo" is me)
-          { _operators: { sharedTo: { some: { eq: connected.user } } } }
-        ]
-      }
-    })
-
-    if(!list) {
-      throw HttpErrors.Unauthorized('You don\'t have access to this todo')
-    }
+    // Fetch the list and check access
+    const list = await fetchListForTodo(args.filter.todo, { Todo, List }, connected)
   },
 
   // Mutations
   async create({ args, context: { authentication }, resolvers: { Todo, List } }) {
+    const nextArgs = { ...args }
+
     const connected = authentication.get()
 
     // If we are not connected, we cannot create a comment
@@ -436,62 +443,14 @@ export default {
       throw HttpErrors.BadRequest('A todo is needed to create a comment')
     }
 
-    // Fetch the todo
-    const todo = Todo.read({ filter: { _id: args.record.todo } })
+    // Fetch the list and check access
+    const list = await fetchListForTodo(args.record.todo, { Todo, List }, connected)
 
-    // Fetch the list
-    const list = await List.read({
-      filter: {
-        _id: todo.list,
-        _and: [
-          // Either I'm the owner
-          { owner: connected.user },
-          // Or the list was shared with me (at least one value of "sharedTo" is me)
-          { _operators: { sharedTo: { some: { eq: connected.user } } } }
-        ]
-      }
-    })
+    // If everything is ok, inject the connected user as the author
+    nextArgs.record.author = connected.user
 
-    if(!list) {
-      throw HttpErrors.Unauthorized('You don\'t have access to this todo')
-    }
+    return nextArgs
   },
-  async update({ args, context: { authentication }, resolvers: { Comment } }) {
-    const connected = authentication.get()
-
-    // If we are not connected, we cannot update a comment
-    if(!connected || !connected.user) {
-      throw HttpErrors.Unauthorized('You need to be authenticated to update a comment')
-    }
-
-    // Fetch the comment
-    const comment = Comment.read({
-      _id: args.record._id,
-      author: connected.user,
-    })
-
-    if(!comment || comment.author !== connected.user) {
-      throw HttpErrors.Unauthorized('You are not the author of that comment')
-    }
-  },
-  async delete({ args, context: { authentication }, resolvers: { Comment } }) {
-    const connected = authentication.get()
-
-    // If we are not connected, we cannot delete a comment
-    if(!connected || !connected.user) {
-      throw HttpErrors.Unauthorized('You need to be authenticated to delete a comment')
-    }
-
-    // Fetch the comment
-    const comment = Comment.read({
-      _id: args._id,
-      author: connected.user,
-    })
-
-    if(!comment || comment.author !== connected.user) {
-      throw HttpErrors.Unauthorized('You are not the author of that comment')
-    }
-  }
 }
 ```
 

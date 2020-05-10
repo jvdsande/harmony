@@ -44,8 +44,8 @@ module.exports = {
       copyright: `Copyright © ${new Date().getFullYear()} HarmonyJS`,
     },
     prism: {
-      theme: require('prism-react-renderer/themes/github'),
-      darkTheme: require('prism-react-renderer/themes/vsDark')
+      theme: require('./src/prism/atom-light'),
+      darkTheme: require('./src/prism/atom-dark')
     },
   },
   presets: [
